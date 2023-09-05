@@ -5,6 +5,7 @@ using Phoenix.models;
 using System.Text.Json;
 using System.Net.Http.Json;
 using System.Collections.Generic;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace Phoenix
 {
@@ -19,6 +20,8 @@ namespace Phoenix
 
             var connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
             var tasks = new List<Task>();
+
+            var openaiKey = config["OPENAI_KEY"];
 
             try
             {
@@ -43,7 +46,10 @@ namespace Phoenix
                             //Console.WriteLine(item.details);
                             int rowId = item.Save(connectionString);
                             if ( rowId > 0 )
-                                item.Embed(rowId, connectionString);
+                                item.Embed(rowId, 
+                                            connectionString,
+                                           providerName: "openai", 
+                                           providerKey: openaiKey);
                         }
 
                     })

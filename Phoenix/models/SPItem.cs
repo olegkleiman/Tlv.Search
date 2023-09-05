@@ -50,20 +50,36 @@ namespace Phoenix.models
         }
 
         public void Embed(int docId, 
-                          string connectionString)
+                          string connectionString,
+                          string providerName,
+                          string providerKey)
         {
             try
             {
                 using var conn = new SqlConnection(connectionString);
                 conn.Open();
+
+                var command = new SqlCommand($@"select id from [dbo].[embedding_providers] where [provider_name] = '{providerName}'", 
+                                conn);
+                using SqlDataReader reader = command.ExecuteReader();
+                int providerId = 0;
+                if (reader.Read())
+                {
+                    providerId = (int)reader["id"];
+                }
+                else
+                    return;
+                reader.Close();
+
                 SqlBulkCopy objbulk = new SqlBulkCopy(conn);
                 objbulk.DestinationTableName = "site_docs_vector";
                 objbulk.ColumnMappings.Add("doc_id", "doc_id");
                 objbulk.ColumnMappings.Add("vector_value_id", "vector_value_id");
                 objbulk.ColumnMappings.Add("vector_value", "vector_value");
+                objbulk.ColumnMappings.Add("embedding_provider_id", "embedding_provider_id");
 
                 // Azure OpenAI package
-                var client = new OpenAIClient("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");
+                var client = new OpenAIClient(providerKey);
                 string? _content = this.getContent();
                 if (string.IsNullOrEmpty(_content))
                     return;
@@ -76,6 +92,7 @@ namespace Phoenix.models
                 tbl.Columns.Add(new DataColumn("doc_id", typeof(Int32)));
                 tbl.Columns.Add(new DataColumn("vector_value_id", typeof(Int32)));
                 tbl.Columns.Add(new DataColumn("vector_value", typeof(float)));
+                tbl.Columns.Add(new DataColumn("embedding_provider_id", typeof(int)));
                 
                 foreach (var item in response.Value.Data)
                 {
@@ -88,6 +105,7 @@ namespace Phoenix.models
                         dr["doc_id"] = docId;
                         dr["vector_value_id"] = i;
                         dr["vector_value"] = value;
+                        dr["embedding_provider_id"] = providerId;
 
                         tbl.Rows.Add(dr);
                     }
