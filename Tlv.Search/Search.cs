@@ -1,50 +1,122 @@
-using System.ComponentModel.DataAnnotations;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
+using Azure;
+using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Tlv.Search.models;
 
 namespace Tlv.Search
 {
-    public class CalculateDistance
+    public class Search
     {
-        private readonly ILogger<CalculateDistance> _logger;
+        private readonly ILogger<Search> _logger;
 
-        public CalculateDistance(ILogger<CalculateDistance> log)
+        public Search(ILogger<Search> log)
         {
             _logger = log;
         }
 
-        [FunctionName("CalculateDistance")]
+        [FunctionName("Search")]
         [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
         [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
         public async Task<IActionResult> Run(
-            [Sql(commandText: "dbo.embedding_providers", connectionStringSetting: "CuriousityDB")]
-            IAsyncCollector<EmbeddingProvider> providers,
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
+ 
+            string prompt = req.Query["q"];
+            _logger.LogInformation($"Running search with prompt '{prompt}'");
 
-            string name = req.Query["name"];
+            string providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
+            // Azure OpenAI package
+            var client = new OpenAIClient(providerKey);
+            Response<Embeddings> response =
+                client.GetEmbeddings("text-embedding-ada-002",
+                                     new EmbeddingsOptions(prompt)
+                                     );
+            var _embedding = response.Value.Data[0].Embedding;
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            var connStr = Environment.GetEnvironmentVariable("CuriousityDB");
+            try
+            {
+                using (SqlConnection conn = new(connStr))
+                {
+                    conn.Open();
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+                    SqlCommand command = new("calculateDistance", conn)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
 
-            return new OkObjectResult(responseMessage);
+                    StringBuilder sb = new StringBuilder("[");
+
+                    float[] arr = _embedding.ToArray<float>();
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        var item = arr[i];
+
+                        sb.Append(item.ToString());
+                        if (i == arr.Length - 1)
+                            break;
+                        sb.Append(",");
+                    }
+                    sb.Append("]");
+
+                    List<SearchItem> searchItems = new List<SearchItem>();
+
+                    string embedding = sb.ToString();
+                    command.Parameters.Add("@vectorJson", SqlDbType.NVarChar, -1).Value
+                        = embedding;
+
+                    using (SqlDataAdapter da = new SqlDataAdapter())
+                    {
+                        da.SelectCommand = command;
+                        da.SelectCommand.CommandType = CommandType.StoredProcedure;
+
+                        DataSet ds = new();
+                        da.Fill(ds, "result_name");
+
+                        DataTable dt = ds.Tables["result_name"];
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            searchItems.Add(new SearchItem()
+                            {
+                                id = (int)row[0], 
+                                title = (string)row[1],
+                                url = (string)row[2],
+                                distance = (double)row[3]
+                            });
+                        }
+                    }
+
+                    return new JsonResult(searchItems)
+                    {
+                        StatusCode = (int)HttpStatusCode.OK,
+                        ContentType = "application/json"
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
+
         }
     }
 }

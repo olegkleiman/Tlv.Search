@@ -2,7 +2,7 @@
   "profiles": {
     "Tlv.Search": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7100",
+      "commandLineArgs": "--port 7082",
       "launchBrowser": false
     }
   }
