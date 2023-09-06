@@ -24,7 +24,7 @@ namespace Tlv.Search
 {
     public class Search
     {
-        private readonly ILogger<Search> _logger;
+        private readonly ILogger<Search>? _logger;
 
         public Search(ILogger<Search> log)
         {
@@ -32,72 +32,72 @@ namespace Tlv.Search
         }
 
         [FunctionName("Search")]
-        [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
-        [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
+        [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
+        [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
  
-            string prompt = req.Query["q"];
+            string? prompt = req.Query["q"];
             _logger.LogInformation($"Running search with prompt '{prompt}'");
 
-            string providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
+            string? providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
             // Azure OpenAI package
-            var client = new OpenAIClient(providerKey);
-            Response<Embeddings> response =
+            OpenAIClient client = new(providerKey);
+            Response<Embeddings>? response =
                 client.GetEmbeddings("text-embedding-ada-002",
                                      new EmbeddingsOptions(prompt)
                                      );
             var _embedding = response.Value.Data[0].Embedding;
 
-            var connStr = Environment.GetEnvironmentVariable("CuriousityDB");
+            string? connStr = Environment.GetEnvironmentVariable("CuriousityDB");
             try
             {
-                using (SqlConnection conn = new(connStr))
+                using (SqlConnection? conn = new(connStr))
                 {
                     conn.Open();
 
-                    SqlCommand command = new("calculateDistance", conn)
+                    SqlCommand? command = new("calculateDistance", conn)
                     {
                         CommandType = CommandType.StoredProcedure
                     };
 
-                    StringBuilder sb = new StringBuilder("[");
+                    StringBuilder? sb = new("[");
 
-                    float[] arr = _embedding.ToArray<float>();
+                    float[]? arr = _embedding.ToArray<float>();
                     for (int i = 0; i < arr.Length; i++)
                     {
                         var item = arr[i];
-
-                        sb.Append(item.ToString());
+                        sb.Append(item);
                         if (i == arr.Length - 1)
                             break;
-                        sb.Append(",");
+                        sb.Append(',');
                     }
-                    sb.Append("]");
+                    sb.Append(']');
 
-                    List<SearchItem> searchItems = new List<SearchItem>();
+                    List<SearchItem>? searchItems = new();
 
-                    string embedding = sb.ToString();
+                    string? embedding = sb.ToString();
                     command.Parameters.Add("@vectorJson", SqlDbType.NVarChar, -1).Value
                         = embedding;
 
-                    using (SqlDataAdapter da = new SqlDataAdapter())
+                    using (SqlDataAdapter? da = new())
                     {
                         da.SelectCommand = command;
                         da.SelectCommand.CommandType = CommandType.StoredProcedure;
 
-                        DataSet ds = new();
+                        DataSet? ds = new();
                         da.Fill(ds, "result_name");
 
-                        DataTable dt = ds.Tables["result_name"];
+                        DataTable? dt = ds.Tables["result_name"];
                         foreach (DataRow row in dt.Rows)
                         {
                             searchItems.Add(new SearchItem()
                             {
                                 id = (int)row[0], 
                                 title = (string)row[1],
+                                //doc = (string)row[2],
                                 url = (string)row[2],
                                 distance = (double)row[3]
                             });

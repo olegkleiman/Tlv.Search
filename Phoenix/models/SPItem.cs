@@ -88,7 +88,7 @@ namespace Phoenix.models
                     client.GetEmbeddings("text-embedding-ada-002", 
                                          new EmbeddingsOptions(_content)
                                          );
-                DataTable tbl = new DataTable();
+                DataTable tbl = new();
                 tbl.Columns.Add(new DataColumn("doc_id", typeof(Int32)));
                 tbl.Columns.Add(new DataColumn("vector_value_id", typeof(Int32)));
                 tbl.Columns.Add(new DataColumn("vector_value", typeof(float)));
@@ -144,8 +144,10 @@ namespace Phoenix.models
                 htmlDoc.LoadHtml(_content);
                 string cleanText = htmlDoc.DocumentNode.InnerText;
 
-                var command = new SqlCommand("storeDocument", conn);
-                command.CommandType = CommandType.StoredProcedure;
+                var command = new SqlCommand("storeDocument", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
 
                 command.Parameters.Add("@doc", SqlDbType.NVarChar, -1).Value = cleanText;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = title;
