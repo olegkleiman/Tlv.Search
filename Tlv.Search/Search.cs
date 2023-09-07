@@ -43,14 +43,14 @@ namespace Tlv.Search
             string? prompt = req.Query["q"];
             _logger.LogInformation($"Running search with prompt '{prompt}'");
 
-            string? providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
+            //string? providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
             // Azure OpenAI package
-            OpenAIClient client = new(providerKey);
-            Response<Embeddings>? response =
-                client.GetEmbeddings("text-embedding-ada-002",
-                                     new EmbeddingsOptions(prompt)
-                                     );
-            var _embedding = response.Value.Data[0].Embedding;
+            //OpenAIClient client = new(providerKey);
+            //Response<Embeddings>? response =
+            //    client.GetEmbeddings("text-embedding-ada-002",
+            //                         new EmbeddingsOptions(prompt)
+            //                         );
+            //var _embedding = response.Value.Data[0].Embedding;
 
             string? connStr = Environment.GetEnvironmentVariable("CuriousityDB");
             try
