@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -62,25 +63,13 @@ namespace Tlv.Search
                     {
                         CommandType = CommandType.StoredProcedure
                     };
-
-                    StringBuilder? sb = new("[");
-
-                    float[]? arr = _embedding.ToArray<float>();
-                    for (int i = 0; i < arr.Length; i++)
-                    {
-                        var item = arr[i];
-                        sb.Append(item);
-                        if (i == arr.Length - 1)
-                            break;
-                        sb.Append(',');
-                    }
-                    sb.Append(']');
-
                     List<SearchItem>? searchItems = new();
 
-                    string? embedding = sb.ToString();
-                    command.Parameters.Add("@vectorJson", SqlDbType.NVarChar, -1).Value
-                        = embedding;
+                    command.Parameters.Add("@inputText ", SqlDbType.NVarChar, -1).Value
+                        = prompt;
+
+                    //Stopwatch sw = new();
+                    //sw.Start();
 
                     using (SqlDataAdapter? da = new())
                     {
@@ -91,18 +80,23 @@ namespace Tlv.Search
                         da.Fill(ds, "result_name");
 
                         DataTable? dt = ds.Tables["result_name"];
-                        foreach (DataRow row in dt.Rows)
-                        {
-                            searchItems.Add(new SearchItem()
+                        if (dt != null)
+                        { 
+                            foreach (DataRow row in dt.Rows)
                             {
-                                id = (int)row[0], 
-                                title = (string)row[1],
-                                //doc = (string)row[2],
-                                url = (string)row[2],
-                                distance = (double)row[3]
-                            });
+                                searchItems.Add(new SearchItem()
+                                {
+                                    id = (int)row[0],
+                                    title = (string)row[1],
+                                    //doc = (string)row[2],
+                                    url = (string)row[2],
+                                    distance = (double)row[3]
+                                });
+                            }
                         }
                     }
+                    //sw.Stop();
+                    //Console.WriteLine(@$"SP executed for {sw.ElapsedMilliseconds} ms.");
 
                     return new JsonResult(searchItems)
                     {
