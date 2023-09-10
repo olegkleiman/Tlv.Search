@@ -65,7 +65,7 @@ namespace Tlv.Search
                     };
                     List<SearchItem>? searchItems = new();
 
-                    command.Parameters.Add("@inputText ", SqlDbType.NVarChar, -1).Value
+                    command.Parameters.Add("@inputText", SqlDbType.NVarChar, -1).Value
                         = prompt;
 
                     //Stopwatch sw = new();

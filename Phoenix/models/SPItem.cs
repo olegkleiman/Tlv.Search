@@ -16,6 +16,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Phoenix.models
 {
@@ -51,7 +52,8 @@ namespace Phoenix.models
 
         public void Embed(int docId, 
                           string connectionString,
-                          string providerName,
+                          string modelName,
+                          int modelId,
                           string providerKey)
         {
             try
@@ -59,24 +61,12 @@ namespace Phoenix.models
                 using var conn = new SqlConnection(connectionString);
                 conn.Open();
 
-                var command = new SqlCommand($@"select id from [dbo].[embedding_providers] where [provider_name] = '{providerName}'", 
-                                conn);
-                using SqlDataReader reader = command.ExecuteReader();
-                int providerId = 0;
-                if (reader.Read())
-                {
-                    providerId = (int)reader["id"];
-                }
-                else
-                    return;
-                reader.Close();
-
                 SqlBulkCopy objbulk = new SqlBulkCopy(conn);
                 objbulk.DestinationTableName = "site_docs_vector";
                 objbulk.ColumnMappings.Add("doc_id", "doc_id");
                 objbulk.ColumnMappings.Add("vector_value_id", "vector_value_id");
                 objbulk.ColumnMappings.Add("vector_value", "vector_value");
-                objbulk.ColumnMappings.Add("embedding_provider_id", "embedding_provider_id");
+                objbulk.ColumnMappings.Add("model_id", "model_id");
 
                 // Azure OpenAI package
                 var client = new OpenAIClient(providerKey);
@@ -85,14 +75,14 @@ namespace Phoenix.models
                     return;
 
                 Response<Embeddings> response = 
-                    client.GetEmbeddings("text-embedding-ada-002", 
+                    client.GetEmbeddings(modelName, //"text-embedding-ada-002", 
                                          new EmbeddingsOptions(_content)
                                          );
                 DataTable tbl = new();
-                tbl.Columns.Add(new DataColumn("doc_id", typeof(Int32)));
-                tbl.Columns.Add(new DataColumn("vector_value_id", typeof(Int32)));
+                tbl.Columns.Add(new DataColumn("doc_id", typeof(int)));
+                tbl.Columns.Add(new DataColumn("vector_value_id", typeof(int)));
                 tbl.Columns.Add(new DataColumn("vector_value", typeof(float)));
-                tbl.Columns.Add(new DataColumn("embedding_provider_id", typeof(int)));
+                tbl.Columns.Add(new DataColumn("model_id", typeof(int)));
                 
                 foreach (var item in response.Value.Data)
                 {
@@ -105,7 +95,7 @@ namespace Phoenix.models
                         dr["doc_id"] = docId;
                         dr["vector_value_id"] = i;
                         dr["vector_value"] = value;
-                        dr["embedding_provider_id"] = providerId;
+                        dr["model_id"] = modelId;
 
                         tbl.Rows.Add(dr);
                     }
@@ -143,6 +133,7 @@ namespace Phoenix.models
                 HtmlDocument htmlDoc = new();
                 htmlDoc.LoadHtml(_content);
                 string cleanText = htmlDoc.DocumentNode.InnerText;
+                cleanText = HttpUtility.HtmlDecode(cleanText);
 
                 var command = new SqlCommand("storeDocument", conn)
                 {

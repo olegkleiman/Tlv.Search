@@ -2,7 +2,7 @@
   "profiles": {
     "Phoenix": {
       "commandName": "Project",
-      "commandLineArgs": "--p openai --model text-embedding-ada-002"
+      "commandLineArgs": "-p openai --modelName text-embedding-ada-002"
     }
   }
 }
