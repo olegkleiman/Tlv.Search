@@ -22,15 +22,18 @@ namespace Phoenix.models
 {
     internal class SPItem
     {
+        const string BASE_URL = "https://www.tel-aviv.gov.il";
+
         public string? title { get; set; }
 
-        [JsonPropertyName("fileRef")]
+        [JsonPropertyName("previewPage")]
         public string? url { get; set; }
         public string? details { get; set; }
         public string? content { get; set; }
         public string? comments { get; set; }
         public string? remarks { get; set; }
         public string? summary { get; set; }
+        
 
         private string? getContent()
         {
@@ -135,6 +138,10 @@ namespace Phoenix.models
                 string cleanText = htmlDoc.DocumentNode.InnerText;
                 cleanText = HttpUtility.HtmlDecode(cleanText);
 
+                htmlDoc.LoadHtml(url);
+                var anchor = htmlDoc.DocumentNode.Descendants("a").First();
+                string link = anchor.Attributes["href"].Value;
+  
                 var command = new SqlCommand("storeDocument", conn)
                 {
                     CommandType = CommandType.StoredProcedure
@@ -142,7 +149,7 @@ namespace Phoenix.models
 
                 command.Parameters.Add("@doc", SqlDbType.NVarChar, -1).Value = cleanText;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = title;
-                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = url;
+                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = BASE_URL + link;
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
                 returnParameter.Direction = ParameterDirection.ReturnValue;
