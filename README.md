@@ -1,6 +1,6 @@
 # Curiosity Project (Tlv.Search)
 
-This document describes the architecture design and some implementation details of Curiosity project - Smart Search for TLV text corpuses.
+This document describes the architecture design and some implementation details of Curiosity project - Semantic Search for TLV text corpuses.
 
 The mathematical basis of the solution is the vector distance computation performed for the embedded prompt of the user and (large) corpus of the embedded documents previously pre-processed for this purpose. 
 
