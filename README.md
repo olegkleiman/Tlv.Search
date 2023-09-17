@@ -22,17 +22,15 @@ Prompt embedding within the stored procedure is HTTP invocation of the deployed 
 
 Thus the described approach is heavily based on Azure SQL ability to efficiently calculate the vector dot products for hundreds of docs, actually serving as vector database. From other hand, being relational database, Azure SQL may find the nearest vectors without kNN approximation algorithms, like HNSW ([Hierarchical Navigable Small World](https://en.wikipedia.org/wiki/Small-world_network) or [FAISS](https://github.com/facebookresearch/faiss).
 
-Q&A
+## Q&A
 ### What model Curiosity uses?
 
 Curiosity uses OpenAI model [text-embedding-ada-002](https://openai.com/blog/new-and-improved-embedding-model) hosted at MS Azure and deployed in Azure’s meaning of the word.  
 
-  - list A
-  - list B
-
 ### Is it possible to use other NLP models with Curiosity?
 
-- There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there “features extraction”.  It should be noted that inference API that proposed by HuggingFace may not be used at production grade. There is payed professional services that HuggingFace provides for production solutions.
-- Curiosity in fact Vendor-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
-- Actually Curiosity may use other models than OpenAI as described in previous section. It the model 
+There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there “features extraction”.  It should be noted that inference API that proposed by HuggingFace may not be used at production grade. There is payed professional services that HuggingFace provides for production solutions.
+### Curiosity in fact Vendor-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
+
+Actually Curiosity may use other models than OpenAI as described in previous section. It the model 
 
