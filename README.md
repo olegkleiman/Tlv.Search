@@ -73,7 +73,7 @@ let response = axios.post(api_url,
  }
 
  const numNeighbors = 3;
- index.searchKnn(query_embedding, numNeighbors);
+ response = index.searchKnn(query_embedding, numNeighbors);
 
 // OR
 
