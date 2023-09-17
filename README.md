@@ -23,6 +23,13 @@ Prompt embedding within the stored procedure is HTTP invocation of the deployed 
 Thus the described approach is heavily based on Azure SQL ability to efficiently calculate the vector dot products for hundreds of docs, actually serving as vector database. From other hand, being relational database, Azure SQL may find the nearest vectors without kNN approximation algorithms, like HNSW ([Hierarchical Navigable Small World](https://en.wikipedia.org/wiki/Small-world_network) or [FAISS](https://github.com/facebookresearch/faiss).
 
 Q&A
+Question
+: Answer
+
+Question
+: Answer
+
+
 - What model Curiosity uses?
 - Curiosity uses OpenAI model text-embedding-ada-002 hosted at MS Azure and deployed in Azure’s meaning of the word.  
   
