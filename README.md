@@ -35,7 +35,7 @@ There is a pletora of pre-trained models at HuggingFace hub. The models used for
 
 Actually Curiosity may use other models than OpenAI as described in previous section. Changing Azure SQL is more challenging task because, as mentioned, Curiosity stores the docs corpus and corresponding embeddings vectors in SQL relational tables. Moreover, when calculating docs similarity, Azure SQL performs ordering sort instead of kNN approximation algorithm. 
 
-1. The most prominent candidate for an alternative of Azure OpenAI is HuggingFace inference API with some BERT-based model. Considering the following code excertp:
+1. The most prominent candidate for an alternative of Azure OpenAI is [HuggingFace Inference API](https://huggingface.co/docs/api-inference/index) with some BERT-based model. Considering the following code excertp:
 ``` JS
 import { HfInference } from '@huggingface/inference';
 
