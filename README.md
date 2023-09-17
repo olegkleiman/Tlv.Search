@@ -113,4 +113,5 @@ for(var i = 0; i < corpus_embeddings.length; i++) {
 index.writeIndexSync('curiosity.dat');
 
 ```
-
+3. ElasticSearch
+   Starting with version 7.3, ElasticSearch introduces the possibility to index dense vectors and to use it for docs scoring. Hence, we can use ElasticSearch to index embeddings along the docs and we can use the query embeddings to retrieve relevant entries.
