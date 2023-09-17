@@ -25,6 +25,7 @@ Thus the described approach is heavily based on Azure SQL ability to efficiently
 Q&A
 - What model Curiosity uses?
 - Curiosity uses OpenAI model text-embedding-ada-002 hosted at MS Azure and deployed in Azure’s meaning of the word.
+  
 - Is it possible to use other NLP models with Curiosity?
 - There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there “features extraction”.  It should be noted that inference API that proposed by HuggingFace may not be used at production grade. There is payed professional services that HuggingFace provides for production solutions.
 - Curiosity in fact Vendor-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
