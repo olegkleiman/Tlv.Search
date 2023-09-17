@@ -38,6 +38,8 @@ Actually Curiosity may use other models than OpenAI as described in previous sec
 1. The most prominent candidate for an alternative of Azure OpenAI is [HuggingFace Inference API](https://huggingface.co/docs/api-inference/index) with some BERT-based model. Considering the following code excertp:
 ``` JS
 import { HfInference } from '@huggingface/inference';
+import pkg from 'hnswlib-node';
+const { HierarchicalNSW } = pkg;
 
 const model_id = "sentence-transformers/all-MiniLM-L6-v2"
 const hf_token = "ht_De...";
@@ -47,6 +49,8 @@ const texts = ["What is most most prominent nlp model",
 ...
 "What is BERT architecture"];
 
+// Raw requests to inference API imply calculating similary without help of HuggingFace.
+// We use HNSW here for this purpose
 const api_url = `https://api-inference.huggingface.co/pipeline/feature-extraction/${model_id}`; 
 let response = axios.post(api_url,
           {
@@ -58,6 +62,18 @@ let response = axios.post(api_url,
             }
           }
  const corpus_embeddings = response.data;
+
+ const numDimensions = 384; // this is number for MiniLM-L6-v2 model
+
+ const index = new HierarchicalNSW('cosine', numDimensions);
+ index.initIndex(maxElements);
+
+ for(let i = 0; i < corpus_embeddings.length; i++) {
+     index.addPoint(corpus_embeddings[i], i);
+ }
+
+ const numNeighbors = 3;
+ index.searchKnn(query_embedding, numNeighbors);
 
 // OR
 
