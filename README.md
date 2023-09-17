@@ -68,7 +68,8 @@ let res = await inference.sentenceSimilarity({
       source_sentence: "What is BERT?",
       sentences: texts
    }
-}) 
+})
+// [0.605, 0.561, 0.7345, ... ,0.344] - distances from each doc passed in 'sentences' param
    
    ``` 
 
