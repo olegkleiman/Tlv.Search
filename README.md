@@ -5,6 +5,7 @@ This document describes the architecture design and some implementation details 
 The idea behind semantic search is to embed all entries in the corpus into vector space.
 
 At the search time, the prompt is embedded into the same vector space and the closest embeddings from the corpus are found. These entries should have a high semantic overlap with the query.
+
 ![docs similarity](https://raw.githubusercontent.com/UKPLab/sentence-transformers/master/docs/img/SemanticSearch.png)
 
 The mathematical basis of the solution is the vector distance computation performed for the embedded prompt of the user and (large) corpus of the embedded documents previously pre-processed for this purpose. 
