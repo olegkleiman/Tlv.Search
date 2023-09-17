@@ -74,6 +74,10 @@ let response = axios.post(api_url,
 
  const numNeighbors = 3;
  response = index.searchKnn(query_embedding, numNeighbors);
+ // {
+ //   distances: [0.66, 0.67, 0.71543],
+ //   neighbors: [5,8,9]
+ // }
 
 // OR
 
