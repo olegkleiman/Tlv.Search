@@ -24,7 +24,7 @@ Thus the described approach is heavily based on Azure SQL ability to efficiently
 
 Q&A
 - What model Curiosity uses?
-- Curiosity uses OpenAI model text-embedding-ada-002 hosted at MS Azure and deployed in Azure’s meaning of the word.
+- Curiosity uses OpenAI model text-embedding-ada-002 hosted at MS Azure and deployed in Azure’s meaning of the word.  
   
   
 - Is it possible to use other NLP models with Curiosity?
