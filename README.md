@@ -31,7 +31,7 @@ Curiosity uses OpenAI model [text-embedding-ada-002](https://openai.com/blog/new
 
 There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there “features extraction”.  It should be noted that inference API that proposed by HuggingFace may not be used at production grade. There is payed professional services that HuggingFace provides for production solutions.
 
-### Curiosity in fact Vendor-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
+### Curiosity in fact Microsoft-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
 
 Actually Curiosity may use other models than OpenAI as described in previous section. Changing Azure SQL is more challenging task because, as mentioned, Curiosity stores the docs corpus and corresponding embeddings vectors in SQL relational tables. Moreover, when calculating docs similarity, Azure SQL performs ordering sort instead of kNN approximation algorithm. 
 
@@ -62,7 +62,7 @@ let response = axios.post(api_url,
 // OR
 
 const inference = new HfInference(hf_token);
-await inference.sentenceSimilarity({
+let res = await inference.sentenceSimilarity({
    model: model_id,
    inputs: {
       source_sentence: "What is BERT?",
