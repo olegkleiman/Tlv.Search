@@ -39,23 +39,36 @@ Actually Curiosity may use other models than OpenAI as described in previous sec
 ``` JS
 import { HfInference } from '@huggingface/inference';
 
-   const model_id = "sentence-transformers/all-MiniLM-L6-v2"
-   const hf_token = "ht_De...";
-  
-   const api_url = `https://api-inference.huggingface.co/pipeline/feature-extraction/${model_id}`; 
-   let response = axios.post(api_url,
-             {
-               "inputs": texts,
-               "options": {"wait_for_model": 1}
-             }, {
-               headers: {
-                 "Authorization": `Bearer ${hf_token}`
-               }
-             }
-    const corpus_embeddings = response.data;
-   
-   const inference = new HfInference(hf_token);
-  //await inference.sentenceSimilarity 
+const model_id = "sentence-transformers/all-MiniLM-L6-v2"
+const hf_token = "ht_De...";
+
+const texts = ["What is most most prominent nlp model",
+"Who created BERT model",
+...
+"What is BERT architecture"];
+
+const api_url = `https://api-inference.huggingface.co/pipeline/feature-extraction/${model_id}`; 
+let response = axios.post(api_url,
+          {
+            "inputs": texts,
+            "options": {"wait_for_model": 1}
+          }, {
+            headers: {
+              "Authorization": `Bearer ${hf_token}`
+            }
+          }
+ const corpus_embeddings = response.data;
+
+// OR
+
+const inference = new HfInference(hf_token);
+await inference.sentenceSimilarity({
+   model: model_id,
+   inputs: {
+      source_sentence: "What is BERT?",
+      sentences: texts
+   }
+}) 
    
    ``` 
 
