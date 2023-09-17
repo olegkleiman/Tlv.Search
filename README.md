@@ -35,7 +35,7 @@ There is a pletora of pre-trained models at HuggingFace hub. The models used for
 
 Actually Curiosity may use other models than OpenAI as described in previous section. Changing Azure SQL is more challenging task because, as mentioned, Curiosity stores the docs corpus and corresponding embeddings vectors in SQL relational tables. Moreover, when calculating docs similarity, Azure SQL performs ordering sort instead of kNN approximation algorithm. 
 
-Obviously some vector database may be considered as alternative to Azure SQL with the table with columnstore index and Node.js could be alternative to Azure-based functions. Consider the following JS in Node.js as vector database used for docs similarity
+Obviously some vector database may be considered as alternative to Azure SQL with the table with columnstore index and Node.js could be alternative to Azure-based functions. Consider the following JS in Node.js that uses [HNSW](https://github.com/yoshoku/hnswlib-node) as vector database used for docs similarity
 ``` JS
 import pkg from 'hnswlib-node';
 const { HierarchicalNSW } = pkg;
