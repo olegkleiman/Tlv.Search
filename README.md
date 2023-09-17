@@ -39,5 +39,14 @@ Obviously some vector database may be considered as alternative to Azure SQL wit
 ``` JS
 import pkg from 'hnswlib-node';
 const { HierarchicalNSW } = pkg;
+...
+const index = new HierarchicalNSW('cosine', numDimensions);
+index.initIndex(maxElements);
+for(var i = 0; i < corpus_embeddings.length; i++) {
+  index.addPoint(corpus_embeddings[i], i);
+}
+// Store embeddings into file
+index.writeIndexSync('curiosity.dat');
+
 ```
 
