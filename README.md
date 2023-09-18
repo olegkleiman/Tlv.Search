@@ -127,5 +127,29 @@ index.writeIndexSync('curiosity.dat');
                     }
           }
 }
-```
 configurations["settings"]
+```
+Then new index could be created and filled out (Python)
+``` Python
+from elasticsearch import es
+
+          actions = []
+          index_name = "site_docs_vector"
+          es.indices.create(index=index_name,
+                              settings=configuration["settings"],
+                              mappings=configuration["mappings"]
+                              )
+          for index, row in df.iterrows():
+                    action = {"index": {"_index": index_name, "_id": index} }
+                    doc = {
+                              "id": index,
+                              "Text": row["text"],
+                              "Embeddings": row["Embeddings"
+                    }
+                    actions.append(action)
+                    actions.append(doc)
+
+          es.bulk(index=index_name, operations=actions)
+                    
+```
+
