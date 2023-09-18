@@ -129,6 +129,21 @@ index.writeIndexSync('curiosity.dat');
 }
 configurations["settings"]
 ```
+Embeddings are produced by the model hosted at TensorFlow Hub:
+``` Python
+import tensorflow_hub as hub
+
+embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+embeddings = embed([
+"The quich brown fox",
+"I am a sentence for which I would like to get its embeddings"])
+
+print(embeddings)
+
+# Compute similarity matrix. Higher score indicates greater similarity.
+similarity_matrix_it = np.inner(en_result, it_result)
+```
+
 Then new index could be created and filled out (Python)
 ``` Python
 from elasticsearch import es
@@ -144,7 +159,7 @@ from elasticsearch import es
                     doc = {
                               "id": index,
                               "Text": row["text"],
-                              "Embeddings": row["Embeddings"
+                              "Embeddings": row["Embeddings"]
                     }
                     actions.append(action)
                     actions.append(doc)
