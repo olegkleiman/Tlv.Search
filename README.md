@@ -152,4 +152,20 @@ from elasticsearch import es
           es.bulk(index=index_name, operations=actions)
                     
 ```
-
+Next, given the embeddings for user's query, the search is done as:
+``` Python
+query_for_search = {
+          "knn": {
+                    "field": "Embeddings",
+                    "query_vector": query_vector,
+                    "k": 5,
+                    "num_candidates": 2414
+          },
+          "_source": ["Text"]
+}
+result = es.search(
+          index=index_name,
+          body=query_for_search)
+result["hits"]
+```
+ES natively supports K-Nearest Neighbors algorithm and it do not be trained separately.
