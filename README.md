@@ -129,7 +129,7 @@ index.writeIndexSync('curiosity.dat');
 }
 configurations["settings"]
 ```
-Embeddings are produced by the model hosted at TensorFlow Hub:
+In this example Embeddings are produced by the model (universal-sentense-decoder) hosted at TensorFlow Hub:
 ``` Python
 import tensorflow_hub as hub
 
