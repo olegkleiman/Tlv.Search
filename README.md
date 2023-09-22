@@ -4,7 +4,7 @@ This document describes the architecture design and some implementation details 
 
 The idea behind semantic search is to embed all entries in the corpus into vector space. Embedding is usually performed by *Transformer* - the core ML model of modern NLP. Unlike traditional NLP models, which rely on recurrent neural networks (RNNs) and convolutional neural networks (CNNs), transformers use a self-attention mechanism to capture relationships between words in a sentence.
 
-At the search time, the prompt is embedded into the same vector space and the closest embeddings from the corpus are found. These entries should have a high semantic overlap with the query.
+The prompt is embedded into the same vector space at the search time and the closest embeddings from the corpus are found. These entries should have a high semantic overlap with the query.
 
 ![docs similarity](https://raw.githubusercontent.com/UKPLab/sentence-transformers/master/docs/img/SemanticSearch.png)
 
