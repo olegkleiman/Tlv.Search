@@ -41,7 +41,27 @@ There is a pletora of pre-trained models at HuggingFace hub. The models used for
 
 Classification based on embeddings is popular technique in NLP. Practically, embeddings can be used for zero-shot classification. For each class, embed the class name or short description of the class. To classify some new text in a zero-shot manner, compare its embedding to all class embeddings and predict the class with the highest similarity.
 ``` Python
+import openai
 from openai.embeddings_utils import cosine_similarity, get_embedding
+
+openai.api_key = "sk-..."
+
+labels = ["sport", "math", "cinema", "books", "freemasons"]
+model = "text-embedding-ada-002"
+texts = ["Founded in 1910, Sport Club Corinthians Paulista is a Brazilian sports club based in São Paulo. It is considered one of the most successful and popular football teams in Brazil, boasting a large fanbase known as \"Fiel\" (Faithful). \n\nCorinthians has won the Brazilian Serie A (the top tier of Brazilian football) seven times, and has also claimed the Copa do Brasil (the Brazilian domestic cup) three times. Internationally, the team has won the FIFA Club World Cup twice, in 2000 and 2012, showcasing its place on the world stage of football.\n\nIn addition to football, the Corinthians club also has departments for other sports, such as futsal, swimming, and esports. The club’s home matches are played at Arena Corinthians, which was opened in 2014 and also hosted matches during the 2014 FIFA World Cup.\n\nThe club is named after the English amateur team Corinthians Casuals, which was known for promoting the principles of Fair Play.",
+         "Fermat's Last Theorem states that no three positive integers a, b, and c can satisfy the equation a^n + b^n = c^n for any integer value of n greater than 2. This theorem was first conjectured by Pierre de Fermat in 1637, but a proof was not found until 1994 by the British mathematician Andrew Wiles"]
+
+label_embeddings = [get_embedding(label, engine=model) for label in labels]
+text_embeddings = [get_embedding(text, engine=model) for text in texts]
+
+res = cosine_similarity(text_embeddings[0], label_embeddings[0])
+print(res)
+res = cosine_similarity(text_embeddings[0], label_embeddings[1])
+print(res)
+res = cosine_similarity(text_embeddings[0], label_embeddings[2])
+print(res)
+res = cosine_similarity(text_embeddings[0], label_embeddings[3])
+print(res)
 ```
 
 ### Curiosity in fact Microsoft-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
