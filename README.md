@@ -10,15 +10,15 @@ The prompt is embedded into the same vector space at the search time and the clo
 
 The mathematical basis of the solution is the vector distance computation performed for the embedded prompt of the user and (large) corpus of the embedded documents previously pre-processed for this purpose. 
 
-The first phase of the whole solution is docs ingesting. It is a relatively complex procedure consistsing of extracting the text from someplace (SharePoint in our case), cleaning it up (standardization), tokenizing and finally embedding the text. This phase is performed when the content of the docs corpus is changed or updated. i.e. by relatively long intervals (once per day or even rarely).
+The first phase of the whole solution is docs ingesting. It is a relatively complex procedure consisting of extracting the text from someplace (SharePoint in our case), cleaning it up (standardization), tokenizing and finally embedding the text. This phase is performed when the content of the docs corpus is changed or updated. i.e. by relatively long intervals (once per day or even rarely).
 Embedding is the most important operation here. Simply put, it’s transforming the text into the real-numbers vector, some kind of vectorization, where the produced vector pretends to represent the semantic meaning of the sentence. 
 Embeddings are derived from extensive text data using techniques like Transformer-based models such BERT or GPT; GPT’s Embeddings API and corresponding Azure OpenAI services serve this purpose.
 
 As said, docs ingestion procedure is executed by demand once there are updates in the docs corpus.
-The sub-project launched for the implementation of this procedure is called Phoenix. In its current state, it is Windows executable invoked manually and performing the following steps:
-- looking for the configuration table in Curiosity Azure SQL, where it finds the list of the URLs for different SharePoint lists. Each list is pulled and its content is inserted into site_docs table. The title and the original url are also stored for further uses.
-- Each processed list consists of a number of texts. Any such text is embedded with a help of AI model and the obtained vector is inserted into site_vector_docs table. Assuming the model produces 1500 float numbers for each doc, the rows count in this table will be 1500*(number of docs in list)*(number of lists)
-As described, the output of this preliminary procedure is two filled tables in SQL Azure: site_docs and site_vector_docs. (Note the columnstore index at site_vector_docs table)
+The sub-project launched for the implementation of this procedure is called Phoenix. In its current state, it is a Windows executable invoked manually and performing the following steps:
+- looking for the configuration table in Curiosity Azure SQL, where it finds the list of the URLs for different SharePoint lists. Each list is pulled and its content is inserted into *site_docs* table. The title and the original URL are also stored for further use.
+- Each processed list consists of several texts. Any such text is embedded with the help of an AI model and the obtained vector is inserted into *site_vector_docs* table. Assuming the model produces 1500 float numbers for each doc, the row count in this table will be 1500*(number of docs in list)*(number of lists)
+As described, the output of this preliminary procedure is two filled tables in SQL Azure: *site_docs* and *site_vector_docs*. (Note the columnstore index at *site_vector_docs* table)
 
 Prompt processing.
 Assuming the text corpus embedding were produced successfully and stored as float vectors in Azure SQL table with columnstore index, now it is possible to process the user’s prompt. Actually, this is done by Azure Function with HTTP trigger that invoked (with GET invocation) after the user requests the search from the site.
