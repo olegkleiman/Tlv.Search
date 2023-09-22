@@ -2,7 +2,7 @@
 
 This document describes the architecture design and some implementation details of Curiosity project - Semantic Search for TLV text corpuses.
 
-The idea behind semantic search is to embed all entries in the corpus into vector space. Embedding usually performed by *Transformer* - the core ML model of modern NLP. Unlike traditional NLP models, which rely on recurrent neural networkd (RNNs) and convolutional neural networks (CNNs), transformers use self-attention mechanism to capture relationships between words in a sentence.
+The idea behind semantic search is to embed all entries in the corpus into vector space. Embedding is usually performed by *Transformer* - the core ML model of modern NLP. Unlike traditional NLP models, which rely on recurrent neural networks (RNNs) and convolutional neural networks (CNNs), transformers use a self-attention mechanism to capture relationships between words in a sentence.
 
 At the search time, the prompt is embedded into the same vector space and the closest embeddings from the corpus are found. These entries should have a high semantic overlap with the query.
 
