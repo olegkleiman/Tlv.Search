@@ -43,11 +43,13 @@ Classification based on embeddings is popular technique in NLP. Practically, emb
 ``` Python
 import openai
 from openai.embeddings_utils import cosine_similarity, get_embedding
+from sentence_transformers import SentenceTransformer, util
 
 openai.api_key = "sk-..."
 
 labels = ["sport", "math", "cinema", "books", "freemasons"]
 model = "text-embedding-ada-002"
+model_st_name = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
 texts = [
     "Founded in 1910, Sport Club Corinthians Paulista is a Brazilian sports club based in São Paulo. It is considered "
     "one of the most successful and popular football teams in Brazil, boasting a large fanbase known as \"Fiel\" ("
@@ -76,8 +78,23 @@ def predictClass(text):
          label_index = similarities.index(maxSimilarity)
          return label_embeddings[label_index][0], maxSimilarity
 
-res = predictClass(texts[3])
+def predict_class_with_sentence_transformer(text):
+    model = SentenceTransformer(model_st_name)
+    labels_emb = model.encode(labels)
+    query_emb = model.encode(text)
+    similarities = util.dot_score(query_emb, labels_emb)[0].cpu().tolist()
+    max_similarity = max(similarities)
+    label_index = similarities.index(max_similarity)
+    return label_embeddings[label_index][0], max_similarity
+
+query = texts[3]
+
+res = predictClass(query)
 print(res)
+
+res = predict_class_with_sentence_transformer(query)
+print(res)
+
 ```
 
 ### Curiosity in fact Microsoft-locked solution. Is it possible to unlock it from MS Azure and OpenAI?
