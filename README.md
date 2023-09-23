@@ -48,8 +48,24 @@ openai.api_key = "sk-..."
 
 labels = ["sport", "math", "cinema", "books", "freemasons"]
 model = "text-embedding-ada-002"
-texts = ["Founded in 1910, Sport Club Corinthians Paulista is a Brazilian sports club based in São Paulo. It is considered one of the most successful and popular football teams in Brazil, boasting a large fanbase known as \"Fiel\" (Faithful). \n\nCorinthians has won the Brazilian Serie A (the top tier of Brazilian football) seven times, and has also claimed the Copa do Brasil (the Brazilian domestic cup) three times. Internationally, the team has won the FIFA Club World Cup twice, in 2000 and 2012, showcasing its place on the world stage of football.\n\nIn addition to football, the Corinthians club also has departments for other sports, such as futsal, swimming, and esports. The club’s home matches are played at Arena Corinthians, which was opened in 2014 and also hosted matches during the 2014 FIFA World Cup.\n\nThe club is named after the English amateur team Corinthians Casuals, which was known for promoting the principles of Fair Play.",
-         "Fermat's Last Theorem states that no three positive integers a, b, and c can satisfy the equation a^n + b^n = c^n for any integer value of n greater than 2. This theorem was first conjectured by Pierre de Fermat in 1637, but a proof was not found until 1994 by the British mathematician Andrew Wiles"]
+texts = [
+    "Founded in 1910, Sport Club Corinthians Paulista is a Brazilian sports club based in São Paulo. It is considered "
+    "one of the most successful and popular football teams in Brazil, boasting a large fanbase known as \"Fiel\" ("
+    "Faithful). \n\nCorinthians has won the Brazilian Serie A (the top tier of Brazilian football) seven times, "
+    "and has also claimed the Copa do Brasil (the Brazilian domestic cup) three times. Internationally, the team has "
+    "won the FIFA Club World Cup twice, in 2000 and 2012, showcasing its place on the world stage of football.\n\nIn "
+    "addition to football, the Corinthians club also has departments for other sports, such as futsal, swimming, "
+    "and esports. The club’s home matches are played at Arena Corinthians, which was opened in 2014 and also hosted "
+    "matches during the 2014 FIFA World Cup.\n\nThe club is named after the English amateur team Corinthians Casuals, "
+    "which was known for promoting the principles of Fair Play.",
+    "Fermat's Last Theorem states that no three positive integers a, b, and c can satisfy the equation a^n + b^n = "
+    "c^n for any integer value of n greater than 2. This theorem was first conjectured by Pierre de Fermat in 1637, "
+    "but a proof was not found until 1994 by the British mathematician Andrew Wiles",
+    "Here begin the constitutions of the art of Geometry according to Euclid. Whoever will both well read and look He "
+    "may find written in old book Of great lords and also ladies, That had many children together, certainly; And had "
+    "no income to keep them with, Neither in town nor field nor enclosed wood;",
+    "And all the points herein before To all of them he must be sworn, And all shall swear the same oath Of the "
+    "masons, be they willing, be they loth"]
 
 label_embeddings = [(label, get_embedding(label, engine=model)) for label in labels]
 
@@ -60,7 +76,7 @@ def predictClass(text):
          label_index = similarities.index(maxSimilarity)
          return label_embeddings[label_index][0], maxSimilarity
 
-res = predictClass(texts[0])
+res = predictClass(texts[3])
 print(res)
 ```
 
