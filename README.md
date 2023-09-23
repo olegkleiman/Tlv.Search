@@ -37,7 +37,7 @@ Curiosity uses OpenAI model [text-embedding-ada-002](https://openai.com/blog/new
 
 There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there “features extraction”.  It should be noted that inference API that proposed by HuggingFace may not be used at production grade. There is payed professional services that HuggingFace provides for production solutions.
 
-### Curiosity Project based om embeddings produced by the model. Can this approach be used for docs classification?
+### Curiosity Project based on embeddings produced by the model. Can this approach be used for docs classification?
 
 Classification based on embeddings is popular technique in NLP. Practically, embeddings can be used for zero-shot classification. For each class, embed the class name or short description of the class. To classify some new text in a zero-shot manner, compare its embedding to all class embeddings and predict the class with the highest similarity.
 ``` Python
