@@ -51,16 +51,16 @@ model = "text-embedding-ada-002"
 texts = ["Founded in 1910, Sport Club Corinthians Paulista is a Brazilian sports club based in São Paulo. It is considered one of the most successful and popular football teams in Brazil, boasting a large fanbase known as \"Fiel\" (Faithful). \n\nCorinthians has won the Brazilian Serie A (the top tier of Brazilian football) seven times, and has also claimed the Copa do Brasil (the Brazilian domestic cup) three times. Internationally, the team has won the FIFA Club World Cup twice, in 2000 and 2012, showcasing its place on the world stage of football.\n\nIn addition to football, the Corinthians club also has departments for other sports, such as futsal, swimming, and esports. The club’s home matches are played at Arena Corinthians, which was opened in 2014 and also hosted matches during the 2014 FIFA World Cup.\n\nThe club is named after the English amateur team Corinthians Casuals, which was known for promoting the principles of Fair Play.",
          "Fermat's Last Theorem states that no three positive integers a, b, and c can satisfy the equation a^n + b^n = c^n for any integer value of n greater than 2. This theorem was first conjectured by Pierre de Fermat in 1637, but a proof was not found until 1994 by the British mathematician Andrew Wiles"]
 
-label_embeddings = [get_embedding(label, engine=model) for label in labels]
-text_embeddings = [get_embedding(text, engine=model) for text in texts]
+label_embeddings = [(label, get_embedding(label, engine=model)) for label in labels]
 
-res = cosine_similarity(text_embeddings[0], label_embeddings[0])
-print(res)
-res = cosine_similarity(text_embeddings[0], label_embeddings[1])
-print(res)
-res = cosine_similarity(text_embeddings[0], label_embeddings[2])
-print(res)
-res = cosine_similarity(text_embeddings[0], label_embeddings[3])
+def predictClass(text):
+         text_embedding = get_embedding(text, engine=model)
+         similarities = [cosine_similarity(text_embedding, label_embedding[1]) for label_embedding in label_embeddings]
+         maxSimilarity = max(similarities)
+         label_index = similarities.index(maxSimilarity)
+         return label_embeddings[label_index][0], maxSimilarity
+
+res = predictClass(texts[0])
 print(res)
 ```
 
