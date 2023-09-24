@@ -35,7 +35,8 @@ Curiosity uses OpenAI model [text-embedding-ada-002](https://openai.com/blog/new
 
 ### Is it possible to use other NLP models with Curiosity?
 
-There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there [“features extraction”](https://huggingface.co/models?pipeline_tag=feature-extraction&sort=trending). We've tried several models on pre-defined doc corpus. The most appreciable results were obtained from [multi-qa-MiniLM-L6-cos-v1](https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-cos-v1), [msmarco-distilbert-base-tas-b](https://huggingface.co/sentence-transformers/msmarco-distilbert-base-tas-b), [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) and [full-sentence-distillroberta3](https://huggingface.co/osanseviero/full-sentence-distillroberta3)
+There is a pletora of pre-trained models at HuggingFace hub. The models used for embeddings are called there [“features extraction”](https://huggingface.co/models?pipeline_tag=feature-extraction&sort=trending). We've tried several models on pre-defined doc corpus. The most appreciable results were obtained from [multi-qa-MiniLM-L6-cos-v1](https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-cos-v1), [msmarco-distilbert-base-tas-b](https://huggingface.co/sentence-transformers/msmarco-distilbert-base-tas-b), [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) and [full-sentence-distillroberta3](https://huggingface.co/osanseviero/full-sentence-distillroberta3).
+
 It should be noted that inference API that proposed by HuggingFace may not be used at production grade. There is payed professional services that HuggingFace provides for production solutions.
 
 ### Curiosity Project based on embeddings produced by the model. Can this approach be used for docs classification?
