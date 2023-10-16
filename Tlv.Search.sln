@@ -5,7 +5,12 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Phoenix", "Phoenix\Phoenix.csproj", "{FDE7A1D7-9360-41A1-A6F0-88F3790BAA5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tlv.Search", "Tlv.Search\Tlv.Search.csproj", "{D065AC13-A11A-4D9F-AB26-4C1542780A20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tlv.Search", "Tlv.Search\Tlv.Search.csproj", "{D065AC13-A11A-4D9F-AB26-4C1542780A20}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B0743EA2-8A24-41AA-A552-476D635A88ED}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

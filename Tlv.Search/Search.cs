@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
@@ -14,12 +15,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.CodeAnalysis;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.OpenApi.Models;
+using Microsoft.SqlServer.Types;
 using Newtonsoft.Json;
 using Tlv.Search.models;
+using YamlDotNet.Core.Tokens;
 
 namespace Tlv.Search
 {
@@ -30,6 +34,63 @@ namespace Tlv.Search
         public Search(ILogger<Search> log)
         {
             _logger = log;
+        }
+
+        SearchContext? analyzePrompt(ref string prompt)
+        {
+            SearchContext sc = new();
+
+            string? connStr = Environment.GetEnvironmentVariable("CuriousityDB");
+
+            try
+            {
+                using SqlConnection? conn = new(connStr);
+                conn.Open();
+
+                SqlCommand? command = new("select * from regions order by tokens_num desc", conn);
+                using SqlDataAdapter? da = new();
+                da.SelectCommand = command;
+
+                DataSet? ds = new();
+                da.Fill(ds);
+
+                bool contextFound = false;
+                DataTable? dt = ds.Tables[0];
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (contextFound)
+                        break;
+
+                    string names = (string)row["names"];
+                    string[] tokens = names.Split(",");
+                    for (int i = 0; i < tokens.Length; i++)
+                    {
+                        var index = prompt.IndexOf(tokens[i]);
+                        if( index >= 0 )
+                        {
+                            sc.type = ContextType.Geography;
+                            SqlGeography geo = (SqlGeography)row["polygon"];
+                            _logger.LogInformation(geo.ToString());
+                            sc.geo = geo;
+                            sc.name = tokens[i].Trim();
+                            contextFound = true;
+
+                            prompt = prompt.Remove(index - 1/*preposition*/ - 1/*space*/, 
+                                                 tokens[i].Length + 1/*preposition*/ + 1/*space*/);
+
+                            break;
+                        }
+                    }
+                }
+
+                return sc;
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
+
+            return null;
         }
 
         [FunctionName("Search")]
@@ -43,8 +104,10 @@ namespace Tlv.Search
             string? prompt = req.Query["q"];
             _logger.LogInformation($"Running search with prompt '{prompt}'");
 
+            SearchContext? sc = analyzePrompt(ref prompt);
+
             //string? providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
-            // Azure OpenAI package
+            ////Azure OpenAI package
             //OpenAIClient client = new(providerKey);
             //Response<Embeddings>? response =
             //    client.GetEmbeddings("text-embedding-ada-002",
@@ -59,7 +122,7 @@ namespace Tlv.Search
                 {
                     conn.Open();
 
-                    SqlCommand? command = new("calculateDistance", conn)
+                    SqlCommand? command = new("[dbo].[find_Nearest]", conn)
                     {
                         CommandType = CommandType.StoredProcedure
                     };
@@ -67,9 +130,16 @@ namespace Tlv.Search
 
                     command.Parameters.Add("@inputText", SqlDbType.NVarChar, -1).Value
                         = prompt;
+                    command.Parameters.Add("@top", SqlDbType.Int).Value = 5;
 
-                    //Stopwatch sw = new();
-                    //sw.Start();
+                    SqlParameter p = new()
+                    {
+                        ParameterName = "@inRegion",
+                        Value = sc.geo,
+                        SqlDbType = SqlDbType.Udt,
+                        UdtTypeName = "geography"
+                    };
+                    command.Parameters.Add(p);
 
                     using (SqlDataAdapter? da = new())
                     {
@@ -77,7 +147,14 @@ namespace Tlv.Search
                         da.SelectCommand.CommandType = CommandType.StoredProcedure;
 
                         DataSet? ds = new();
+
+                        Stopwatch sw = new();
+                        sw.Start();
+
                         da.Fill(ds, "result_name");
+
+                        sw.Stop();
+                        Console.WriteLine(@$"SP executed for {sw.ElapsedMilliseconds} ms.");
 
                         DataTable? dt = ds.Tables["result_name"];
                         if (dt != null)
@@ -88,15 +165,12 @@ namespace Tlv.Search
                                 {
                                     id = (int)row[0],
                                     title = (string)row[1],
-                                    //doc = (string)row[2],
                                     url = (string)row[2],
                                     distance = (double)row[3]
                                 });
                             }
                         }
                     }
-                    //sw.Stop();
-                    //Console.WriteLine(@$"SP executed for {sw.ElapsedMilliseconds} ms.");
 
                     return new JsonResult(searchItems)
                     {

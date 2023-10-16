@@ -11,6 +11,42 @@ using System.ComponentModel;
 
 namespace Phoenix
 {
+    public class DateTimeConverterUsingDateTimeParse : System.Text.Json.Serialization.JsonConverter<DateTime>
+    {
+        public override DateTime Read(ref Utf8JsonReader reader, 
+            Type typeToConvert, 
+            JsonSerializerOptions options)
+        {
+            string? str = reader.GetString();
+            DateTime dt;
+            return DateTime.TryParse(str, out dt) ? dt : DateTime.MinValue;
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
+        }
+    }
+
+    public class FloatConverterUsingDateTimeParse : System.Text.Json.Serialization.JsonConverter<float>
+    {
+        public override float Read(ref Utf8JsonReader reader, 
+            Type typeToConvert, 
+            JsonSerializerOptions options)
+        {
+            string? str = reader.GetString();
+            float value;
+            return float.TryParse(str, out value) ? value : float.MinValue;
+        }
+
+        public override void Write(Utf8JsonWriter writer, 
+                                    float value, 
+                                    JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
+        }
+    }
+
     internal class Program
     {
         internal static async Task<int> MainProcess(string provider, 
@@ -31,9 +67,12 @@ namespace Phoenix
                 using var conn = new SqlConnection(connectionString);
                 conn.Open();
 
+                // SqlTransaction transaction = conn.BeginTransaction();
+
                 int modelId = 0;
                 SqlCommand command = new($"select * from embedding_providers where [provider_name] = '{provider}' and [model_name] = '{modelName}'", 
                                         conn);
+                //command.Transaction = transaction;
                 using SqlDataReader _reader = command.ExecuteReader();
                 if( _reader.Read() )
                 {
@@ -41,31 +80,51 @@ namespace Phoenix
                 }
                 _reader.Close();
 
+                //
+                // Clear all docs corpus
+                //
+                command = new SqlCommand("clearAll", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                //command.Transaction = transaction;
+                command.ExecuteNonQuery();
+
                 command = new SqlCommand("select * from dbo.config where is_enabled = 1", conn);
                 using SqlDataReader reader = command.ExecuteReader();
 
-                while (reader.Read())
+                while( reader.Read() )
                 {
                     string? url = reader["url"] as string;
                     tasks.Add(Task.Run(async () => {
 
-                        Console.WriteLine(url);
-                        using var client = new HttpClient();
-                        client.Timeout = TimeSpan.FromSeconds(40);
-                        var items = await client.GetFromJsonAsync<List<SPItem>>(url);
-                        if (items == null)
-                            return;
-
-                        foreach (var item in items)
+                        try
                         {
-                            //Console.WriteLine(item.details);
-                            int rowId = item.Save(connectionString);
-                            if (rowId > 0)
-                                item.Embed(rowId,
-                                           connectionString,
-                                           modelName: modelName,
-                                           modelId: modelId,
-                                           providerKey: openaiKey); ;
+                            Console.WriteLine(url);
+                            using var client = new HttpClient();
+                            client.Timeout = TimeSpan.FromSeconds(40);
+
+                            JsonSerializerOptions options = new JsonSerializerOptions();
+                            options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+                            options.Converters.Add(new FloatConverterUsingDateTimeParse());
+                            var items = await client.GetFromJsonAsync<List<SPItem>>(url, options);
+                            if (items == null)
+                                return;
+
+                            foreach (var item in items)
+                            {
+                                int rowId = item.Save(connectionString);
+                                if (rowId > 0)
+                                    item.Embed(rowId,
+                                               connectionString,
+                                               modelName: modelName,
+                                               modelId: modelId,
+                                               providerKey: openaiKey); ;
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            Console.WriteLine(ex.ToString());
                         }
 
                     })
@@ -75,6 +134,7 @@ namespace Phoenix
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                //tra
             }
 
             Task t = Task.WhenAll(tasks);

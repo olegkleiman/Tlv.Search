@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography.X509Certificates;
@@ -33,7 +34,16 @@ namespace Phoenix.models
         public string? comments { get; set; }
         public string? remarks { get; set; }
         public string? summary { get; set; }
-        
+
+        [JsonPropertyName("address1")]
+        public string? address { get; set; }
+        [JsonPropertyName("address1_LAT")]
+        public float lat {  get; set; }
+        [JsonPropertyName("address1_LON")]
+        public float lon { get; set; }
+
+        public DateTime startDate { get; set; }
+        public DateTime endDate { get; set; }
 
         private string? getContent()
         {
@@ -147,9 +157,18 @@ namespace Phoenix.models
                     CommandType = CommandType.StoredProcedure
                 };
 
+                // 
+                // Format geography location
+                //
+                string location = string.Format("POINT({0} {1})", lat, lon);
+
                 command.Parameters.Add("@doc", SqlDbType.NVarChar, -1).Value = cleanText;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = title;
                 command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = BASE_URL + link;
+                command.Parameters.Add("@address", SqlDbType.NVarChar, -1).Value = address;
+                command.Parameters.Add("@geom_location", SqlDbType.NVarChar, -1).Value = location;
+                command.Parameters.Add("@startDate", SqlDbType.DateTime).Value = startDate;
+                command.Parameters.Add("@endDate", SqlDbType.DateTime).Value = endDate;
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
                 returnParameter.Direction = ParameterDirection.ReturnValue;
