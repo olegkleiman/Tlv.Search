@@ -40,7 +40,7 @@ namespace Tlv.Search
         {
             SearchContext sc = new();
 
-            string? connStr = Environment.GetEnvironmentVariable("CuriousityDB");
+            string? connStr = Environment.GetEnvironmentVariable("CuriosityDB");
 
             try
             {
@@ -115,7 +115,7 @@ namespace Tlv.Search
             //                         );
             //var _embedding = response.Value.Data[0].Embedding;
 
-            string? connStr = Environment.GetEnvironmentVariable("CuriousityDB");
+            string? connStr = Environment.GetEnvironmentVariable("CuriosityDB");
             try
             {
                 using (SqlConnection? conn = new(connStr))
