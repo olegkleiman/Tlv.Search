@@ -6,8 +6,8 @@ on:
 env:
   AZURE_FUNCTIONAPP_NAME: TlvSearch
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '${{ github.workspace }}'
-  CONFIGURATION: Release
-  DOTNET_CORE_VERSION: 6.0.x
+  CONFIGURATION: Debug
+  DOTNET_CORE_VERSION: 7.0.x
   WORKING_DIRECTORY: .
 jobs:
   build:
