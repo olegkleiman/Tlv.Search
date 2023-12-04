@@ -99,70 +99,22 @@ namespace Phoenix
                 //
                 // Process sitemaps
                 //
-                SiteMap? siteMap = null;
-                using (var httpClient = new HttpClient())
-                {
-                    var request = new HttpRequestMessage(HttpMethod.Get, "https://www.tel-aviv.gov.il/sitemap0.xml");
-                    string xmlDoc = httpClient.SendAsync(request).Result.Content.ReadAsStringAsync().Result;
-
-                    siteMap = SiteMap.Parse(xmlDoc);
-                    if (siteMap == null)
-                        return 1;
-
-                    foreach(var item in siteMap.items)
-                    {
-                        await item.DownloadAndSave(httpClient, connectionString);
-                    }
-
-                    //await Task.Run(() => Parallel.ForEach( siteMap.items, async item =>
-                    //{
-                    //    await item.DownloadAndSave(connectionString);
-                    //}));
-
-                    //ParallelOptions parallelOptions = new ParallelOptions()
-                    //{
-                    //    MaxDegreeOfParallelism = Environment.ProcessorCount
-                    //};
-                    //await Task.Run( () => Parallel.ForEachAsync(siteMap.items,
-                    //    parallelOptions,
-                    //     async (item, _) =>
-                    //     {
-                    //         await item.DownloadAndSave(connectionString);
-                    //     }
-                    //     ));
-
-                }
-                //try
+                //SiteMap? siteMap = null;
+                //using (var httpClient = new HttpClient())
                 //{
-                //    HttpClient _httpClient = new HttpClient();
-                //    var request = new HttpRequestMessage(HttpMethod.Get, siteMap.items[0].Location);
-                //    var response = _httpClient.SendAsync(request).Result;
-                //    response.EnsureSuccessStatusCode();
+                //    var request = new HttpRequestMessage(HttpMethod.Get, "https://www.tel-aviv.gov.il/sitemap0.xml");
+                //    string xmlDoc = httpClient.SendAsync(request).Result.Content.ReadAsStringAsync().Result;
 
-                //    var _content = await response.Content.ReadAsStringAsync();
-                //    HtmlDocument htmlDoc = new();
-                //    htmlDoc.LoadHtml(_content);
+                //    siteMap = SiteMap.Parse(xmlDoc);
+                //    if (siteMap == null)
+                //        return 1;
 
-                //    var clearText = htmlDoc.DocumentNode.SelectSingleNode(".//div[@class='DCContent']").InnerText.Trim();
-                //    clearText = HttpUtility.HtmlDecode(clearText);
+                //    foreach(var item in siteMap.items)
+                //    {
+                //        await item.DownloadAndSave(httpClient, connectionString);
+                //    }
+
                 //}
-                //catch(Exception ex)
-                //{
-                //    Console.WriteLine(ex.Message);
-                //}
-
-                    //var batches = siteMap.items.Chunk(10);
-
-
-                    //await Parallel.ForEachAsync(siteMap.items,
-                    //     parallelOptions,
-                    //     async (item, _) =>
-                    //     {
-                    //         string url = item.Location;
-                    //         //var req = new HttpRequestMessage(HttpMethod.Get, item.Location);
-                    //         //httpClient.SendAsync(req);
-                    //     }
-                    //     );
 
                 command = new SqlCommand("select * from dbo.config where is_enabled = 1", conn);
                 using SqlDataReader reader = command.ExecuteReader();
@@ -187,7 +139,8 @@ namespace Phoenix
 
                             foreach (var item in items)
                             {
-                                int rowId = item.Save(connectionString);
+                                int rowId = item.Save(connectionString, 
+                                                      source: "SharePoint");
                                 if (rowId > 0)
                                     item.Embed(rowId,
                                                connectionString,

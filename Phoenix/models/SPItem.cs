@@ -116,7 +116,8 @@ namespace Phoenix.models
 
         }
 
-        public int Save(string connectionString)
+        public int Save(string connectionString,
+                        string source = "")
         {
             try
             {
@@ -156,6 +157,7 @@ namespace Phoenix.models
                 command.Parameters.Add("@geom_location", SqlDbType.NVarChar, -1).Value = location;
                 command.Parameters.Add("@startDate", SqlDbType.DateTime).Value = startDate;
                 command.Parameters.Add("@endDate", SqlDbType.DateTime).Value = endDate;
+                command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = source;
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
                 returnParameter.Direction = ParameterDirection.ReturnValue;

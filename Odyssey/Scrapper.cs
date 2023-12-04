@@ -49,13 +49,16 @@ namespace Odyssey
 
         private async Task<bool> Scrap(string url)
         {
+            Console.WriteLine(url);
+
             try
             {
                 await m_page.GotoAsync(url);
 
-                var locator = m_page.Locator("xpath=//");
-                var content = await locator.TextContentAsync();
+                // Get entire content of the page
+                var content = await m_page.ContentAsync();
 
+                // Load the entire page into HAP
                 HtmlDocument htmlDoc = new();
                 htmlDoc.LoadHtml(content);
 
