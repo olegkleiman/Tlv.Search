@@ -1,22 +1,9 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
-using Azure.Identity;
 using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
-using OpenAI_API;
-using OpenAI_API.Embedding;
-using OpenAI_API.Models;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace Phoenix.models
@@ -38,7 +25,7 @@ namespace Phoenix.models
         [JsonPropertyName("address1")]
         public string? address { get; set; }
         [JsonPropertyName("address1_LAT")]
-        public float lat {  get; set; }
+        public float lat { get; set; }
         [JsonPropertyName("address1_LON")]
         public float lon { get; set; }
 
@@ -57,13 +44,13 @@ namespace Phoenix.models
                 _content = this.comments;
             else if (!string.IsNullOrEmpty(this.remarks))
                 _content = this.remarks;
-            else if( !string.IsNullOrEmpty(this.summary))
+            else if (!string.IsNullOrEmpty(this.summary))
                 _content = this.summary;
 
             return _content;
         }
 
-        public void Embed(int docId, 
+        public void Embed(int docId,
                           string connectionString,
                           string modelName,
                           int modelId,
@@ -87,7 +74,7 @@ namespace Phoenix.models
                 if (string.IsNullOrEmpty(_content))
                     return;
 
-                Response<Embeddings> response = 
+                Response<Embeddings> response =
                     client.GetEmbeddings(modelName, //"text-embedding-ada-002", 
                                          new EmbeddingsOptions(_content)
                                          );
@@ -96,14 +83,14 @@ namespace Phoenix.models
                 tbl.Columns.Add(new DataColumn("vector_value_id", typeof(int)));
                 tbl.Columns.Add(new DataColumn("vector_value", typeof(float)));
                 tbl.Columns.Add(new DataColumn("model_id", typeof(int)));
-                
+
                 foreach (var item in response.Value.Data)
                 {
                     var embedding = item.Embedding;
-                    for(int i = 0; i < embedding.Count; i++)
+                    for (int i = 0; i < embedding.Count; i++)
                     {
                         float value = embedding[i];
-                        
+
                         DataRow dr = tbl.NewRow();
                         dr["doc_id"] = docId;
                         dr["vector_value_id"] = i;
@@ -126,7 +113,7 @@ namespace Phoenix.models
             {
                 Console.WriteLine(ex.Message);
             }
-        
+
         }
 
         public int Save(string connectionString)
@@ -151,7 +138,7 @@ namespace Phoenix.models
                 htmlDoc.LoadHtml(url);
                 var anchor = htmlDoc.DocumentNode.Descendants("a").First();
                 string link = anchor.Attributes["href"].Value;
-  
+
                 var command = new SqlCommand("storeDocument", conn)
                 {
                     CommandType = CommandType.StoredProcedure
@@ -179,7 +166,7 @@ namespace Phoenix.models
 
                 return rowId;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
                 return 0;

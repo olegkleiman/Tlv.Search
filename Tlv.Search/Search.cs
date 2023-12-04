@@ -1,29 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Azure;
-using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
-using Microsoft.CodeAnalysis;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using Microsoft.OpenApi.Models;
 using Microsoft.SqlServer.Types;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Net;
+using System.Threading.Tasks;
 using Tlv.Search.models;
-using YamlDotNet.Core.Tokens;
 
 namespace Tlv.Search
 {
@@ -66,7 +56,7 @@ namespace Tlv.Search
                     for (int i = 0; i < tokens.Length; i++)
                     {
                         var index = prompt.IndexOf(tokens[i]);
-                        if( index >= 0 )
+                        if (index >= 0)
                         {
                             sc.type = ContextType.Geography;
                             SqlGeography geo = (SqlGeography)row["polygon"];
@@ -75,7 +65,7 @@ namespace Tlv.Search
                             sc.name = tokens[i].Trim();
                             contextFound = true;
 
-                            prompt = prompt.Remove(index - 1/*preposition*/ - 1/*space*/, 
+                            prompt = prompt.Remove(index - 1/*preposition*/ - 1/*space*/,
                                                  tokens[i].Length + 1/*preposition*/ + 1/*space*/);
 
                             break;
@@ -85,7 +75,7 @@ namespace Tlv.Search
 
                 return sc;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
             }
@@ -100,7 +90,7 @@ namespace Tlv.Search
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
- 
+
             string? prompt = req.Query["q"];
             _logger.LogInformation($"Running search with prompt '{prompt}'");
 
@@ -158,7 +148,7 @@ namespace Tlv.Search
 
                         DataTable? dt = ds.Tables["result_name"];
                         if (dt != null)
-                        { 
+                        {
                             foreach (DataRow row in dt.Rows)
                             {
                                 searchItems.Add(new SearchItem()
