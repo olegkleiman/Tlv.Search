@@ -1,19 +1,14 @@
-﻿using Azure;
-using HtmlAgilityPack;
-using Microsoft.Playwright;
+﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 using Odyssey.models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Odyssey.Models;
+using PuppeteerSharp;
 using System.Web;
 
 namespace Odyssey
 {
     public class Scrapper
     {
-        private IPlaywright m_playwright;
         private IPage       m_page;
         private SiteMap     m_siteMap;
 
@@ -24,39 +19,49 @@ namespace Odyssey
 
         public async Task Init()
         {
-            m_playwright = await Playwright.CreateAsync();
-
-            var browserTypeLaunchOptions = new BrowserTypeLaunchOptions()
+            var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-                Headless = false
-            };
-
-            var browserTask = m_playwright.Chromium.LaunchAsync(browserTypeLaunchOptions);
-            var browser = await browserTask;
+                Headless = false,
+                ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+            });
             m_page = await browser.NewPageAsync();
         }
 
-        public async Task<bool> Scrap()
+        public async Task<bool> Scrap(Action<Doc> callback)
         {
+
             foreach (var item in m_siteMap.items)
             {
-                await Scrap(item.Location);
+                try
+                {
+                    Doc doc = await Scrap(item.Location);
+                    callback(doc);
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
             
             return true;
         }
 
-        private async Task<bool> Scrap(string url)
+        private async Task<Doc> Scrap(string url)
         {
             Console.WriteLine(url);
 
+            Doc doc = new()
+            {
+                url = url,
+                source = "sitemap0.xml"
+            };
+
             try
             {
-                await m_page.GotoAsync(url);
+                await m_page.GoToAsync(url);
 
                 // Get entire content of the page
-                var content = await m_page.ContentAsync();
+                var content = await m_page.GetContentAsync();
 
                 // Load the entire page into HAP
                 HtmlDocument htmlDoc = new();
@@ -64,21 +69,25 @@ namespace Odyssey
 
                 HtmlNode htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//div[@class='DCContent']");
                 if (htmlNode == null)
-                {
-                    Console.WriteLine("==> No DCContent");
-                    return false;
-                }
+                    throw new ApplicationException("==> No DCContent");
 
                 var clearText = htmlNode.InnerText.Trim();
                 clearText = HttpUtility.HtmlDecode(clearText);
+                doc.doc = clearText;
+
+                htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//h1");
+                if (htmlNode == null)
+                    throw new ApplicationException("==> No H1 element");
+                clearText = htmlNode.InnerText.Trim();
+                clearText = HttpUtility.HtmlDecode(clearText);
+                doc.title = clearText;
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                return false;
+                throw new ApplicationException(ex.Message);
             }
 
-            return true;
+            return doc;
         }
     }
 }
