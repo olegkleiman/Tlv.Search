@@ -9,8 +9,8 @@ namespace Odyssey
 {
     public class Scrapper
     {
-        private IPage       m_page;
-        private SiteMap     m_siteMap;
+        private IPage?       m_page;
+        private SiteMap?     m_siteMap;
 
         public Scrapper(SiteMap siteMap)
         {
@@ -34,7 +34,7 @@ namespace Odyssey
             {
                 try
                 {
-                    Doc doc = await Scrap(item.Location);
+                    Doc doc = await Scrap(item.Location, m_siteMap.m_url.ToString());
                     callback(doc);
                 }
                 catch(Exception ex)
@@ -46,14 +46,15 @@ namespace Odyssey
             return true;
         }
 
-        private async Task<Doc> Scrap(string url)
+        private async Task<Doc> Scrap(string url,
+                                      string source)
         {
             Console.WriteLine(url);
 
             Doc doc = new()
             {
                 url = url,
-                source = "sitemap0.xml"
+                source = source
             };
 
             try

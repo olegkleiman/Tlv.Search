@@ -50,36 +50,64 @@ namespace Odyssey
             //
             // Process sitemaps
             //
-            SiteMap? siteMap = null;
-            using( var httpClient = new HttpClient() )
+            var builder = new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddJsonFile("appsettings.json", optional: false);
+            IConfiguration config = builder.Build();
+
+            var connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+            try
             {
-                var request = new HttpRequestMessage(HttpMethod.Get, "https://www.tel-aviv.gov.il/sitemap0.xml");
-                string xmlDoc = httpClient.SendAsync(request).Result.Content.ReadAsStringAsync().Result;
+                using var conn = new SqlConnection(connectionString);
+                conn.Open();
 
-                siteMap = SiteMap.Parse(xmlDoc);
-                if (siteMap == null)
-                    return; 
-                
-                Scrapper scrapper = new Scrapper(siteMap);
-                await scrapper.Init();
-                await scrapper.Scrap(saveDoc);
+                var command = new SqlCommand("select * from doc_sources where type = 'sitemap'", conn);
+                SqlDataReader reader = command.ExecuteReader();
 
-                //foreach (var item in siteMap.items)
-                //{
-                //    try
-                //    {
-                //        await item.Scrap();
-                //    }
-                //    catch(ApplicationException ex)
-                //    {
-                //        Console.WriteLine(ex.Message);
-                //    }
-                //}
+                List<Task> tasks = new List<Task>();
+
+                while (reader.Read())
+                {
+                    var siteMapUrl = reader.GetString(1);
+ 
+                    Console.WriteLine($"Start processing {siteMapUrl}");
+                    SiteMap? siteMap = SiteMap.Parse(new Uri(siteMapUrl));
+                    if (siteMap == null)
+                    {
+                        Console.WriteLine($"Couldn't parse {siteMapUrl}");
+                        continue;
+                    }
+
+                    Scrapper scrapper = new(siteMap);
+                    await scrapper.Init();
+                    Task task = scrapper.Scrap(saveDoc);
+                    tasks.Add(task);
+                }
+
+                Task.WaitAll([.. tasks]);
+
             }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message);
+            }
+
+            //SiteMap? siteMap = null;
+            //using( var httpClient = new HttpClient() )      
+            //{
+            //    var url = new Uri("https://www.tel-aviv.gov.il/sitemap0.xml");
+            //    var request = new HttpRequestMessage(HttpMethod.Get, url);
+            //    string xmlDoc = httpClient.SendAsync(request).Result.Content.ReadAsStringAsync().Result;
+
+            //    siteMap = SiteMap.Parse(url);
+            //    if (siteMap == null)
+            //        return; 
+                
+            //    Scrapper scrapper = new (siteMap);
+            //    await scrapper.Init();
+            //    await scrapper.Scrap(saveDoc);
+            //}
         }
-
-        
-
 
     }
 }
