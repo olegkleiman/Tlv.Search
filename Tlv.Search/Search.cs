@@ -122,14 +122,17 @@ namespace Tlv.Search
                         = prompt;
                     command.Parameters.Add("@top", SqlDbType.Int).Value = 15;
 
-                    SqlParameter p = new()
+                    if (sc != null)
                     {
-                        ParameterName = "@inRegion",
-                        Value = sc.geo,
-                        SqlDbType = SqlDbType.Udt,
-                        UdtTypeName = "geography"
-                    };
-                    command.Parameters.Add(p);
+                        SqlParameter p = new()
+                        {
+                            ParameterName = "@inRegion",
+                            Value = sc.geo,
+                            SqlDbType = SqlDbType.Udt,
+                            UdtTypeName = "geography"
+                        };
+                        command.Parameters.Add(p);
+                    }
 
                     using (SqlDataAdapter? da = new())
                     {
