@@ -9,6 +9,8 @@ namespace Odyssey.Models
 {
     public class Doc
     {
+        public int Id { get; set; }
+        public string lang { get; set; }
         public string? doc { get; set; }
         public string? title { get; set; }
         public string? url { get; set; }

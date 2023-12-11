@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Odyssey.models;
 using Odyssey.Models;
@@ -11,8 +12,11 @@ namespace Odyssey
     {
         private IPage?       m_page;
         private SiteMap?     m_siteMap;
+        public string? ContentSelector { get; set; }
+        public string? TitleSelector { get; set; }
+        public string? AddressSelector { get; set; }
 
-        public Scrapper(SiteMap siteMap)
+        private Scrapper(SiteMap siteMap)
         {
             m_siteMap = siteMap;
         }
@@ -25,6 +29,46 @@ namespace Odyssey
                 ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
             });
             m_page = await browser.NewPageAsync();
+        }
+
+        public static async Task<Scrapper?> Load(int scrapperId, 
+                                        SiteMap siteMap,
+                                        string connectionString)
+        {
+            Scrapper scrapper = new(siteMap);
+
+            try
+            {
+                using var conn = new SqlConnection(connectionString);
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand($"select * from [dbo].[scrappers] where id = {scrapperId}",
+                                                 conn);
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (!reader.Read())
+                    return null;
+
+                var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = false,
+                    ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+                });
+
+                if (!reader.IsDBNull(2))
+                    scrapper.ContentSelector = reader.GetString(2);
+                if (!reader.IsDBNull(3))
+                    scrapper.TitleSelector = reader.GetString(3);
+                if( !reader.IsDBNull(4) )
+                    scrapper.AddressSelector = reader.GetString(4);
+
+                scrapper.m_page = await browser.NewPageAsync();
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
+
+            return scrapper;
         }
 
         public async Task<bool> Scrap(Action<Doc> callback)
@@ -59,7 +103,9 @@ namespace Odyssey
 
             try
             {
-                await m_page.GoToAsync(url);
+                var response = await m_page.GoToAsync(url);
+                if (!response.Ok)
+                    throw new ApplicationException("Couldn't load page");
 
                 // Get entire content of the page
                 var content = await m_page.GetContentAsync();
@@ -68,7 +114,18 @@ namespace Odyssey
                 HtmlDocument htmlDoc = new();
                 htmlDoc.LoadHtml(content);
 
-                HtmlNode htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//div[@class='DCContent']");
+                HtmlNode? htmlNode = htmlDoc.DocumentNode.SelectSingleNode("./html");
+                if( htmlNode != null 
+                    && htmlNode.Attributes != null)
+                {
+                    doc.lang = (from attr in htmlNode.Attributes
+                                where attr.Name == "lang"
+                                select attr.Value).FirstOrDefault();
+                }
+
+                //HtmlNode htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//div[@class='DCContent']");
+                htmlNode = htmlDoc.DocumentNode.SelectSingleNode(this.ContentSelector);
+
                 if (htmlNode == null)
                     throw new ApplicationException("==> No DCContent");
 
@@ -76,7 +133,8 @@ namespace Odyssey
                 clearText = HttpUtility.HtmlDecode(clearText);
                 doc.doc = clearText;
 
-                htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//h1");
+                //htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//h1");
+                htmlNode = htmlDoc.DocumentNode.SelectSingleNode(this.TitleSelector);
                 if (htmlNode == null)
                     throw new ApplicationException("==> No H1 element");
                 clearText = htmlNode.InnerText.Trim();

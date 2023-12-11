@@ -120,7 +120,7 @@ namespace Tlv.Search
 
                     command.Parameters.Add("@inputText", SqlDbType.NVarChar, -1).Value
                         = prompt;
-                    command.Parameters.Add("@top", SqlDbType.Int).Value = 5;
+                    command.Parameters.Add("@top", SqlDbType.Int).Value = 15;
 
                     SqlParameter p = new()
                     {

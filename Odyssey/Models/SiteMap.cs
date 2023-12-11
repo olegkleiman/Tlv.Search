@@ -15,6 +15,7 @@ namespace Odyssey.models
     {
         public List<SiteMapItem>? items { get; set; }
         public Uri m_url { get; set; }
+        public string ContentSelector { get; set; }
 
         public SiteMap(Uri url)
         {
