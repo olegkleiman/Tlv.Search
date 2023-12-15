@@ -74,10 +74,16 @@ namespace Phoenix.models
                 if (string.IsNullOrEmpty(_content))
                     return;
 
+
+                EmbeddingsOptions eo = new EmbeddingsOptions()
+                {
+                    DeploymentName = modelName,
+                    Input = [_content]
+                };
+
                 Response<Embeddings> response =
-                    client.GetEmbeddings(modelName, //"text-embedding-ada-002", 
-                                         new EmbeddingsOptions(_content)
-                                         );
+                    client.GetEmbeddings(eo);
+
                 DataTable tbl = new();
                 tbl.Columns.Add(new DataColumn("doc_id", typeof(int)));
                 tbl.Columns.Add(new DataColumn("vector_value_id", typeof(int)));
@@ -87,9 +93,9 @@ namespace Phoenix.models
                 foreach (var item in response.Value.Data)
                 {
                     var embedding = item.Embedding;
-                    for (int i = 0; i < embedding.Count; i++)
+                    for (int i = 0; i < embedding.Length; i++)
                     {
-                        float value = embedding[i];
+                        float value = embedding.Span[i];
 
                         DataRow dr = tbl.NewRow();
                         dr["doc_id"] = docId;

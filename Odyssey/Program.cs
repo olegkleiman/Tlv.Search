@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using Ardalis.GuardClauses;
+using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -13,17 +14,21 @@ namespace Odyssey
     {
         private static void SaveAndEmbed(Doc doc)
         {
+            if (doc == null)
+                return;
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false);
             IConfiguration config = builder.Build();
 
             var connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+            if (string.IsNullOrEmpty(connectionString))
+                throw new ApplicationException("No connection string when saving scrapped document");
 
             var openaiKey = config["OPENAI_KEY"];
-
-            if (doc == null)
-                return;
+            if( string.IsNullOrEmpty(openaiKey) )
+                throw new ApplicationException("No OPENAI key for embedding scrapped document");
 
             int rowId = saveDoc(doc, connectionString);
             if (rowId > 0)
@@ -41,7 +46,7 @@ namespace Odyssey
             {
                 // Azure OpenAI package
                 var client = new OpenAIClient(providerKey);
-                string? _content = doc.doc;
+                string? _content = doc.Content;
                 if (string.IsNullOrEmpty(_content))
                     return;
 
@@ -55,10 +60,16 @@ namespace Odyssey
                 objbulk.ColumnMappings.Add("vector_value", "vector_value");
                 objbulk.ColumnMappings.Add("model_id", "model_id");
 
-                Response<Embeddings> response =
-                        client.GetEmbeddings("text-embedding-ada-002", 
-                             new EmbeddingsOptions(_content)
-                         );
+                //List<string> inputs = new List<string>();
+                //inputs.Add(_content);
+
+                EmbeddingsOptions eo = new EmbeddingsOptions()
+                {
+                    DeploymentName = "text-embedding-ada-002",
+                    Input = [_content]
+                };
+
+                Response<Embeddings> response = client.GetEmbeddings(eo);
 
                 DataTable tbl = new();
                 tbl.Columns.Add(new DataColumn("doc_id", typeof(int)));
@@ -69,9 +80,9 @@ namespace Odyssey
                 foreach (var item in response.Value.Data)
                 {
                     var embedding = item.Embedding;
-                    for (int i = 0; i < embedding.Count; i++)
+                    for (int i = 0; i < embedding.Length; i++)
                     {
-                        float value = embedding[i];
+                        float value = embedding.Span[i];
 
                         DataRow dr = tbl.NewRow();
                         dr["doc_id"] = doc.Id;
@@ -103,11 +114,13 @@ namespace Odyssey
                     CommandType = CommandType.StoredProcedure
                 };
 
-                command.Parameters.Add("@lang", SqlDbType.NVarChar, -1).Value = doc.lang;
-                command.Parameters.Add("@doc", SqlDbType.NVarChar, -1).Value = doc.doc;
-                command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.title;
-                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.url;
-                command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = doc.source;
+                command.Parameters.Add("@lang", SqlDbType.NVarChar, -1).Value = doc.Lang;
+                command.Parameters.Add("@text", SqlDbType.NVarChar, -1).Value = doc.Text;
+                command.Parameters.Add("@description", SqlDbType.NVarChar, -1).Value = doc.Description;
+                command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
+                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.Url;
+                command.Parameters.Add("@imageUrl", SqlDbType.VarChar, -1).Value = doc.ImageUrl;
+                command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = doc.Source;
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
                 returnParameter.Direction = ParameterDirection.ReturnValue;
@@ -126,42 +139,55 @@ namespace Odyssey
 
         static async Task Main(string[] args)
         {
-            //
-            // Process sitemaps
-            //
-            var builder = new ConfigurationBuilder()
-                            .SetBasePath(Directory.GetCurrentDirectory())
-                            .AddJsonFile("appsettings.json", optional: false);
-            IConfiguration config = builder.Build();
-
-            var connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
             try
             {
+                //
+                // Process sitemaps
+                //
+                var builder = new ConfigurationBuilder()
+                                .SetBasePath(Directory.GetCurrentDirectory())
+                                .AddJsonFile("appsettings.json", optional: false);
+                IConfiguration config = builder.Build();
+
+                string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+                Guard.Against.NullOrEmpty(connectionString);
+
                 using var conn = new SqlConnection(connectionString);
+                string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
+                
                 conn.Open();
 
-                var command = new SqlCommand("select * from doc_sources where type = 'sitemap'", conn);
-                SqlDataReader reader = command.ExecuteReader();
+                using var da = new SqlDataAdapter(query, connectionString);
+                var table = new DataTable();
+                da.Fill(table);
 
-                List<Task> tasks = new List<Task>();
-
-                while (reader.Read())
+                List<Task> tasks = [];
+                foreach(DataRow? row in table.Rows)
                 {
-                    var siteMapUrl = reader.GetString(1);
- 
+                    Guard.Against.Null(row);
+
+                    object? val = row["url"];
+                    if( val == null || val == DBNull.Value)
+                        continue;
+
+                    string? siteMapUrl = val.ToString();
+                    if( string.IsNullOrEmpty(siteMapUrl) )
+                        continue;
+
                     Console.WriteLine($"Start processing {siteMapUrl}");
-                    SiteMap? siteMap = SiteMap.Parse(new Uri(siteMapUrl));
+                    Uri uri = new(siteMapUrl); 
+                    SiteMap? siteMap = SiteMap.Parse(uri);
                     if (siteMap == null)
                     {
                         Console.WriteLine($"Couldn't parse {siteMapUrl}");
                         continue;
                     }
 
-                    int scrapperId = reader.GetInt32(3);
+                    int scrapperId = (int)row["scrapper_id"];
                     Scrapper? scrapper = await Scrapper.Load(scrapperId, siteMap, connectionString);
+                    if (scrapper == null)
+                        continue;
 
-                    //Scrapper scrapper = new(siteMap);
-                    //await scrapper.Init();
                     Task task = scrapper.Scrap(SaveAndEmbed);
                     tasks.Add(task);
                 }
@@ -173,22 +199,6 @@ namespace Odyssey
             {
                 Console.Write(ex.Message);
             }
-
-            //SiteMap? siteMap = null;
-            //using( var httpClient = new HttpClient() )      
-            //{
-            //    var url = new Uri("https://www.tel-aviv.gov.il/sitemap0.xml");
-            //    var request = new HttpRequestMessage(HttpMethod.Get, url);
-            //    string xmlDoc = httpClient.SendAsync(request).Result.Content.ReadAsStringAsync().Result;
-
-            //    siteMap = SiteMap.Parse(url);
-            //    if (siteMap == null)
-            //        return; 
-                
-            //    Scrapper scrapper = new (siteMap);
-            //    await scrapper.Init();
-            //    await scrapper.Scrap(saveDoc);
-            //}
         }
 
     }

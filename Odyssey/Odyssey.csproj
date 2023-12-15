@@ -8,17 +8,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.7" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
+	  <PackageReference Include="Ardalis.GuardClauses" Version="4.2.0" />
+	  <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.11" />
+	  <PackageReference Include="Azure.Identity" Version="1.10.4" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.55" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="PuppeteerSharp" Version="13.0.2" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="arnona.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="sitemaps\sitemap0.xml">

@@ -83,7 +83,7 @@ namespace Tlv.Search
             return null;
         }
 
-        [FunctionName("Search")]
+        [FunctionName(nameof(Search))]
         [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
@@ -120,7 +120,7 @@ namespace Tlv.Search
 
                     command.Parameters.Add("@inputText", SqlDbType.NVarChar, -1).Value
                         = prompt;
-                    command.Parameters.Add("@top", SqlDbType.Int).Value = 15;
+                    command.Parameters.Add("@top", SqlDbType.Int).Value = 5;
 
                     if (sc != null)
                     {
@@ -159,7 +159,8 @@ namespace Tlv.Search
                                     id = (int)row[0],
                                     title = (string)row[1],
                                     url = (string)row[2],
-                                    distance = (double)row[3]
+                                    imageUrl = (string)row[3]
+                                    //distance = (double)row[4]
                                 });
                             }
                         }

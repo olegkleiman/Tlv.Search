@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Odyssey.models;
 using Odyssey.Models;
+using Odyssey.Tools;
 using PuppeteerSharp;
 using System.Web;
 
@@ -10,8 +11,8 @@ namespace Odyssey
 {
     public class Scrapper
     {
-        private IPage?       m_page;
-        private SiteMap?     m_siteMap;
+        private IPage?                m_page;
+        private readonly SiteMap?     m_siteMap;
         public string? ContentSelector { get; set; }
         public string? TitleSelector { get; set; }
         public string? AddressSelector { get; set; }
@@ -33,8 +34,11 @@ namespace Odyssey
 
         public static async Task<Scrapper?> Load(int scrapperId, 
                                         SiteMap siteMap,
-                                        string connectionString)
+                                        string? connectionString)
         {
+            if( string.IsNullOrEmpty(connectionString) )
+                return null;
+
             Scrapper scrapper = new(siteMap);
 
             try
@@ -71,15 +75,20 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> Scrap(Action<Doc> callback)
+        public async Task<bool> Scrap(Action<Doc?> callback)
         {
+            if (m_siteMap is null
+                 || m_siteMap.items is null )
+                return false;
 
-            foreach (var item in m_siteMap.items)
+            foreach (SiteMapItem item in m_siteMap.items)
             {
                 try
                 {
-                    Doc doc = await Scrap(item.Location, m_siteMap.m_url.ToString());
-                    callback(doc);
+                    string docSource = m_siteMap.m_url.ToString();
+                    Doc? doc = await Scrap(item.Location, docSource);
+                    if( doc is not null)
+                        callback(doc);
                 }
                 catch(Exception ex)
                 {
@@ -90,21 +99,17 @@ namespace Odyssey
             return true;
         }
 
-        private async Task<Doc> Scrap(string url,
+        private async Task<Doc?> Scrap(string url,
                                       string source)
         {
             Console.WriteLine(url);
-
-            Doc doc = new()
-            {
-                url = url,
-                source = source
-            };
+            if (m_page is null)
+                return null;
 
             try
             {
-                var response = await m_page.GoToAsync(url);
-                if (!response.Ok)
+                IResponse? response = await m_page.GoToAsync(url);
+                if( !response.Ok )
                     throw new ApplicationException("Couldn't load page");
 
                 // Get entire content of the page
@@ -114,39 +119,56 @@ namespace Odyssey
                 HtmlDocument htmlDoc = new();
                 htmlDoc.LoadHtml(content);
 
+                string? lang = string.Empty, description = string.Empty,
+                        imageUrl = string.Empty, title = string.Empty;
+
+                // Get 'lang' of root html
                 HtmlNode? htmlNode = htmlDoc.DocumentNode.SelectSingleNode("./html");
-                if( htmlNode != null 
-                    && htmlNode.Attributes != null)
+                if( htmlNode == null )
+                    throw new ApplicationException("Couldn't select root");
+
+                if ( htmlNode.Attributes != null)
                 {
-                    doc.lang = (from attr in htmlNode.Attributes
-                                where attr.Name == "lang"
+                    lang = (from attr in htmlNode.Attributes
+                                where attr != null && attr.Name == "lang"
                                 select attr.Value).FirstOrDefault();
                 }
 
-                //HtmlNode htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//div[@class='DCContent']");
-                htmlNode = htmlDoc.DocumentNode.SelectSingleNode(this.ContentSelector);
+                OpenGraph? openGraph = new (htmlNode);
+                if( openGraph is not null )
+                {
+                    description = openGraph.Description;
+                    imageUrl = openGraph.Image;
+                    title = openGraph.Title;
+                }
 
-                if (htmlNode == null)
-                    throw new ApplicationException("==> No DCContent");
+                Doc doc = new (url)
+                {
+                    Source = source,
+                    Lang = lang,
+                    Description = description,
+                    ImageUrl = imageUrl,
+                    Title = title
+                };
 
-                var clearText = htmlNode.InnerText.Trim();
-                clearText = HttpUtility.HtmlDecode(clearText);
-                doc.doc = clearText;
+                // Get content(s)
+                HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(this.ContentSelector);
+                if (htmlNodes == null || htmlNodes.Count == 0)
+                    throw new ApplicationException($"==> No {this.ContentSelector} for content");
+                foreach (var node in htmlNodes)
+                {
+                    string _clearText = node.InnerText.Trim();
+                    _clearText = HttpUtility.HtmlDecode(_clearText);
+                    doc.Text += " " + _clearText;
+                }
 
-                //htmlNode = htmlDoc.DocumentNode.SelectSingleNode(".//h1");
-                htmlNode = htmlDoc.DocumentNode.SelectSingleNode(this.TitleSelector);
-                if (htmlNode == null)
-                    throw new ApplicationException("==> No H1 element");
-                clearText = htmlNode.InnerText.Trim();
-                clearText = HttpUtility.HtmlDecode(clearText);
-                doc.title = clearText;
+                return doc;
+
             }
             catch(Exception ex)
             {
                 throw new ApplicationException(ex.Message);
             }
-
-            return doc;
         }
     }
 }
