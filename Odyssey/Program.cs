@@ -119,7 +119,7 @@ namespace Odyssey
                 command.Parameters.Add("@description", SqlDbType.NVarChar, -1).Value = doc.Description;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
                 command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.Url;
-                command.Parameters.Add("@imageUrl", SqlDbType.VarChar, -1).Value = doc.ImageUrl;
+                command.Parameters.Add("@imageUrl", SqlDbType.NVarChar, -1).Value = doc.ImageUrl;
                 command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = doc.Source;
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
