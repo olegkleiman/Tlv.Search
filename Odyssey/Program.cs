@@ -11,42 +11,6 @@ namespace Odyssey
 {
     internal class Program
     {
-
-        private static int saveDoc(Doc doc, string connectionString)
-        {
-            try
-            { 
-                using var conn = new SqlConnection(connectionString);
-                conn.Open();
-
-                var command = new SqlCommand("storeDocument", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-
-                command.Parameters.Add("@lang", SqlDbType.NVarChar, -1).Value = doc.Lang;
-                command.Parameters.Add("@text", SqlDbType.NVarChar, -1).Value = doc.Text;
-                command.Parameters.Add("@description", SqlDbType.NVarChar, -1).Value = doc.Description;
-                command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
-                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.Url;
-                command.Parameters.Add("@imageUrl", SqlDbType.NVarChar, -1).Value = doc.ImageUrl;
-                command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = doc.Source;
-
-                var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
-                returnParameter.Direction = ParameterDirection.ReturnValue;
-
-                int rowsUpdated = command.ExecuteNonQuery();
-
-                int rowId = (int)returnParameter.Value;
-                return rowId;
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return 0;
-            }
-        }
-
         static async Task Main(string[] args)
         {
             try
@@ -63,7 +27,7 @@ namespace Odyssey
                 Guard.Against.NullOrEmpty(connectionString);
 
                 var openaiKey = config["OPENAI_KEY"];
-                string? providerKey = config["QDRANT_PROVIDER_KEY"];
+                string? providerKey = config["PROVIDER_KEY"];
 
                 using var conn = new SqlConnection(connectionString);
                 string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
@@ -73,6 +37,13 @@ namespace Odyssey
                 using var da = new SqlDataAdapter(query, connectionString);
                 var table = new DataTable();
                 da.Fill(table);
+
+                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.SQLServer, providerKey);
+                if (vectorDb is null)
+                {
+                    Console.WriteLine($"Couldn't create vector db store: {providerKey}");
+                    return;
+                }
 
                 List<Task> tasks = [];
                 foreach(DataRow? row in table.Rows)
@@ -101,13 +72,8 @@ namespace Odyssey
                     if (scrapper == null)
                         continue;
 
-                    //Task task = scrapper.Scrap(SaveAndEmbed);
-                    IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
-                    if (vectorDb is not null)
-                    {
-                        Task task = scrapper.ScrapTo(vectorDb, openaiKey);
-                        tasks.Add(task);
-                    }
+                    Task task = scrapper.ScrapTo(vectorDb, openaiKey);
+                    tasks.Add(task);
                 }
 
                 Task.WaitAll([.. tasks]);

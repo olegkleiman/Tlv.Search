@@ -7,7 +7,7 @@ namespace VectorDb.Core
         Task<bool> Save(Doc doc);
         Task<bool> Embed(Doc doc, ulong docIndex, string key);
 
-        public string m_providerKey { get; set; }
+        public string? m_providerKey { get; set; }
     }
 
     public enum VectorDbProviders
@@ -30,6 +30,14 @@ namespace VectorDb.Core
             {
                 assemblyName = "VectorDb.QDrant";
                 className = assemblyName + ".QDrantStore";
+                assemblyVersion = "1.0.0.0";
+                assemblyCulture = "neutral";
+                publicKeyToken = "null";
+            }
+            else if( providerName == VectorDbProviders.SQLServer )
+            {
+                assemblyName = "VectorDb.SQLServer";
+                className = assemblyName + ".SQLServerStore";
                 assemblyVersion = "1.0.0.0";
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";

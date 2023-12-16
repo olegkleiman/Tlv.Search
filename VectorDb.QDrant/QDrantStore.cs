@@ -10,7 +10,7 @@ namespace VectorDb.QDrant
 {
     public class QDrantStore(string providerKey) : IVectorDb
     {
-        public string? m_providerKey { get; set; } = providerKey; // 
+        public string? m_providerKey { get; set; } = providerKey; 
 
         const ulong VECTOR_SIZE = 1536;
 

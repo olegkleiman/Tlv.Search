@@ -81,8 +81,7 @@ namespace Phoenix.models
                     Input = [_content]
                 };
 
-                Response<Embeddings> response =
-                    client.GetEmbeddings(eo);
+                Response<Embeddings> response = client.GetEmbeddings(eo);
 
                 DataTable tbl = new();
                 tbl.Columns.Add(new DataColumn("doc_id", typeof(int)));

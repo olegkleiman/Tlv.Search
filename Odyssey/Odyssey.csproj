@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\VectorDb.Core\VectorDb.Core.csproj" />
     <ProjectReference Include="..\VectorDb.QDrant\VectorDb.QDrant.csproj" />
+    <ProjectReference Include="..\VectorDb.SQLServer\VectorDb.SQLServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
