@@ -14,7 +14,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Phoenix", "Phoenix\Phoenix.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Odyssey", "Odyssey\Odyssey.csproj", "{A9527F77-2453-4D00-B0AD-04D2B7F720AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAIDrive", "OpenAIDrive\OpenAIDrive.csproj", "{544BDB6D-6283-470D-80F0-881B9AA8EC0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAIDrive", "OpenAIDrive\OpenAIDrive.csproj", "{544BDB6D-6283-470D-80F0-881B9AA8EC0C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QDrantDrive", "QDrantDrive\QDrantDrive.csproj", "{BCB57405-CD79-4327-9B07-C4D95BB6FACB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VectorDb.Core", "VectorDb.Core\VectorDb.Core.csproj", "{865CB4AD-A89D-4D5D-AD35-7E5F26F94B69}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VectorDb.QDrant", "VectorDb.QDrant\VectorDb.QDrant.csproj", "{5B20FAEE-9850-402A-875F-99CD9E0E6369}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +44,18 @@ Global
 		{544BDB6D-6283-470D-80F0-881B9AA8EC0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{544BDB6D-6283-470D-80F0-881B9AA8EC0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{544BDB6D-6283-470D-80F0-881B9AA8EC0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCB57405-CD79-4327-9B07-C4D95BB6FACB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB57405-CD79-4327-9B07-C4D95BB6FACB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCB57405-CD79-4327-9B07-C4D95BB6FACB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCB57405-CD79-4327-9B07-C4D95BB6FACB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{865CB4AD-A89D-4D5D-AD35-7E5F26F94B69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{865CB4AD-A89D-4D5D-AD35-7E5F26F94B69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{865CB4AD-A89D-4D5D-AD35-7E5F26F94B69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{865CB4AD-A89D-4D5D-AD35-7E5F26F94B69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B20FAEE-9850-402A-875F-99CD9E0E6369}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B20FAEE-9850-402A-875F-99CD9E0E6369}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B20FAEE-9850-402A-875F-99CD9E0E6369}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B20FAEE-9850-402A-875F-99CD9E0E6369}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,10 +3,9 @@ using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Identity.Client;
-using Odyssey.models;
 using Odyssey.Models;
 using System.Data;
+using VectorDb.Core;
 
 namespace Odyssey
 {
@@ -152,6 +151,9 @@ namespace Odyssey
                 string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
                 Guard.Against.NullOrEmpty(connectionString);
 
+                var openaiKey = config["OPENAI_KEY"];
+                string? providerKey = config["QDRANT_PROVIDER_KEY"];
+
                 using var conn = new SqlConnection(connectionString);
                 string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
                 
@@ -188,8 +190,13 @@ namespace Odyssey
                     if (scrapper == null)
                         continue;
 
-                    Task task = scrapper.Scrap(SaveAndEmbed);
-                    tasks.Add(task);
+                    //Task task = scrapper.Scrap(SaveAndEmbed);
+                    IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
+                    if (vectorDb is not null)
+                    {
+                        Task task = scrapper.ScrapTo(vectorDb, openaiKey);
+                        tasks.Add(task);
+                    }
                 }
 
                 Task.WaitAll([.. tasks]);

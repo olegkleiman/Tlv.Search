@@ -1,12 +1,6 @@
 ﻿using Ardalis.GuardClauses;
-using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Odyssey.Models
+namespace VectorDb.Core
 {
     public class Doc(string url)
     {

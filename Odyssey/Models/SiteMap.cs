@@ -1,8 +1,6 @@
-﻿using Odyssey.Models;
-using System;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 
-namespace Odyssey.models
+namespace Odyssey.Models
 {
     public record SiteMapItem(string Location, DateTime LastModified);
 

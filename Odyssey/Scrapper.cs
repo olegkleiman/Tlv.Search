@@ -1,11 +1,10 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using Odyssey.models;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
 using System.Web;
+using VectorDb.Core;
 
 namespace Odyssey
 {
@@ -96,6 +95,36 @@ namespace Odyssey
                 }
             }
             
+            return true;
+        }
+
+        public async Task<bool> ScrapTo(IVectorDb vectorDb, string embeddingKey)
+        {
+            if (vectorDb is null)
+                return false;
+            if (m_siteMap is null
+                 || m_siteMap.items is null)
+                return false;
+
+            ulong docIndex = 0;
+            foreach (SiteMapItem item in m_siteMap.items)
+            {
+                string docSource = m_siteMap.m_url.ToString();
+                Doc? doc = await Scrap(item.Location, docSource);
+                
+                if (doc is not null)
+                {
+                    //Task task = vectorDb.Save(doc)
+                    //    .ContinueWith((task) =>
+                    //            vectorDb.Embed(doc, docIndex++, embeddingKey)
+                    //    );
+                    //await task;
+                    await vectorDb.Save(doc);
+                    await vectorDb.Embed(doc, docIndex++, embeddingKey);
+                }
+                Console.WriteLine(docIndex);
+            }
+
             return true;
         }
 
