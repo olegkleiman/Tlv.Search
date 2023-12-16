@@ -22,7 +22,7 @@ namespace QDrantDrive
         {
             try
             {
-                List<string> prompts = ["Hello", "from QDrant"];
+                List<string> prompts = ["Hello", "הנחות מארנונה"];
 
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
@@ -58,7 +58,7 @@ namespace QDrantDrive
                 {
                     Console.WriteLine(ex.Message);
                 }
-                string collectionName = "site_docs";
+                string collectionName = "site_docs2";
 
                 QdrantClient qdClient = new("localhost");
                 var collections =  await qdClient.ListCollectionsAsync();
@@ -103,7 +103,7 @@ namespace QDrantDrive
                         Payload =
                         {
                             ["text"] = prompts[itemIndex],
-                            ["title"] = "הנחות מארנונה",
+                            ["title"] = "Generic",
                             ["url"] = "https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaSwitching.aspx"
                         },
                         Vectors = _vectors.ToArray()
@@ -114,6 +114,41 @@ namespace QDrantDrive
                 }
 
                 await qdClient.UpsertAsync(collectionName, points);
+
+                List<float> queryVector = new();
+                eo.Input = ["הנחות מארנונה"];
+                response = await client.GetEmbeddingsAsync(eo);
+                foreach (var item in response.Value.Data)
+                {
+                    var embedding = item.Embedding;
+                    for (int i = 0; i < embedding.Length; i++)
+                    {
+                        queryVector.Add(embedding.Span[i]);
+                    }
+                }
+
+                //
+                // Search
+                //
+
+                Filter filter = new Filter()
+                {
+                    
+                };
+                //filter: Range("rand_number", new Range { Gte = 3 })
+
+                SearchParams sp = new SearchParams()
+                {
+                    Exact = true
+                };
+
+                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), 
+                                                        filter: filter, searchParams: sp, limit: 5);
+                foreach(var score in scores)
+                {
+                    var payload = score.Payload;
+                    Console.WriteLine($"Text: {payload["text"]} Score: {score.Score}"); 
+                }
             }
             catch (Exception ex)
             {

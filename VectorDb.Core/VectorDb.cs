@@ -6,6 +6,7 @@ namespace VectorDb.Core
     {
         Task<bool> Save(Doc doc);
         Task<bool> Embed(Doc doc, ulong docIndex, string key);
+        List<Doc> Search(string prompt);
 
         public string? m_providerKey { get; set; }
     }

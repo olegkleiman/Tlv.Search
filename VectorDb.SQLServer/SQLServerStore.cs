@@ -113,5 +113,10 @@ namespace VectorDb.SQLServer
                 return false;
             }
         }
+
+        public List<Doc> Search(string prompt)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

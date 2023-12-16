@@ -59,7 +59,8 @@ namespace VectorDb.QDrant
                         {
                             ["text"] = doc.Description,
                             ["title"] = doc.Title,
-                            ["url"] = doc.Url
+                            ["url"] = doc.Url,
+                            ["image_url"] = doc.ImageUrl
                         },
                         Vectors = _vectors.ToArray()
                     };
@@ -100,6 +101,11 @@ namespace VectorDb.QDrant
         public async Task<bool> Save(Doc doc)
         {
             return true;
+        }
+
+        public List<Doc> Search(string prompt)
+        {
+            throw new NotImplementedException();
         }
     }
 }

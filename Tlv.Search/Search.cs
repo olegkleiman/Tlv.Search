@@ -156,7 +156,7 @@ namespace Tlv.Search
                             {
                                 searchItems.Add(new SearchItem()
                                 {
-                                    id = (int)row[0],
+                                    id = (ulong)row[0],
                                     title = (string)row[1],
                                     url = (string)row[2],
                                     imageUrl = (string)row[3]

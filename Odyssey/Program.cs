@@ -1,6 +1,4 @@
 ﻿using Ardalis.GuardClauses;
-using Azure;
-//using Azure.AI.OpenAI;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Odyssey.Models;
@@ -38,7 +36,7 @@ namespace Odyssey
                 var table = new DataTable();
                 da.Fill(table);
 
-                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.SQLServer, providerKey);
+                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
                 if (vectorDb is null)
                 {
                     Console.WriteLine($"Couldn't create vector db store: {providerKey}");
