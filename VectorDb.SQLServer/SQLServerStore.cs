@@ -66,11 +66,8 @@ namespace VectorDb.SQLServer
             try
             {
                 var client = new OpenAIClient(key, new OpenAIClientOptions());
-                EmbeddingsOptions eo = new()
-                {
-                    DeploymentName = "text-embedding-ada-002",
-                    Input = [content]
-                };
+                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
+                                            input: [content]);
                 return await client.GetEmbeddingsAsync(eo);
             }
             catch (Exception)

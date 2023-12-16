@@ -75,11 +75,8 @@ namespace Phoenix.models
                     return;
 
 
-                EmbeddingsOptions eo = new EmbeddingsOptions()
-                {
-                    DeploymentName = modelName,
-                    Input = [_content]
-                };
+                EmbeddingsOptions eo = new EmbeddingsOptions(deploymentName: modelName,
+                                                             input: [_content]);
 
                 Response<Embeddings> response = client.GetEmbeddings(eo);
 

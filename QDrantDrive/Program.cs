@@ -76,12 +76,9 @@ namespace QDrantDrive
                     await qdClient.CreateCollectionAsync(collectionName, vp);
                 }
 
-                
-                EmbeddingsOptions eo = new()
-                {
-                    DeploymentName = "text-embedding-ada-002",
-                    Input = prompts
-                };
+
+                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
+                                            input: prompts);
                 Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
                 List<PointStruct> points = [];
                 var random = new Random();
@@ -115,9 +112,10 @@ namespace QDrantDrive
 
                 await qdClient.UpsertAsync(collectionName, points);
 
-                List<float> queryVector = new();
-                eo.Input = ["הנחות מארנונה"];
-                response = await client.GetEmbeddingsAsync(eo);
+                List<float> queryVector = [];
+                EmbeddingsOptions eo2 = new(deploymentName: "text-embedding-ada-002",
+                                            input:["הנחות מארנונה"]);
+                response = await client.GetEmbeddingsAsync(eo2);
                 foreach (var item in response.Value.Data)
                 {
                     var embedding = item.Embedding;

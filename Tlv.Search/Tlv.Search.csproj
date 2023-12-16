@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" Version="4.2.0" />
-    <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.11" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.12" />
 	<PackageReference Include="Qdrant.Client" Version="1.7.0" />  
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2" />

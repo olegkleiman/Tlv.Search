@@ -97,11 +97,9 @@ namespace Tlv.Search
                 {
                     prompt
                 };
-                EmbeddingsOptions eo = new()
-                {
-                    DeploymentName = "text-embedding-ada-002",
-                    Input = prompts
-                };
+                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
+                                           input: prompts);
+
                 Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
                 foreach (var item in response.Value.Data)
                 {

@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
+using Google.Protobuf;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Collections;
@@ -85,11 +86,8 @@ namespace VectorDb.QDrant
             try
             {
                 var client = new OpenAIClient(key, new OpenAIClientOptions());
-                EmbeddingsOptions eo = new()
-                {
-                    DeploymentName = "text-embedding-ada-002",
-                    Input = [content]
-                };
+                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
+                                            input: [content]);
                 return await client.GetEmbeddingsAsync(eo);
             }
             catch (Exception)

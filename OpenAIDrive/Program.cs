@@ -37,6 +37,30 @@ namespace OpenAIDrive
 
                 // Azure OpenAI package
                 var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
+
+                //
+                // Embeddings
+                //
+                List<float> queryVector = new();
+                EmbeddingsOptions eo = new(
+                    deploymentName: "text-embedding-ada-002",
+                    input: examplePrompts);
+
+                Response<Embeddings> _response = await client.GetEmbeddingsAsync(eo);
+                foreach (var item in _response.Value.Data)
+                {
+                    var embedding = item.Embedding;
+
+                    for (int i = 0; i < embedding.Length; i++)
+                    {
+                        float value = embedding.Span[i];
+                        queryVector.Add(value);
+                    }
+                }
+
+                //
+                // Completions
+                //
                 foreach (string prompt in examplePrompts)
                 {
                     CultureInfo ci = new("he-IL");
