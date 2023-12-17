@@ -1,15 +1,19 @@
-﻿using HtmlAgilityPack;
+﻿using Ardalis.GuardClauses;
+using EmbeddingEngine.Core;
+using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
 using System.Web;
+using Tlv.Search.Common;
 using VectorDb.Core;
 
 namespace Odyssey
 {
-    public class Scrapper
+    public class Scrapper : IAsyncDisposable
     {
+        private IBrowser?             m_browser;
         private IPage?                m_page;
         private readonly SiteMap?     m_siteMap;
         public string? ContentSelector { get; set; }
@@ -21,17 +25,33 @@ namespace Odyssey
             m_siteMap = siteMap;
         }
 
+        ~Scrapper()
+        {
+            m_browser?.CloseAsync();
+        }
+
+        //ValueTask IAsyncDisposable.DisposeAsync() => ValueTask.CompletedTask;
+
+        public async ValueTask DisposeAsync()
+        {
+            GC.SuppressFinalize(this);
+
+
+            //m_browser?.CloseAsync();
+        }
+
         public async Task Init()
         {
-            var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+            m_browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = false,
                 ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
             });
-            m_page = await browser.NewPageAsync();
+            
+            m_page = await m_browser.NewPageAsync();
         }
 
-        public static async Task<Scrapper?> Load(int scrapperId, 
+        public static Scrapper? Load(int scrapperId, 
                                         SiteMap siteMap,
                                         string? connectionString)
         {
@@ -47,15 +67,9 @@ namespace Odyssey
 
                 SqlCommand cmd = new SqlCommand($"select * from [dbo].[scrappers] where id = {scrapperId}",
                                                  conn);
-                SqlDataReader reader = cmd.ExecuteReader();
+                using SqlDataReader reader = cmd.ExecuteReader();
                 if (!reader.Read())
                     return null;
-
-                var browser = await Puppeteer.LaunchAsync(new LaunchOptions
-                {
-                    Headless = false,
-                    ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-                });
 
                 if (!reader.IsDBNull(2))
                     scrapper.ContentSelector = reader.GetString(2);
@@ -63,10 +77,8 @@ namespace Odyssey
                     scrapper.TitleSelector = reader.GetString(3);
                 if( !reader.IsDBNull(4) )
                     scrapper.AddressSelector = reader.GetString(4);
-
-                scrapper.m_page = await browser.NewPageAsync();
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 return null;
             }
@@ -98,9 +110,11 @@ namespace Odyssey
             return true;
         }
 
-        public async Task<bool> ScrapTo(IVectorDb vectorDb, string embeddingKey)
+        public async Task<bool> ScrapTo(IVectorDb vectorDb, 
+                                        IEmbeddingEngine embeddingEngine)
         {
-            if (vectorDb is null)
+            if (vectorDb is null
+                || embeddingEngine is null )
                 return false;
             if (m_siteMap is null
                  || m_siteMap.items is null)
@@ -114,13 +128,12 @@ namespace Odyssey
                 
                 if (doc is not null)
                 {
-                    //Task task = vectorDb.Save(doc)
-                    //    .ContinueWith((task) =>
-                    //            vectorDb.Embed(doc, docIndex++, embeddingKey)
-                    //    );
-                    //await task;
-                    await vectorDb.Save(doc);
-                    await vectorDb.Embed(doc, docIndex++, embeddingKey);
+                    if (embeddingEngine is not null
+                        && vectorDb is not null )
+                    {
+                        float[] embeddings = await embeddingEngine.Embed(doc);
+                        await vectorDb.Save(doc, docIndex++, embeddings);
+                    }
                 }
                 Console.WriteLine(docIndex);
             }
@@ -199,5 +212,7 @@ namespace Odyssey
                 throw new ApplicationException(ex.Message);
             }
         }
+
+
     }
 }

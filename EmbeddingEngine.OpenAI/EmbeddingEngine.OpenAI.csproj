@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Ardalis.GuardClauses" Version="4.2.0" />
+		<PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.12" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
+	  <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
+	</ItemGroup>
+
+</Project>
