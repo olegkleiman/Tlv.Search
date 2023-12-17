@@ -39,7 +39,8 @@ namespace Odyssey.Tools
         private string? getPropertyContent(string property)
         {
             string? val = (from node in metaNodes
-                                where node.Attributes[attributeProperty].Value == property
+                           where node.Attributes[attributeProperty] is not null
+                                && node.Attributes[attributeProperty].Value == property
                                 select node.Attributes[attributeContent].Value)
                             .FirstOrDefault();
 

@@ -44,10 +44,10 @@ namespace VectorDb.QDrant
                     Id = docIndex,
                     Payload =
                     {
-                        ["text"] = doc.Description,
-                        ["title"] = doc.Title,
-                        ["url"] = doc.Url,
-                        ["image_url"] = doc.ImageUrl
+                        ["text"] = doc.Description ?? string.Empty,
+                        ["title"] = doc.Title ?? string.Empty,
+                        ["url"] = doc.Url ?? string.Empty,
+                        ["image_url"] = doc.ImageUrl ?? string.Empty
                     },
                     Vectors = vector
                 };
