@@ -1,10 +1,7 @@
-﻿using Azure;
-using Azure.AI.OpenAI;
-using Google.Protobuf;
-using Qdrant.Client;
+﻿using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Collections;
-using System.Net.Sockets;
+using Tlv.Search.Common;
 using VectorDb.Core;
 
 namespace VectorDb.QDrant
@@ -15,12 +12,17 @@ namespace VectorDb.QDrant
 
         const ulong VECTOR_SIZE = 1536;
 
-        public async Task<bool> Embed(Doc doc, ulong docIndex, string key)
+        public List<Doc> Search(string prompt)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<bool> Save(Doc doc, ulong docIndex, float[] vector)
         {
             try
             {
                 QdrantClient qdClient = new(m_providerKey); // This is a host name (like 'localhost') for this provider
-
+                
                 string collectionName = "site_docs";
                 var collections = await qdClient.ListCollectionsAsync();
                 var q = (from collection in collections
@@ -31,79 +33,37 @@ namespace VectorDb.QDrant
                     VectorParams vp = new()
                     {
                         Distance = Distance.Cosine,
-                        Size = VECTOR_SIZE
+                        Size = (ulong)vector.Length
                     };
 
                     await qdClient.CreateCollectionAsync(collectionName, vp);
                 }
 
-                string? _content = doc.Content;
-                Response<Embeddings> response = await EmbedInternal(key, _content);
-
-                List<PointStruct> points = [];
-                //int index = 0;
-                foreach (var item in response.Value.Data)
+                PointStruct ps = new()
                 {
-                    var embedding = item.Embedding;
-                    //int itemIndex = item.Index;
-
-                    List<float> _vectors = [];
-                    for (int i = 0; i < embedding.Length; i++)
+                    Id = docIndex,
+                    Payload =
                     {
-                        float value = embedding.Span[i];
-                        _vectors.Add(value);
-                    }
-                    PointStruct ps = new()
-                    {
-                        Id = docIndex,
-                        Payload =
-                        {
-                            ["text"] = doc.Description,
-                            ["title"] = doc.Title,
-                            ["url"] = doc.Url,
-                            ["image_url"] = doc.ImageUrl
-                        },
-                        Vectors = _vectors.ToArray()
-                    };
-                    points.Add(ps);
-                    Console.WriteLine($"String {doc.Url}");
-                }
+                        ["text"] = doc.Description,
+                        ["title"] = doc.Title,
+                        ["url"] = doc.Url,
+                        ["image_url"] = doc.ImageUrl
+                    },
+                    Vectors = vector
+                };
 
-                await qdClient.UpsertAsync(collectionName, points);
+                await qdClient.UpsertAsync(collectionName, [ps]);
 
+                return true;
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;
             }
-
-            return true;
+                
+            
         }
 
-        private async Task<Response<Embeddings>> EmbedInternal(string key, string content)
-        {
-            try
-            {
-                var client = new OpenAIClient(key, new OpenAIClientOptions());
-                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
-                                            input: [content]);
-                return await client.GetEmbeddingsAsync(eo);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public async Task<bool> Save(Doc doc)
-        {
-            return true;
-        }
-
-        public List<Doc> Search(string prompt)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

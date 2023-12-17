@@ -1,11 +1,12 @@
-﻿using System.Runtime.Remoting;
+﻿using Ardalis.GuardClauses;
+using System.Runtime.Remoting;
+using Tlv.Search.Common;
 
 namespace VectorDb.Core
 {
     public interface IVectorDb
     {
-        Task<bool> Save(Doc doc);
-        Task<bool> Embed(Doc doc, ulong docIndex, string key);
+        Task<bool> Save(Doc doc, ulong docIndex, float[] vector);
         List<Doc> Search(string prompt);
 
         public string? m_providerKey { get; set; }
@@ -22,6 +23,8 @@ namespace VectorDb.Core
     {
         public static IVectorDb? Create(VectorDbProviders providerName, string providerKey)
         {
+            Guard.Against.EnumOutOfRange(providerName);
+
             string assemblyName = string.Empty, 
                    className = string.Empty, 
                    assemblyVersion = string.Empty,
@@ -44,9 +47,8 @@ namespace VectorDb.Core
                 publicKeyToken = "null";
             }
 
-            if (string.IsNullOrEmpty(assemblyName)
-                || string.IsNullOrEmpty(className))
-                return null;
+            Guard.Against.NullOrEmpty(assemblyName);
+            Guard.Against.NullOrEmpty(className);
 
             try
             {

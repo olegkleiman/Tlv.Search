@@ -1,6 +1,7 @@
 ﻿using Ardalis.GuardClauses;
+using System;
 
-namespace VectorDb.Core
+namespace Tlv.Search.Common
 {
     public class Doc(string url)
     {
