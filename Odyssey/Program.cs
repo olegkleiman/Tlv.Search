@@ -58,11 +58,6 @@ namespace Odyssey
                 }
 
                 List<Task> tasks = [];
-                //await foreach(DataRow? row in table.Rows)
-                //{
-
-                //}
-                
                 foreach (DataRow? row in table.Rows)
                 {
                     Guard.Against.Null(row);

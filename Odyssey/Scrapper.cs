@@ -5,13 +5,14 @@ using Microsoft.Data.SqlClient;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
+using System.Text.RegularExpressions;
 using System.Web;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
 namespace Odyssey
 {
-    public class Scrapper : IAsyncDisposable
+    public class Scrapper 
     {
         private IBrowser?             m_browser;
         private IPage?                m_page;
@@ -23,21 +24,6 @@ namespace Odyssey
         private Scrapper(SiteMap siteMap)
         {
             m_siteMap = siteMap;
-        }
-
-        ~Scrapper()
-        {
-            m_browser?.CloseAsync();
-        }
-
-        //ValueTask IAsyncDisposable.DisposeAsync() => ValueTask.CompletedTask;
-
-        public async ValueTask DisposeAsync()
-        {
-            GC.SuppressFinalize(this);
-
-
-            //m_browser?.CloseAsync();
         }
 
         public async Task Init()
@@ -194,14 +180,23 @@ namespace Odyssey
                 };
 
                 // Get content(s)
-                HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(this.ContentSelector);
-                if (htmlNodes == null || htmlNodes.Count == 0)
-                    throw new ApplicationException($"==> No {this.ContentSelector} for content");
-                foreach (var node in htmlNodes)
+                List<string> contentSelectors = [this.ContentSelector, ".//div[@class='container']"];
+                foreach( var contentSelector in contentSelectors )
                 {
-                    string _clearText = node.InnerText.Trim();
-                    _clearText = HttpUtility.HtmlDecode(_clearText);
-                    doc.Text += " " + _clearText;
+                    HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
+                    if( htmlNodes is not null )
+                    {
+                        foreach (var node in htmlNodes)
+                        {
+                            string _clearText = node.InnerText.Trim();
+                            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+                            _clearText = HttpUtility.HtmlDecode(_clearText);
+                            doc.Text += " " + _clearText;
+                        }
+
+                        break;
+                    }
+
                 }
 
                 return doc;
