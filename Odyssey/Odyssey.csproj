@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.OpenAI\EmbeddingEngine.OpenAI.csproj" />
+    <ProjectReference Include="..\EmbeddingEngine.Voyage\EmbeddingEngine.Gemini.csproj" />
     <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
     <ProjectReference Include="..\VectorDb.Core\VectorDb.Core.csproj" />
     <ProjectReference Include="..\VectorDb.QDrant\VectorDb.QDrant.csproj" />

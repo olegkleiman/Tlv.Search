@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
+    <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
+  </ItemGroup>
+
+</Project>

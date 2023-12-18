@@ -41,7 +41,7 @@ namespace Odyssey.Tools
             string? val = (from node in metaNodes
                            where node.Attributes[attributeProperty] is not null
                                 && node.Attributes[attributeProperty].Value == property
-                                select node.Attributes[attributeContent].Value)
+                                select node.Attributes[attributeContent]?.Value)
                             .FirstOrDefault();
 
             return string.IsNullOrEmpty(val) ?
