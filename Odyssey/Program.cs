@@ -27,8 +27,8 @@ namespace Odyssey
                 Guard.Against.NullOrEmpty(connectionString);
 
                 string keyName = "OPENAI_KEY";
-                string? openaiKey = config[keyName];
-                Guard.Against.NullOrEmpty(openaiKey, keyName, $"Couldn't find {keyName} in configuration");
+                string? embeddingEngineKey = config[keyName];
+                Guard.Against.NullOrEmpty(embeddingEngineKey, keyName, $"Couldn't find {keyName} in configuration");
 
                 keyName = "VECTOR_DB_PROVIDER_KEY";
                 string? providerKey = config[keyName];
@@ -50,10 +50,10 @@ namespace Odyssey
                     return;
                 }
 
-                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.OpenAI, openaiKey);
+                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.OpenAI, embeddingEngineKey);
                 if( embeddingEngine is null )
                 {
-                    Console.WriteLine($"Couldn't create embedding engine with key '{openaiKey}'");
+                    Console.WriteLine($"Couldn't create embedding engine with key '{embeddingEngineKey}'");
                     return;
                 }
 

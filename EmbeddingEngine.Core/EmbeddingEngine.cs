@@ -13,7 +13,8 @@ namespace EmbeddingEngine.Core
     public enum EmbeddingsProviders
     {
         OpenAI,
-        Gemini
+        Gemini,
+        Voyage
     }
 
     public class EmbeddingEngine
@@ -35,6 +36,15 @@ namespace EmbeddingEngine.Core
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";
             }
+            else if( providerName == EmbeddingsProviders .Gemini)
+            {
+                assemblyName = "EmbeddingEngine.Gemini";
+                className = assemblyName + ".GeminiEngine";
+                assemblyVersion = "1.0.0.0";
+                assemblyCulture = "neutral";
+                publicKeyToken = "null";
+            }
+
             Guard.Against.NullOrEmpty(assemblyName);
             Guard.Against.NullOrEmpty(className);
 
