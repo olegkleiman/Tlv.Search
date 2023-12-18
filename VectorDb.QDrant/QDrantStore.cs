@@ -17,13 +17,14 @@ namespace VectorDb.QDrant
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, ulong docIndex, float[] vector)
+        public async Task<bool> Save(Doc doc, ulong docIndex, float[] vector, string collectionName)
         {
+            if (string.IsNullOrEmpty(collectionName))
+                return false;
+
             try
             {
                 QdrantClient qdClient = new(m_providerKey); // This is a host name (like 'localhost') for this provider
-                
-                string collectionName = "site_docs";
                 var collections = await qdClient.ListCollectionsAsync();
                 var q = (from collection in collections
                          where collection == collectionName
@@ -44,7 +45,8 @@ namespace VectorDb.QDrant
                     Id = docIndex,
                     Payload =
                     {
-                        ["text"] = doc.Description ?? string.Empty,
+                        ["text"] = doc.Text ?? string.Empty,
+                        ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url ?? string.Empty,
                         ["image_url"] = doc.ImageUrl ?? string.Empty

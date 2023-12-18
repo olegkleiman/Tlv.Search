@@ -5,7 +5,7 @@ namespace Tlv.Search.Common
 {
     public class Doc(string url)
     {
-        public int Id { get; set; }
+        public ulong Id { get; set; }
         public string? Lang { get; set; }
         public string? Text { get; set; }
         public string? Description { get; set; }
@@ -23,6 +23,8 @@ namespace Tlv.Search.Common
             Title = prev.Title;
             Source = prev.Source;
         }
+
+        public List<Doc>? subDocs = [];
 
         public string Content
         {

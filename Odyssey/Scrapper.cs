@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Web;
 using Tlv.Search.Common;
@@ -72,29 +73,29 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> Scrap(Action<Doc?> callback)
-        {
-            if (m_siteMap is null
-                 || m_siteMap.items is null )
-                return false;
+        //public async Task<bool> Scrap(Action<Doc?> callback)
+        //{
+        //    if (m_siteMap is null
+        //         || m_siteMap.items is null )
+        //        return false;
 
-            foreach (SiteMapItem item in m_siteMap.items)
-            {
-                try
-                {
-                    string docSource = m_siteMap.m_url.ToString();
-                    Doc? doc = await Scrap(item.Location, docSource);
-                    if( doc is not null)
-                        callback(doc);
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
+        //    foreach (SiteMapItem item in m_siteMap.items)
+        //    {
+        //        try
+        //        {
+        //            string docSource = m_siteMap.m_url.ToString();
+        //            Doc? doc = await Scrap(item.Location, docSource);
+        //            if( doc is not null)
+        //                callback(doc);
+        //        }
+        //        catch(Exception ex)
+        //        {
+        //            Console.WriteLine(ex.Message);
+        //        }
+        //    }
             
-            return true;
-        }
+        //    return true;
+        //}
 
         public async Task<bool> ScrapTo(IVectorDb vectorDb, 
                                         IEmbeddingEngine embeddingEngine)
@@ -111,6 +112,7 @@ namespace Odyssey
             {
                 string docSource = m_siteMap.m_url.ToString();
                 Doc? doc = await Scrap(item.Location, docSource);
+                doc.Id = docIndex;
                 
                 if (doc is not null)
                 {
@@ -118,10 +120,28 @@ namespace Odyssey
                         && vectorDb is not null )
                     {
                         float[] embeddings = await embeddingEngine.Embed(doc);
-                        await vectorDb.Save(doc, docIndex++, embeddings);
+                        await vectorDb.Save(doc, docIndex, embeddings, 
+                                            "site_docs");
                     }
+                    Console.WriteLine($"processed {docIndex}");
+
+                    // process sub-docs
+                    ulong subDocIndex = 0;
+                    foreach (Doc subDoc in doc.subDocs)
+                    {
+                        if (embeddingEngine is not null
+                            && vectorDb is not null)
+                        {
+                            float[] embeddings = await embeddingEngine.Embed(subDoc);
+                            await vectorDb.Save(subDoc, subDocIndex++, embeddings,
+                                               $"subs_{doc.Id}" // collection name
+                                               );
+                        }
+                    }
+
+                    docIndex++;
                 }
-                Console.WriteLine(docIndex);
+
             }
 
             return true;
@@ -180,8 +200,8 @@ namespace Odyssey
                 };
 
                 // Get content(s)
-                List<string> contentSelectors = [this.ContentSelector, ".//div[@class='container']"];
-                foreach( var contentSelector in contentSelectors )
+                List<string> contentSelectors = [this.ContentSelector, ".//li[contains(@class, 'liAdditionalFields')]",".//div[@class='container']"];
+                foreach ( var contentSelector in contentSelectors )
                 {
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
                     if( htmlNodes is not null )
@@ -192,11 +212,16 @@ namespace Odyssey
                             _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
                             _clearText = HttpUtility.HtmlDecode(_clearText);
                             doc.Text += " " + _clearText;
+
+                            doc.subDocs.Add(new Doc(url)
+                            {
+                                Text = _clearText,
+                            });
                         }
 
                         break;
                     }
-
+                    
                 }
 
                 return doc;

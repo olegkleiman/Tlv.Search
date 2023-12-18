@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -87,10 +87,11 @@ namespace Tlv.Search
                 {
 
                 };
-                SearchParams sp = new SearchParams()
-                {
-                    Exact = true
-                };
+                //SearchParams sp = new SearchParams()
+                //{
+                //    Exact = true
+                    
+                //};
 
                 List<float> queryVector = new();
                 List<string> prompts = new()
@@ -112,16 +113,31 @@ namespace Tlv.Search
                     }
                 }
 
+                //
+                // first step of search - search in all the documents in general collection
+                //
                 var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(),
-                                                        filter: filter, searchParams: sp, limit: 5);
+                                                        filter: filter, limit: 5);
                 List<SearchItem>? searchItems = new();
                 foreach (var score in scores)
                 {
                     var payload = score.Payload;
+                    ulong docId = score.Id.Num;
+                    
+                    //
+                    // second search in sub-documents
+                    //
+                    string subCollectionName = $"subs_{docId}";
+                    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), limit:2);
+                    ScoredPoint scoredPoint = subScores[0]; // TBD
+                    var subPayload = scoredPoint.Payload;
+                    var summary = subPayload["text"];
+
                     searchItems.Add(new SearchItem()
                     {
                         id = score.Id.Num,
                         title = payload["title"].StringValue,
+                        summary = summary.HasStringValue ? summary.StringValue : string.Empty,
                         url = payload["url"].StringValue,
                         imageUrl = payload["image_url"].StringValue,
                         similarity = score.Score
