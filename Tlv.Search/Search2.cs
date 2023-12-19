@@ -13,6 +13,7 @@ using System.Net;
 using Qdrant.Client;
 using System.Linq;
 using Qdrant.Client.Grpc;
+using static Qdrant.Client.Grpc.Conditions;
 using System.Collections;
 using System.Collections.Generic;
 using Azure.AI.OpenAI;
@@ -21,6 +22,7 @@ using Azure;
 using System.Web.Http;
 using Ardalis.GuardClauses;
 using Tlv.Search.models;
+using Google.Protobuf.Collections;
 
 namespace Tlv.Search
 {
@@ -83,10 +85,7 @@ namespace Tlv.Search
                 //
                 OpenAIClient client = new(providerKey);
 
-                Filter filter = new Filter()
-                {
 
-                };
                 //SearchParams sp = new SearchParams()
                 //{
                 //    Exact = true
@@ -116,8 +115,7 @@ namespace Tlv.Search
                 //
                 // first step of search - search in all the documents in general collection
                 //
-                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(),
-                                                        filter: filter, limit: 5);
+                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), limit: 5);
                 List<SearchItem>? searchItems = new();
                 foreach (var score in scores)
                 {
@@ -127,8 +125,32 @@ namespace Tlv.Search
                     //
                     // second search in sub-documents
                     //
-                    string subCollectionName = $"subs_{docId}";
-                    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), limit:2);
+                    string subCollectionName = $"doc_parts";
+
+                    FieldCondition fc = new FieldCondition()
+                    {
+                        //Match = new Match()
+                        //{
+                        //    Keyword = "fff",
+                        //    Text
+                        //}
+                        Key = "parent_doc_id",
+                        Range = new Qdrant.Client.Grpc.Range()
+                        {
+                            Gte = docId
+                        }
+                    };
+
+                    //Filter _filter = new Filter()
+                    //{
+                    //    Must = null
+                    //};
+
+                    Qdrant.Client.Grpc.Range range = new Qdrant.Client.Grpc.Range { Gte = docId };
+                    Filter filter = Range("parent_doc_id", range);
+                    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), 
+                                                                filter: filter,
+                                                                limit:2);
                     ScoredPoint scoredPoint = subScores[0]; // TBD
                     var subPayload = scoredPoint.Payload;
                     var summary = subPayload["text"];

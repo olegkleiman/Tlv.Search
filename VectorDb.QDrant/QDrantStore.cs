@@ -17,7 +17,8 @@ namespace VectorDb.QDrant
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, ulong docIndex, float[] vector, string collectionName)
+        public async Task<bool> Save(Doc doc, ulong docIndex, ulong parentDocId,
+                                    float[] vector, string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 return false;
@@ -49,7 +50,8 @@ namespace VectorDb.QDrant
                         ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url ?? string.Empty,
-                        ["image_url"] = doc.ImageUrl ?? string.Empty
+                        ["image_url"] = doc.ImageUrl ?? string.Empty,
+                        ["parent_doc_id"] = parentDocId
                     },
                     Vectors = vector
                 };

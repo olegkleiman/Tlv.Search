@@ -14,7 +14,8 @@ namespace VectorDb.SQLServer
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, ulong docIndex, float[] vector, string collectionName)
+        public async Task<bool> Save(Doc doc, ulong docIndex, ulong parentDocId,
+                                     float[] vector, string collectionName)
         {
             try
             {
