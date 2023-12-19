@@ -61,7 +61,7 @@ namespace Odyssey
                 if (!reader.IsDBNull(2))
                 {
                     string selectors = reader.GetString(2);
-                    scrapper.m_ContentSelectors = selectors.Split(',');
+                    scrapper.m_ContentSelectors = selectors.Split(';');
                 }
                 if (!reader.IsDBNull(3))
                     scrapper.TitleSelector = reader.GetString(3);
@@ -86,7 +86,9 @@ namespace Odyssey
                  || m_siteMap.items is null)
                 return false;
 
-            ulong docIndex = 0;
+            int docIndex = 0;
+            int subDocIndex = 0;
+
             foreach (SiteMapItem item in m_siteMap.items)
             {
                 string docSource = m_siteMap.m_url.ToString();
@@ -105,7 +107,6 @@ namespace Odyssey
                     Console.WriteLine($"processed {docIndex}");
 
                     // process sub-docs
-                    ulong subDocIndex = 0;
                     foreach (Doc subDoc in doc.subDocs)
                     {
                         if (embeddingEngine is not null
@@ -188,7 +189,7 @@ namespace Odyssey
                 };
 
                 // Get content(s)
-                foreach ( var contentSelector in this.m_ContentSelectors)
+                foreach ( var contentSelector in this.m_ContentSelectors )
                 {
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
                     if( htmlNodes is not null )

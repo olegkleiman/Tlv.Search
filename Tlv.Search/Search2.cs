@@ -85,12 +85,11 @@ namespace Tlv.Search
                 //
                 OpenAIClient client = new(providerKey);
 
+                SearchParams sp = new SearchParams()
+                {
+                    Exact = true
 
-                //SearchParams sp = new SearchParams()
-                //{
-                //    Exact = true
-                    
-                //};
+                };
 
                 List<float> queryVector = new();
                 List<string> prompts = new()
@@ -115,55 +114,48 @@ namespace Tlv.Search
                 //
                 // first step of search - search in all the documents in general collection
                 //
-                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), limit: 5);
+                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), 
+                                                        searchParams: sp,    
+                                                        limit: 5);
                 List<SearchItem>? searchItems = new();
                 foreach (var score in scores)
                 {
                     var payload = score.Payload;
                     ulong docId = score.Id.Num;
-                    
-                    //
-                    // second search in sub-documents
-                    //
-                    string subCollectionName = $"doc_parts";
 
-                    FieldCondition fc = new FieldCondition()
-                    {
-                        //Match = new Match()
-                        //{
-                        //    Keyword = "fff",
-                        //    Text
-                        //}
-                        Key = "parent_doc_id",
-                        Range = new Qdrant.Client.Grpc.Range()
-                        {
-                            Gte = docId
-                        }
-                    };
-
-                    //Filter _filter = new Filter()
-                    //{
-                    //    Must = null
-                    //};
-
-                    Qdrant.Client.Grpc.Range range = new Qdrant.Client.Grpc.Range { Gte = docId };
-                    Filter filter = Range("parent_doc_id", range);
-                    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), 
-                                                                filter: filter,
-                                                                limit:2);
-                    ScoredPoint scoredPoint = subScores[0]; // TBD
-                    var subPayload = scoredPoint.Payload;
-                    var summary = subPayload["text"];
-
-                    searchItems.Add(new SearchItem()
+                    SearchItem si = new SearchItem()
                     {
                         id = score.Id.Num,
                         title = payload["title"].StringValue,
-                        summary = summary.HasStringValue ? summary.StringValue : string.Empty,
+                        summary = string.Empty, // may be set from subDoc below
                         url = payload["url"].StringValue,
                         imageUrl = payload["image_url"].StringValue,
                         similarity = score.Score
-                    });
+                    };
+
+                    //
+                    // second search in sub-documents
+                    //
+                    string subCollectionName = "doc_parts";
+
+
+                    Qdrant.Client.Grpc.Range range = new Qdrant.Client.Grpc.Range { Gte = docId };
+                    Filter filter = Match("parent_doc_id", (long)docId); //HasId(docId);// // Range("parent_doc_id", range);
+                    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), 
+                                                                filter: filter,
+                                                                searchParams: sp,
+                                                                limit:2);
+                    if (subScores.Count > 0)
+                    {
+                        ScoredPoint scoredPoint = subScores[0]; // TBD
+                        var subPayload = scoredPoint.Payload;
+                        var summary = subPayload["text"];
+
+                        if( summary.HasStringValue )
+                            si.summary = summary.StringValue;
+                    }
+
+                    searchItems.Add(si);
                 }
 
                 return new JsonResult(searchItems)

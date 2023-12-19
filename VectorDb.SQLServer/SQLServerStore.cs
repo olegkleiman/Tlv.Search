@@ -14,7 +14,7 @@ namespace VectorDb.SQLServer
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, ulong docIndex, ulong parentDocId,
+        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
                                      float[] vector, string collectionName)
         {
             try
@@ -41,7 +41,7 @@ namespace VectorDb.SQLServer
                 returnParameter.Direction = ParameterDirection.ReturnValue;
 
                 int rowsUpdated = command.ExecuteNonQuery();
-                doc.Id = (ulong)returnParameter.Value;
+                doc.Id = (int)returnParameter.Value;
 
                 //
                 // Store embeddings vector
