@@ -101,7 +101,8 @@ namespace QDrantDrive
                         {
                             ["text"] = prompts[itemIndex],
                             ["title"] = "Generic",
-                            ["url"] = "https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaSwitching.aspx"
+                            ["url"] = "https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaSwitching.aspx",
+                            ["subs"] = "[{\"group_id\": \"user_1\"}]"
                         },
                         Vectors = _vectors.ToArray()
                     };

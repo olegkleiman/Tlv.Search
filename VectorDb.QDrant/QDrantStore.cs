@@ -17,7 +17,8 @@ namespace VectorDb.QDrant
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, ulong docIndex, float[] vector, string collectionName)
+        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
+                                    float[] vector, string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 return false;
@@ -42,14 +43,16 @@ namespace VectorDb.QDrant
 
                 PointStruct ps = new()
                 {
-                    Id = docIndex,
+                    Id = (ulong)docIndex,
                     Payload =
                     {
                         ["text"] = doc.Text ?? string.Empty,
+                        ["summary"] = doc.Summary ?? string.Empty,
                         ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url ?? string.Empty,
-                        ["image_url"] = doc.ImageUrl ?? string.Empty
+                        ["image_url"] = doc.ImageUrl ?? string.Empty,
+                        ["parent_doc_id"] = parentDocId
                     },
                     Vectors = vector
                 };

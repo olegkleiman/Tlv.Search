@@ -5,9 +5,10 @@ namespace Tlv.Search.Common
 {
     public class Doc(string url)
     {
-        public ulong Id { get; set; }
+        public int Id { get; set; }
         public string? Lang { get; set; }
         public string? Text { get; set; }
+        public string? Summary { get; set; }
         public string? Description { get; set; }
         public string? Title { get; set; }
         public string? Url { get; private set; } = Guard.Against.NullOrEmpty(url);
@@ -24,13 +25,13 @@ namespace Tlv.Search.Common
             Source = prev.Source;
         }
 
-        public List<Doc>? subDocs = [];
+        public List<Doc> subDocs = [];
 
-        public string Content
+        public string? Content
         {
             get
             {
-                return Text + " " + Description + " " + Title;
+                return Text;// + " " + Description + " " + Title;
             }
         }
     }

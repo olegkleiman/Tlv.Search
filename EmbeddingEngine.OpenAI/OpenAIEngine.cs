@@ -15,8 +15,33 @@ namespace EmbeddingEngine.OpenAI
         {
             try
             {
-                string content = doc.Content;
                 var client = new OpenAIClient(m_providerKey, new OpenAIClientOptions());
+                //string userMessage = "סכם בבקשה את הטקסט הבא \n: ";
+
+                //ChatCompletionsOptions cco = new()
+                //{
+                //    DeploymentName = "gpt-3.5-turbo-1106", //,"gpt-4"
+                //    Messages =
+                //        {
+                //            new ChatRequestSystemMessage(@"You are a help assistant that summarized the user input."),
+                //            new ChatRequestUserMessage(userMessage + doc.Text)
+                //        },
+                //    Temperature = (float)0.7,
+                //    MaxTokens = 800,
+                //    NucleusSamplingFactor = (float)0.95,
+                //    FrequencyPenalty = 0,
+                //    PresencePenalty = 0,
+                //};
+
+                //Response<ChatCompletions> responseWithoutStream = await client.GetChatCompletionsAsync(cco);
+                //ChatResponseMessage summaryMessage = responseWithoutStream.Value.Choices[0].Message;
+                //string summary = summaryMessage.Content;
+                //doc.Summary = summary;
+
+                string? content = doc.Content;
+                if (string.IsNullOrEmpty(content))
+                    return [];
+
                 EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
                                             input: [content]);
                 Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
@@ -30,9 +55,11 @@ namespace EmbeddingEngine.OpenAI
                 return [];
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                Console.WriteLine(ex.Message);
+                return null;
+                //throw;
             }
         }
     }

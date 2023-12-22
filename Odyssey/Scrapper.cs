@@ -18,7 +18,7 @@ namespace Odyssey
         private IBrowser?             m_browser;
         private IPage?                m_page;
         private readonly SiteMap?     m_siteMap;
-        public string? ContentSelector { get; set; }
+        public string[]? m_ContentSelectors { get; set; }
         public string? TitleSelector { get; set; }
         public string? AddressSelector { get; set; }
 
@@ -59,7 +59,10 @@ namespace Odyssey
                     return null;
 
                 if (!reader.IsDBNull(2))
-                    scrapper.ContentSelector = reader.GetString(2);
+                {
+                    string selectors = reader.GetString(2);
+                    scrapper.m_ContentSelectors = selectors.Split(';');
+                }
                 if (!reader.IsDBNull(3))
                     scrapper.TitleSelector = reader.GetString(3);
                 if( !reader.IsDBNull(4) )
@@ -73,30 +76,6 @@ namespace Odyssey
             return scrapper;
         }
 
-        //public async Task<bool> Scrap(Action<Doc?> callback)
-        //{
-        //    if (m_siteMap is null
-        //         || m_siteMap.items is null )
-        //        return false;
-
-        //    foreach (SiteMapItem item in m_siteMap.items)
-        //    {
-        //        try
-        //        {
-        //            string docSource = m_siteMap.m_url.ToString();
-        //            Doc? doc = await Scrap(item.Location, docSource);
-        //            if( doc is not null)
-        //                callback(doc);
-        //        }
-        //        catch(Exception ex)
-        //        {
-        //            Console.WriteLine(ex.Message);
-        //        }
-        //    }
-            
-        //    return true;
-        //}
-
         public async Task<bool> ScrapTo(IVectorDb vectorDb, 
                                         IEmbeddingEngine embeddingEngine)
         {
@@ -107,7 +86,9 @@ namespace Odyssey
                  || m_siteMap.items is null)
                 return false;
 
-            ulong docIndex = 0;
+            int docIndex = 0;
+            int subDocIndex = 0;
+
             foreach (SiteMapItem item in m_siteMap.items)
             {
                 string docSource = m_siteMap.m_url.ToString();
@@ -120,22 +101,30 @@ namespace Odyssey
                         && vectorDb is not null )
                     {
                         float[] embeddings = await embeddingEngine.Embed(doc);
-                        await vectorDb.Save(doc, docIndex, embeddings, 
-                                            "site_docs");
+                        if( embeddings != null )
+                            await vectorDb.Save(doc, docIndex, 0, embeddings, 
+                                                "site_docs");
                     }
                     Console.WriteLine($"processed {docIndex}");
 
                     // process sub-docs
-                    ulong subDocIndex = 0;
                     foreach (Doc subDoc in doc.subDocs)
                     {
                         if (embeddingEngine is not null
                             && vectorDb is not null)
                         {
+                            subDoc.Title = doc.Title;
+                            subDoc.Description = doc.Description;
+                            subDoc.ImageUrl = doc.ImageUrl;
+
                             float[] embeddings = await embeddingEngine.Embed(subDoc);
-                            await vectorDb.Save(subDoc, subDocIndex++, embeddings,
-                                               $"subs_{doc.Id}" // collection name
-                                               );
+                            if (embeddings != null)
+                            {
+                                await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
+                                                    embeddings,
+                                                   "doc_parts" // collection name
+                                                   );
+                            }
                         }
                     }
 
@@ -152,6 +141,9 @@ namespace Odyssey
         {
             Console.WriteLine(url);
             if (m_page is null)
+                return null;
+
+            if ( m_ContentSelectors is null)
                 return null;
 
             try
@@ -200,17 +192,19 @@ namespace Odyssey
                 };
 
                 // Get content(s)
-                List<string> contentSelectors = [this.ContentSelector, ".//li[contains(@class, 'liAdditionalFields')]",".//div[@class='container']"];
-                foreach ( var contentSelector in contentSelectors )
+                foreach ( var contentSelector in this.m_ContentSelectors )
                 {
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
                     if( htmlNodes is not null )
                     {
+                        Console.WriteLine($"Using {contentSelector}");
                         foreach (var node in htmlNodes)
                         {
                             string _clearText = node.InnerText.Trim();
                             _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
                             _clearText = HttpUtility.HtmlDecode(_clearText);
+                            Regex trimmer = new Regex(@"\s\s+");
+                            _clearText = trimmer.Replace(_clearText, " ");
                             doc.Text += " " + _clearText;
 
                             doc.subDocs.Add(new Doc(url)

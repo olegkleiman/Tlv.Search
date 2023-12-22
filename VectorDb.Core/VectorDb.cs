@@ -6,7 +6,7 @@ namespace VectorDb.Core
 {
     public interface IVectorDb
     {
-        Task<bool> Save(Doc doc, ulong docIndex, float[] vector, string collectionName);
+        Task<bool> Save(Doc doc, int docIndex, int parentDocId, float[] vector, string collectionName);
         List<Doc> Search(string prompt);
 
         public string? m_providerKey { get; set; }
