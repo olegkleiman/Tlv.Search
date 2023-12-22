@@ -101,8 +101,9 @@ namespace Odyssey
                         && vectorDb is not null )
                     {
                         float[] embeddings = await embeddingEngine.Embed(doc);
-                        await vectorDb.Save(doc, docIndex, 0, embeddings, 
-                                            "site_docs");
+                        if( embeddings != null )
+                            await vectorDb.Save(doc, docIndex, 0, embeddings, 
+                                                "site_docs");
                     }
                     Console.WriteLine($"processed {docIndex}");
 
@@ -112,16 +113,18 @@ namespace Odyssey
                         if (embeddingEngine is not null
                             && vectorDb is not null)
                         {
-                            float[] embeddings = await embeddingEngine.Embed(subDoc);
-
                             subDoc.Title = doc.Title;
                             subDoc.Description = doc.Description;
                             subDoc.ImageUrl = doc.ImageUrl;
 
-                            await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
-                                                embeddings,
-                                               "doc_parts" // collection name
-                                               );
+                            float[] embeddings = await embeddingEngine.Embed(subDoc);
+                            if (embeddings != null)
+                            {
+                                await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
+                                                    embeddings,
+                                                   "doc_parts" // collection name
+                                                   );
+                            }
                         }
                     }
 
@@ -194,6 +197,7 @@ namespace Odyssey
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
                     if( htmlNodes is not null )
                     {
+                        Console.WriteLine($"Using {contentSelector}");
                         foreach (var node in htmlNodes)
                         {
                             string _clearText = node.InnerText.Trim();

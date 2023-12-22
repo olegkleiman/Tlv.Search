@@ -46,7 +46,12 @@ namespace Tlv.Search
             ILogger log)
         {
             string? prompt = req.Query["q"];
-            if( _logger is not null )
+            if (string.IsNullOrEmpty(prompt))
+                return new BadRequestObjectResult("Please provide some input");
+
+            prompt = " " + prompt;
+
+            if ( _logger is not null )
                 _logger.LogInformation($"Running search with prompt '{prompt}'");
 
             try
@@ -144,7 +149,7 @@ namespace Tlv.Search
                     var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), 
                                                                 filter: filter,
                                                                 searchParams: sp,
-                                                                limit:2);
+                                                                limit:1);
                     if (subScores.Count > 0)
                     {
                         ScoredPoint scoredPoint = subScores[0]; // TBD

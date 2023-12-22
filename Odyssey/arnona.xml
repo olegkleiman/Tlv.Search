@@ -5,11 +5,12 @@
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/Arnona.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
+	-->
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/PrivateDiscounts.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
-	<url>
+	<!--<url>
 		<loc>https://www.tel-aviv.gov.il/Contact/Pages/Apointments.aspx?screen=3&amp;customerType=24&amp;interest=26</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
@@ -21,11 +22,12 @@
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaPayments.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
+	-->
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaDiscounts.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
-	</url>-->
-	<!--<url>
+	</url>
+	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/Appeal.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>site
 	</url>
@@ -40,7 +42,7 @@
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/PropertyDiscounts.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
-	</url>-->
+	</url>
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Pages/MainItemPage.aspx?WebID=9e6c064d-788a-4b36-a0aa-73f4e95502a9&amp;ListID=8d092124-9b6d-42c6-925e-6da307da7f4e&amp;ItemID=1</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
