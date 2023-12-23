@@ -49,7 +49,7 @@ namespace Tlv.Search
             if (string.IsNullOrEmpty(prompt))
                 return new BadRequestObjectResult("Please provide some input");
 
-            prompt = " " + prompt;
+            //prompt = " " + prompt;
 
             if ( _logger is not null )
                 _logger.LogInformation($"Running search with prompt '{prompt}'");
