@@ -47,7 +47,7 @@ namespace VectorDb.QDrant
                     Payload =
                     {
                         ["text"] = doc.Text ?? string.Empty,
-                        //["summary"] = doc.Summary ?? string.Empty,
+                        ["subtitle"] = doc.SubTitle ?? string.Empty,
                         ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url ?? string.Empty,

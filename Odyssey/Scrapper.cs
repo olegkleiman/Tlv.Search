@@ -8,6 +8,7 @@ using PuppeteerSharp;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Xml.Linq;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
@@ -186,9 +187,9 @@ namespace Odyssey
                 {
                     Source = source,
                     Lang = lang,
-                    Description = description,
-                    ImageUrl = imageUrl,
-                    Title = title
+                    Description = clearText(description),
+                    ImageUrl = clearText(imageUrl),
+                    Title = clearText(title)
                 };
 
                 // Get content(s)
@@ -200,17 +201,23 @@ namespace Odyssey
                         Console.WriteLine($"Using {contentSelector}");
                         foreach (var node in htmlNodes)
                         {
-                            string _clearText = node.InnerText.Trim();
-                            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
-                            _clearText = HttpUtility.HtmlDecode(_clearText);
-                            Regex trimmer = new Regex(@"\s\s+");
-                            _clearText = trimmer.Replace(_clearText, " ");
-                            doc.Text += " " + _clearText;
+                            string? _clearText = clearText(node.InnerText);
+                            doc.Text = _clearText;
 
-                            doc.subDocs.Add(new Doc(url)
+                            if ( node.HasChildNodes )
                             {
-                                Text = _clearText,
-                            });
+                                var subtitle = (from subNode in node.ChildNodes
+                                        where subNode.Name == "h3"
+                                        select subNode.InnerText)
+                                        .FirstOrDefault();
+
+                                doc.subDocs.Add(new Doc(url)
+                                {
+                                    Text = _clearText,
+                                    SubTitle = clearText(subtitle)
+                                });
+                            }
+
                         }
 
                         break;
@@ -228,5 +235,19 @@ namespace Odyssey
         }
 
 
+
+        private string? clearText(string? text)
+        {
+            if( string.IsNullOrEmpty(text) )
+                return null;
+
+            string _clearText = text.Trim();
+            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+            _clearText = HttpUtility.HtmlDecode(_clearText);
+            Regex trimmer = new Regex(@"\s\s+");
+            _clearText = trimmer.Replace(_clearText, " ");
+
+            return _clearText;
+        }
     }
 }

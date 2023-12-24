@@ -5,7 +5,6 @@
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/Arnona.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
-	-->
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Contact/Pages/Management.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
@@ -14,23 +13,23 @@
 		<loc>https://www.tel-aviv.gov.il/Contact/Pages/Apointments.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
+	-->
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/PrivateDiscounts.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
-	<!--<url>
+	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/BusinessDiscounts.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
-	</url>-->
+	</url>
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaSwitching.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>	
-	<!--<url>
+	<url>
 		<loc>https://www.tel-aviv.gov.il/Contact/Pages/Apointments.aspx?screen=3&amp;customerType=24&amp;interest=26</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>
 	</url>
-	-->
 	<url>
 		<loc>https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaPayments.aspx</loc>
 		<lastmod>2023-11-07T08:53:51Z</lastmod>

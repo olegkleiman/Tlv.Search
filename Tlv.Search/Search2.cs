@@ -76,13 +76,11 @@ namespace Tlv.Search
                          select collection).FirstOrDefault();
                 if (q == null)
                 {
-                    VectorParams vp = new()
+                    // This is equivalent to InternalServerErrorResult, but with the message
+                    return new ObjectResult(new { error = $"Couldn't find '{collectionName}' collection" })
                     {
-                        Distance = Distance.Cosine,
-                        Size = uVectorSize
+                        StatusCode = StatusCodes.Status500InternalServerError
                     };
-
-                    await qdClient.CreateCollectionAsync(collectionName, vp);
                 }
 
                 //
@@ -90,10 +88,9 @@ namespace Tlv.Search
                 //
                 OpenAIClient client = new(providerKey);
 
-                SearchParams sp = new SearchParams()
+                SearchParams sp = new()
                 {
-                    Exact = true
-
+                    Exact = false
                 };
 
                 List<float> queryVector = new();
@@ -116,52 +113,74 @@ namespace Tlv.Search
                     }
                 }
 
-                //
-                // first step of search - search in all the documents in general collection
-                //
-                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), 
-                                                        searchParams: sp,    
-                                                        limit: 5);
+                collectionName = "doc_parts";
+
+                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(),
+                                            searchParams: sp, limit: 5);
+
                 List<SearchItem>? searchItems = new();
                 foreach (var score in scores)
                 {
                     var payload = score.Payload;
-                    ulong docId = score.Id.Num;
 
-                    SearchItem si = new SearchItem()
+                    SearchItem si = new()
                     {
                         id = score.Id.Num,
                         title = payload["title"].StringValue,
-                        summary = string.Empty, // may be set from subDoc below
+                        summary = payload["text"].StringValue,
                         url = payload["url"].StringValue,
                         imageUrl = payload["image_url"].StringValue,
                         similarity = score.Score
                     };
 
-                    //
-                    // second search in sub-documents
-                    //
-                    string subCollectionName = "doc_parts";
-
-
-                    Qdrant.Client.Grpc.Range range = new Qdrant.Client.Grpc.Range { Gte = docId };
-                    Filter filter = Match("parent_doc_id", (long)docId); //HasId(docId);// // Range("parent_doc_id", range);
-                    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), 
-                                                                filter: filter,
-                                                                searchParams: sp,
-                                                                limit:1);
-                    if (subScores.Count > 0)
-                    {
-                        ScoredPoint scoredPoint = subScores[0]; // TBD
-                        var subPayload = scoredPoint.Payload;
-                        var summary = subPayload["text"];
-
-                        if( summary.HasStringValue )
-                            si.summary = summary.StringValue;
-                    }
-
                     searchItems.Add(si);
                 }
+                ////
+                //// first step of search - search in all the documents in general collection
+                ////
+                //var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), 
+                //                                        searchParams: sp,    
+                //                                        limit: 5);
+                //List<SearchItem>? searchItems = new();
+                //foreach (var score in scores)
+                //{
+                //    var payload = score.Payload;
+                //    ulong docId = score.Id.Num;
+
+                //    SearchItem si = new SearchItem()
+                //    {
+                //        id = score.Id.Num,
+                //        title = payload["title"].StringValue,
+                //        summary = string.Empty, // may be set from subDoc below
+                //        url = payload["url"].StringValue,
+                //        imageUrl = payload["image_url"].StringValue,
+                //        similarity = score.Score
+                //    };
+
+                //    //
+                //    // second search in sub-documents
+                //    //
+                //    string subCollectionName = "doc_parts";
+
+
+                //    Qdrant.Client.Grpc.Range range = new Qdrant.Client.Grpc.Range { Gte = docId };
+                //    Filter filter = Match("parent_doc_id", (long)docId); //HasId(docId);// // Range("parent_doc_id", range);
+                //    var subScores = await qdClient.SearchAsync(subCollectionName, queryVector.ToArray(), 
+                //                                                filter: filter,
+                //                                                searchParams: sp,
+                //                                                limit:1);
+                //    if (subScores.Count > 0)
+                //    {
+                //        ScoredPoint scoredPoint = subScores[0]; // TBD
+                //        var subPayload = scoredPoint.Payload;
+                //        var summary = subPayload["text"];
+
+                //        if( summary.HasStringValue )
+                //            si.summary = summary.StringValue;
+                //    }
+
+                //    searchItems.Add(si);
+                //}
 
                 return new JsonResult(searchItems)
                 {

@@ -8,9 +8,9 @@ namespace Tlv.Search.Common
         public int Id { get; set; }
         public string? Lang { get; set; }
         public string? Text { get; set; }
-        //public string? Summary { get; set; }
         public string? Description { get; set; }
         public string? Title { get; set; }
+        public string? SubTitle { get; set; }
         public string? Url { get; private set; } = Guard.Against.NullOrEmpty(url);
         public string? ImageUrl { get; set; }
         public string? Source { get; set; }
@@ -31,7 +31,7 @@ namespace Tlv.Search.Common
         {
             get
             {
-                return $"{Text} {Title}";
+                return $"{Title?.Trim()} {SubTitle?.Trim()}";
             }
         }
     }
