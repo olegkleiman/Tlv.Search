@@ -194,6 +194,10 @@ namespace Odyssey
                 // Get content(s)
                 foreach ( var contentSelector in this.m_ContentSelectors )
                 {
+                    //var inputs = htmlDoc.DocumentNode.SelectNodes(".//input[contains(@class, 'filterCheckBox')]");
+                    //var inputNode = inputs[1];
+                    //await m_page.ClickAsync(inputNode.XPath);
+
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
                     if( htmlNodes is not null )
                     {

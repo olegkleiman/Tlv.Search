@@ -30,7 +30,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmbeddingEngine.OpenAI", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tlv.Search.Common", "Tlv.Search.Common\Tlv.Search.Common.csproj", "{2BC2AF82-A580-4ED4-B2D2-A0A2A51BCED5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmbeddingEngine.Gemini", "EmbeddingEngine.Voyage\EmbeddingEngine.Gemini.csproj", "{D04B9B7D-7FCF-4853-9140-365FB5A148E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmbeddingEngine.Gemini", "EmbeddingEngine.Voyage\EmbeddingEngine.Gemini.csproj", "{D04B9B7D-7FCF-4853-9140-365FB5A148E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SKDrive", "SKDrive\SKDrive.csproj", "{9029BA5C-7F86-4119-9317-846A4CE100D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -86,6 +88,10 @@ Global
 		{D04B9B7D-7FCF-4853-9140-365FB5A148E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D04B9B7D-7FCF-4853-9140-365FB5A148E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D04B9B7D-7FCF-4853-9140-365FB5A148E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9029BA5C-7F86-4119-9317-846A4CE100D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9029BA5C-7F86-4119-9317-846A4CE100D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9029BA5C-7F86-4119-9317-846A4CE100D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9029BA5C-7F86-4119-9317-846A4CE100D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
