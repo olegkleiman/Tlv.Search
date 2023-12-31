@@ -1,12 +1,14 @@
 ﻿using Azure.AI.OpenAI;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Memory;
-using System;
-using System.Diagnostics;
+//using Microsoft.SemanticKernel.Memory;
+
 
 namespace SKDrive
 {
@@ -45,40 +47,50 @@ namespace SKDrive
                 // Azure OpenAI package
                 var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
 
+                const string model = "microsoft/Orca-2-13b";
+                const string Endpoint = "https://api-inference.huggingface.co/models/microsoft/Orca-2-13b";
+
                 IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
+#pragma warning disable SKEXP0020
+                kernelBuilder.AddHuggingFaceTextEmbeddingGeneration("sentence-transformers/all-MiniLM-L6-v2");
+                //kernelBuilder.AddHuggingFaceTextGeneration(model,
+                //    "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",
+                //    Endpoint);
+#pragma warning restore SKEXP0020
                 kernelBuilder.AddAzureOpenAIChatCompletion(
                                                      "gpt4", // Azure OpenAI Deployment Name
                                                      openaiEndpoint,
                                                      openaiAzureKey
                                                      );
-
+                kernelBuilder.Services.AddLogging(c => c.AddConsole());
                 kernelBuilder.Plugins.AddFromType<LightPlugin>();
 
                 var kernel = kernelBuilder.Build();
 
-#pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
+//#pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
+                
+//                var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
+                
+//                var memoryBuilder = new MemoryBuilder()
+//                    .WithAzureOpenAITextEmbeddingGeneration("ada2",
+//                                                            openaiEndpoint,
+//                                                            openaiAzureKey)
+//                   .WithMemoryStore(new QdrantMemoryStore(qdClient));
+//                var memory = memoryBuilder.Build();
 
-                var memoryBuilder = new MemoryBuilder();
-                memoryBuilder.WithAzureOpenAITextEmbeddingGeneration("ada2",
-                                                                    openaiEndpoint,
-                                                                    openaiAzureKey);
-                var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
-                memoryBuilder.WithMemoryStore(new QdrantMemoryStore(qdClient));
-                var memory = memoryBuilder.Build();
+//                const string MemoryCollectionName = "aboutMe";
+//                await memory.SaveInformationAsync(MemoryCollectionName, id: "info1", text: "My name is Andrea");
+//                await memory.SaveInformationAsync(MemoryCollectionName, id: "info2", text: "My name is Irina");
+//                MemoryQueryResult? lookup  = await memory.GetAsync(MemoryCollectionName, "info2", withEmbedding: true);
 
-                const string MemoryCollectionName = "aboutMe";
-                await memory.SaveInformationAsync(MemoryCollectionName, id: "info1", text: "My name is Andrea");
-                await memory.SaveInformationAsync(MemoryCollectionName, id: "info2", text: "My name is Irina");
-                MemoryQueryResult? lookup  = await memory.GetAsync(MemoryCollectionName, "info2", withEmbedding: true);
+//                IAsyncEnumerable<MemoryQueryResult> searchResults = memory.SearchAsync(MemoryCollectionName, "Irina",
+//                                                                                        limit: 2, minRelevanceScore: 0.5);
+//                await foreach (MemoryQueryResult item in searchResults)
+//                {
+//                    Console.WriteLine(item.Metadata.Text + " : " + item.Relevance);
+//                }
 
-                IAsyncEnumerable<MemoryQueryResult> searchResults = memory.SearchAsync(MemoryCollectionName, "Irina",
-                                                                                        limit: 2, minRelevanceScore: 0.5);
-                await foreach (MemoryQueryResult item in searchResults)
-                {
-                    Console.WriteLine(item.Metadata.Text + " : " + item.Relevance);
-                }
-
-#pragma warning restore SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
+//#pragma warning restore SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
 
 
                 var functions = kernel.Plugins.GetFunctionsMetadata();

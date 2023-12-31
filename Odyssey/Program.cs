@@ -5,7 +5,9 @@ using Odyssey.Models;
 using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
-using System.Diagnostics.Contracts;
+using Microsoft.SemanticKernel.Memory;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Connectors.Qdrant;
 
 namespace Odyssey
 {
@@ -57,6 +59,36 @@ namespace Odyssey
                     return;
                 }
 
+                var openaiAzureKey = config["OPENAI_AZURE_KEY"];
+                if (string.IsNullOrEmpty(openaiAzureKey))
+                {
+                    Console.WriteLine("Azure OpenAI key not found in configuration");
+                    return;
+                }
+                var openaiEndpoint = config["OPENAI_ENDPOINT"];
+                if (string.IsNullOrEmpty(openaiEndpoint))
+                {
+                    Console.WriteLine("OpenAI endpoint not found in configuration");
+                    return;
+                }
+
+#pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026
+
+                //var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
+                //IMemoryStore memoryStore = new QdrantMemoryStore(qdClient);
+                //bool b = await memoryStore.DoesCollectionExistAsync("site_docs");
+                //memoryStore.DeleteCollectionAsync("site_docs");
+                var memoryBuilder = new MemoryBuilder()
+                                .WithAzureOpenAITextEmbeddingGeneration("ada2",
+                                                                    openaiEndpoint,
+                                                                    openaiAzureKey)
+                                .WithQdrantMemoryStore("http://localhost:6333", 1536);
+                                //.WithMemoryStore(memoryStore);
+
+                ISemanticTextMemory memory = memoryBuilder.Build();
+
+#pragma warning restore SKEXP0003, SKEXP0011, SKEXP0026
+
                 List<Task> tasks = [];
                 foreach (DataRow? row in table.Rows)
                 {
@@ -86,7 +118,8 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine);
+                    //Task task = scrapper.ScrapTo(vectorDb, embeddingEngine);
+                    Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
 

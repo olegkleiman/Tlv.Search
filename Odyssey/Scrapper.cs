@@ -1,7 +1,9 @@
 ﻿using Ardalis.GuardClauses;
+using BenchmarkDotNet.Attributes;
 using EmbeddingEngine.Core;
 using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
+using Microsoft.SemanticKernel.Memory;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
@@ -76,11 +78,42 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> ScrapTo(IVectorDb vectorDb, 
+#pragma warning disable SKEXP0003
+        public async Task<bool> ScrapTo(ISemanticTextMemory memory)
+        {
+            if (memory == null)
+                return false;
+            if (m_siteMap is null
+                 || m_siteMap.items is null)
+                return false;
+
+            int docIndex = 0;
+            int subDocIndex = 0;
+            const string MemoryCollectionName = "site_docs2";
+
+            foreach (SiteMapItem item in m_siteMap.items)
+            {
+                string docSource = m_siteMap.m_url.ToString();
+                Doc? doc = await Scrap(item.Location, docSource);
+                if (doc is null)
+                    continue;
+
+                doc.Id = docIndex;
+                
+                await memory.SaveInformationAsync(MemoryCollectionName, 
+                                                    id: "info1", 
+                                                    text: doc.Text);
+            }
+
+            return true;
+        }
+#pragma warning restore SKEXP0003
+
+        public async Task<bool> ScrapTo(IVectorDb vectorDb,
                                         IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
-                || embeddingEngine is null )
+                || embeddingEngine is null)
                 return false;
             if (m_siteMap is null
                  || m_siteMap.items is null)
@@ -93,16 +126,19 @@ namespace Odyssey
             {
                 string docSource = m_siteMap.m_url.ToString();
                 Doc? doc = await Scrap(item.Location, docSource);
+                if (doc is null)
+                    continue;
+
                 doc.Id = docIndex;
-                
+
                 if (doc is not null)
                 {
                     if (embeddingEngine is not null
-                        && vectorDb is not null )
+                        && vectorDb is not null)
                     {
                         float[] embeddings = await embeddingEngine.Embed(doc);
-                        if( embeddings != null )
-                            await vectorDb.Save(doc, docIndex, 0, embeddings, 
+                        if (embeddings != null)
+                            await vectorDb.Save(doc, docIndex, 0, embeddings,
                                                 "site_docs");
                     }
                     Console.WriteLine($"processed {docIndex}");
@@ -136,6 +172,7 @@ namespace Odyssey
             return true;
         }
 
+        [Benchmark]
         private async Task<Doc?> Scrap(string url,
                                       string source)
         {

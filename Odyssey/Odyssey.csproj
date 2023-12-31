@@ -10,6 +10,9 @@
   <ItemGroup>
 	  <PackageReference Include="Ardalis.GuardClauses" Version="4.3.0" />
 	  <PackageReference Include="Azure.Identity" Version="1.10.4" />
+	  <PackageReference Include="BenchmarkDotNet" Version="0.13.11" />
+	  <PackageReference Include="Microsoft.SemanticKernel" Version="1.0.1" />
+	  <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.0.1-alpha" />	  
     <PackageReference Include="HtmlAgilityPack" Version="1.11.57" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
