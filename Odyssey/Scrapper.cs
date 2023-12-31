@@ -133,14 +133,14 @@ namespace Odyssey
 
                 if (doc is not null)
                 {
-                    if (embeddingEngine is not null
-                        && vectorDb is not null)
-                    {
-                        float[] embeddings = await embeddingEngine.Embed(doc);
-                        if (embeddings != null)
-                            await vectorDb.Save(doc, docIndex, 0, embeddings,
-                                                "site_docs");
-                    }
+                    //if (embeddingEngine is not null
+                    //    && vectorDb is not null)
+                    //{
+                    //    float[] embeddings = await embeddingEngine.Embed(doc);
+                    //    if (embeddings != null)
+                    //        await vectorDb.Save(doc, docIndex, 0, embeddings,
+                    //                            "site_docs");
+                    //}
                     Console.WriteLine($"processed {docIndex}");
 
                     // process sub-docs
@@ -243,9 +243,12 @@ namespace Odyssey
                         {
                             string _clearText = node.InnerText.Trim();
                             _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+                            _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
                             _clearText = HttpUtility.HtmlDecode(_clearText);
                             Regex trimmer = new Regex(@"\s\s+");
                             _clearText = trimmer.Replace(_clearText, " ");
+                            _clearText = _clearText.Replace('"', '\'');
+                            _clearText = _clearText.Replace('•', '*');
                             doc.Text += " " + _clearText;
 
                             doc.subDocs.Add(new Doc(url)

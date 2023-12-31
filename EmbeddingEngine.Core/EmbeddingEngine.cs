@@ -7,7 +7,7 @@ namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<Single[]> Embed(Doc doc);
+        Task<Single[]?> Embed(Doc doc);
     }
 
     public enum EmbeddingsProviders

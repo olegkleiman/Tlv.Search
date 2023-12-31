@@ -28,7 +28,7 @@ namespace Odyssey
                 string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
                 Guard.Against.NullOrEmpty(connectionString);
 
-                string keyName = "OPENAI_KEY";
+                string keyName = "GEMINI_KEY";
                 string? embeddingEngineKey = config[keyName];
                 Guard.Against.NullOrEmpty(embeddingEngineKey, keyName, $"Couldn't find {keyName} in configuration");
 
@@ -52,7 +52,7 @@ namespace Odyssey
                     return;
                 }
 
-                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.OpenAI, embeddingEngineKey);
+                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.Gemini, embeddingEngineKey);
                 if( embeddingEngine is null )
                 {
                     Console.WriteLine($"Couldn't create embedding engine with key '{embeddingEngineKey}'");
@@ -118,8 +118,8 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    //Task task = scrapper.ScrapTo(vectorDb, embeddingEngine);
-                    Task task = scrapper.ScrapTo(memory);
+                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine);
+                    //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
 

@@ -4,9 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.HuggingFace;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Memory;
+using System.Collections;
+using System.Net;
+using System.Net.Http.Headers;
 //using Microsoft.SemanticKernel.Memory;
 
 
@@ -21,12 +25,12 @@ namespace SKDrive
                 .AddJsonFile("appsettings.json", optional: false);
             IConfiguration config = builder.Build();
 
-            var openaiKey = config["OPENAI_KEY"];
-            if (string.IsNullOrEmpty(openaiKey))
-            {
-                Console.WriteLine("OpenAI key not found in configuration");
-                return;
-            }
+            //var openaiKey = config["OPENAI_KEY"];
+            //if (string.IsNullOrEmpty(openaiKey))
+            //{
+            //    Console.WriteLine("OpenAI key not found in configuration");
+            //    return;
+            //}
 
             var openaiAzureKey = config["OPENAI_AZURE_KEY"];
             if (string.IsNullOrEmpty(openaiAzureKey))
@@ -45,52 +49,75 @@ namespace SKDrive
             try
             {
                 // Azure OpenAI package
-                var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
+                //var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
 
-                const string model = "microsoft/Orca-2-13b";
+                //const string model = "microsoft/Orca-2-13b";
                 const string Endpoint = "https://api-inference.huggingface.co/models/microsoft/Orca-2-13b";
 
+                string model = "google/canine-c"; // intfloat /multilingual-e5-large"; // sentence -transformers/all-MiniLM-L6-v2";
+
                 IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
-#pragma warning disable SKEXP0020
-                kernelBuilder.AddHuggingFaceTextEmbeddingGeneration("sentence-transformers/all-MiniLM-L6-v2");
+                kernelBuilder.Services.AddLogging(c => c.AddConsole());
+#pragma warning disable SKEXP0003, SKEXP0020, SKEXP0026
+                //kernelBuilder.AddHuggingFaceTextEmbeddingGeneration(model);
                 //kernelBuilder.AddHuggingFaceTextGeneration(model,
                 //    "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",
                 //    Endpoint);
-#pragma warning restore SKEXP0020
-                kernelBuilder.AddAzureOpenAIChatCompletion(
-                                                     "gpt4", // Azure OpenAI Deployment Name
-                                                     openaiEndpoint,
-                                                     openaiAzureKey
-                                                     );
-                kernelBuilder.Services.AddLogging(c => c.AddConsole());
+
+                //kernelBuilder.AddAzureOpenAIChatCompletion(
+                //                                     "gpt4", // Azure OpenAI Deployment Name
+                //                                     openaiEndpoint,
+                //                                     openaiAzureKey
+                //                                     );
+                //kernelBuilder.Services.AddLogging(c => c.AddConsole());
                 kernelBuilder.Plugins.AddFromType<LightPlugin>();
 
                 var kernel = kernelBuilder.Build();
 
-//#pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
-                
-//                var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
-                
-//                var memoryBuilder = new MemoryBuilder()
-//                    .WithAzureOpenAITextEmbeddingGeneration("ada2",
-//                                                            openaiEndpoint,
-//                                                            openaiAzureKey)
-//                   .WithMemoryStore(new QdrantMemoryStore(qdClient));
-//                var memory = memoryBuilder.Build();
+                #pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
 
-//                const string MemoryCollectionName = "aboutMe";
-//                await memory.SaveInformationAsync(MemoryCollectionName, id: "info1", text: "My name is Andrea");
-//                await memory.SaveInformationAsync(MemoryCollectionName, id: "info2", text: "My name is Irina");
-//                MemoryQueryResult? lookup  = await memory.GetAsync(MemoryCollectionName, "info2", withEmbedding: true);
+                var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
 
-//                IAsyncEnumerable<MemoryQueryResult> searchResults = memory.SearchAsync(MemoryCollectionName, "Irina",
-//                                                                                        limit: 2, minRelevanceScore: 0.5);
-//                await foreach (MemoryQueryResult item in searchResults)
-//                {
-//                    Console.WriteLine(item.Metadata.Text + " : " + item.Relevance);
-//                }
 
-//#pragma warning restore SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
+                string proxyURL = "http://forticache:8080";
+                WebProxy webProxy = new WebProxy(proxyURL);
+
+                HttpClientHandler httpClientHandler = new HttpClientHandler
+                {
+                    Proxy = webProxy,
+                };
+                HttpClient client = new HttpClient(httpClientHandler);
+                client.BaseAddress = new Uri("https://api-inference.huggingface.co/models/");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "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");
+
+                HuggingFaceTextEmbeddingGenerationService embeddingService = new(model, client);
+                var memoryBuilder = new MemoryBuilder()
+                    .WithLoggerFactory(kernel.LoggerFactory)
+                    .WithTextEmbeddingGeneration(embeddingService)
+                   //.WithAzureOpenAITextEmbeddingGeneration("ada2",
+                   //                                        openaiEndpoint,
+                   //                                        openaiAzureKey)
+                   .WithMemoryStore(new QdrantMemoryStore(qdClient));
+                var memory = memoryBuilder.Build();
+
+                string collectionName = "MyCollection";
+                await memory.SaveInformationAsync(collectionName, "Today is a sunny day and I will get some ice cream.", "1000");
+
+#pragma warning restore SKEXP0003, SKEXP0020, SKEXP0026
+
+                //                const string MemoryCollectionName = "aboutMe";
+                //                await memory.SaveInformationAsync(MemoryCollectionName, id: "info1", text: "My name is Andrea");
+                //                await memory.SaveInformationAsync(MemoryCollectionName, id: "info2", text: "My name is Irina");
+                //                MemoryQueryResult? lookup  = await memory.GetAsync(MemoryCollectionName, "info2", withEmbedding: true);
+
+                //                IAsyncEnumerable<MemoryQueryResult> searchResults = memory.SearchAsync(MemoryCollectionName, "Irina",
+                //                                                                                        limit: 2, minRelevanceScore: 0.5);
+                //                await foreach (MemoryQueryResult item in searchResults)
+                //                {
+                //                    Console.WriteLine(item.Metadata.Text + " : " + item.Relevance);
+                //                }
+
+                //#pragma warning restore SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
 
 
                 var functions = kernel.Plugins.GetFunctionsMetadata();
