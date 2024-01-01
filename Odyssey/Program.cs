@@ -28,7 +28,7 @@ namespace Odyssey
                 string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
                 Guard.Against.NullOrEmpty(connectionString);
 
-                string keyName = "GEMINI_KEY";
+                string keyName = "OPENAI_KEY";
                 string? embeddingEngineKey = config[keyName];
                 Guard.Against.NullOrEmpty(embeddingEngineKey, keyName, $"Couldn't find {keyName} in configuration");
 
@@ -57,7 +57,7 @@ namespace Odyssey
                 }
 
                 IEmbeddingEngine? embeddingEngine = 
-                    EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.Gemini, 
+                    EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.OpenAI, 
                                                                 providerKey: embeddingEngineKey,
                                                                 modelName: modelName);
                 if( embeddingEngine is null )

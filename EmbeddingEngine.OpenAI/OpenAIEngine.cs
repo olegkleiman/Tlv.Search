@@ -7,10 +7,10 @@ using Tlv.Search.Common;
 
 namespace EmbeddingEngine.OpenAI
 {
-    public class OpenAIEngine(string providerKey) : IEmbeddingEngine
+    public class OpenAIEngine(string providerKey, string modelName) : IEmbeddingEngine
     {
         public string? m_providerKey { get; set; } = providerKey;
-        public string m_modelName { get; set; }
+        public string? m_modelName { get; set; } = modelName;
 
         public async Task<float[]?> Embed(Doc doc)
         {
