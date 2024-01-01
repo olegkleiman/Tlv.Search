@@ -39,16 +39,21 @@ namespace EmbeddingEngine.Gemini
     {
         public string? m_providerKey { get; set; } = providerKey;
         public string? m_modelName { get; set; } = modelName;
-
-        public async Task<Single[]?> Embed(string modelName, Doc doc)
+  
+        public async Task<float[]?> Embed(Doc doc)
         {
+            if (string.IsNullOrEmpty(m_modelName))
+                return null;
+            if (string.IsNullOrEmpty(doc.Content))
+                return null;
+
             try
             {
                 using HttpClient httpClient = new();
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
                 var payload = new Payload
                 {
-                    model = "models/embedding-001",
+                    model = m_modelName,
                     content = new Content()
                     {
                         parts = [new Text()
@@ -58,7 +63,7 @@ namespace EmbeddingEngine.Gemini
                     }
                 };
 
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key={m_providerKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/{m_modelName}:embedContent?key={m_providerKey}";
                 HttpResponseMessage response = await httpClient.PostAsJsonAsync(url, payload);
                 response.EnsureSuccessStatusCode();
 
@@ -66,11 +71,12 @@ namespace EmbeddingEngine.Gemini
                 GeminiResponse? geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(respContent);
                 return geminiResponse?.embedding?.values;
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 throw;
             }
 
         }
+
     }
 }

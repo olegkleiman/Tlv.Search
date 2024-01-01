@@ -10,8 +10,9 @@ namespace EmbeddingEngine.OpenAI
     public class OpenAIEngine(string providerKey) : IEmbeddingEngine
     {
         public string? m_providerKey { get; set; } = providerKey;
+        public string m_modelName { get; set; }
 
-        public async Task<Single[]?> Embed(string modelName, Doc doc)
+        public async Task<float[]?> Embed(Doc doc)
         {
             try
             {

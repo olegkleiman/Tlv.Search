@@ -7,7 +7,9 @@ namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<float[]?> Embed(string modelName, Doc doc);
+        Task<float[]?> Embed(Doc doc);
+
+        public string? m_modelName { get; set; }
     }
 
     public enum EmbeddingsProviders
@@ -53,7 +55,7 @@ namespace EmbeddingEngine.Core
                 string typeName = $"{className}, {assemblyName}, Version={assemblyVersion}, Culture={assemblyCulture}, PublicKeyToken={publicKeyToken}";
                 Type? _type = Type.GetType(typeName);
                 if (_type is null) return null;
-                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: providerKey);
+                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: [providerKey,modelName]);
                 if (engine is null) return null;
                 return engine;
             }

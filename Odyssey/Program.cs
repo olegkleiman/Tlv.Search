@@ -36,6 +36,10 @@ namespace Odyssey
                 string? providerKey = config[keyName];
                 Guard.Against.NullOrEmpty(providerKey, keyName, $"Couldn't find {keyName} in configuration");
 
+                keyName = "EMBEDDING_MODEL_NAME";
+                string? modelName = config[keyName];
+                Guard.Against.NullOrEmpty(modelName, keyName, $"Couldn't find {modelName} in configuration");
+
                 using var conn = new SqlConnection(connectionString);
                 string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
                 
@@ -52,7 +56,10 @@ namespace Odyssey
                     return;
                 }
 
-                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.Gemini, embeddingEngineKey);
+                IEmbeddingEngine? embeddingEngine = 
+                    EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.Gemini, 
+                                                                providerKey: embeddingEngineKey,
+                                                                modelName: modelName);
                 if( embeddingEngine is null )
                 {
                     Console.WriteLine($"Couldn't create embedding engine with key '{embeddingEngineKey}'");
