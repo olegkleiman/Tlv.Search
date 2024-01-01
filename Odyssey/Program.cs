@@ -125,7 +125,7 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine);
+                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine, modelName);
                     //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }

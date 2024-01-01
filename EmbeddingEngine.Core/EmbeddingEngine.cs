@@ -1,13 +1,10 @@
 ﻿using Ardalis.GuardClauses;
-using System.Reflection;
-using Tlv.Search.Common;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<float[]?> Embed(Doc doc);
+        Task<float[]>? GenerateEmbeddingsAsync(string input);
 
         public string? m_modelName { get; set; }
     }

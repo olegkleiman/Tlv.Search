@@ -9,13 +9,17 @@ namespace VectorDb.SQLServer
     {
         public string m_providerKey { get; set; } = providerKey;
 
-        public List<Doc> Search(string prompt)
+        public Task<List<SearchItem>> Search(string collectionName,
+                                            ReadOnlyMemory<float> queryVector,
+                                            ulong limit = 5)
         {
             throw new NotImplementedException();
         }
 
         public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
-                                     float[] vector, string collectionName)
+                                     float[] vector, 
+                                     string collectionName,
+                                     string sourceName)
         {
             try
             {

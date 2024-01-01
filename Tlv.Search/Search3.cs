@@ -5,8 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-//using Microsoft.Extensions.Logging;
-//using Newtonsoft.Json;
+
 using Qdrant.Client;
 using Ardalis.GuardClauses;
 using System.Net;
@@ -20,6 +19,7 @@ using System.Net.Http;
 using System.Text.Json;
 using Microsoft.Identity.Client;
 using Microsoft.Extensions.Logging;
+using Tlv.Search.Common;
 
 namespace Tlv.Search
 {

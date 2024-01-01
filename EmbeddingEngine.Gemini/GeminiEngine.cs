@@ -39,12 +39,12 @@ namespace EmbeddingEngine.Gemini
     {
         public string? m_providerKey { get; set; } = providerKey;
         public string? m_modelName { get; set; } = modelName;
-  
-        public async Task<float[]?> Embed(Doc doc)
+
+        public async Task<float[]>? GenerateEmbeddingsAsync(string input)
         {
             if (string.IsNullOrEmpty(m_modelName))
                 return null;
-            if (string.IsNullOrEmpty(doc.Content))
+            if (string.IsNullOrEmpty(input))
                 return null;
 
             try
@@ -58,7 +58,7 @@ namespace EmbeddingEngine.Gemini
                     {
                         parts = [new Text()
                         {
-                            text = doc.Content
+                            text = input
                         }]
                     }
                 };

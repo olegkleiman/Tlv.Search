@@ -24,6 +24,7 @@ using Ardalis.GuardClauses;
 using Tlv.Search.models;
 using Google.Protobuf.Collections;
 using TiktokenSharp;
+using Tlv.Search.Common;
 
 namespace Tlv.Search
 {

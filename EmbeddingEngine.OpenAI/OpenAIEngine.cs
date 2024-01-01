@@ -12,7 +12,7 @@ namespace EmbeddingEngine.OpenAI
         public string? m_providerKey { get; set; } = providerKey;
         public string? m_modelName { get; set; } = modelName;
 
-        public async Task<float[]?> Embed(Doc doc)
+        public async Task<float[]>? GenerateEmbeddingsAsync(string input)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace EmbeddingEngine.OpenAI
                 //string summary = summaryMessage.Content;
                 //doc.Summary = summary;
 
-                string? content = doc.Content;
+                string? content = input;
                 if (string.IsNullOrEmpty(content))
                     return [];
 
@@ -60,8 +60,8 @@ namespace EmbeddingEngine.OpenAI
             {
                 Console.WriteLine(ex.Message);
                 return null;
-                //throw;
             }
         }
+
     }
 }

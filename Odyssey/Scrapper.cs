@@ -110,7 +110,8 @@ namespace Odyssey
 #pragma warning restore SKEXP0003
 
         public async Task<bool> ScrapTo(IVectorDb vectorDb,
-                                        IEmbeddingEngine embeddingEngine)
+                                        IEmbeddingEngine embeddingEngine,
+                                        string sourceName)
         {
             if (vectorDb is null
                 || embeddingEngine is null)
@@ -136,10 +137,11 @@ namespace Odyssey
                     //if (embeddingEngine is not null
                     //    && vectorDb is not null)
                     //{
-                    //    float[] embeddings = await embeddingEngine.Embed(doc);
+                    //    float[] embeddings = await embeddingEngine.GenerateEmbeddingsAsync(doc.Content);
                     //    if (embeddings != null)
                     //        await vectorDb.Save(doc, docIndex, 0, embeddings,
-                    //                            "site_docs");
+                    //                            "site_docs",
+                    //                            sourceName);
                     //}
                     Console.WriteLine($"processed {docIndex}");
 
@@ -153,13 +155,13 @@ namespace Odyssey
                             subDoc.Description = doc.Description;
                             subDoc.ImageUrl = doc.ImageUrl;
 
-                            float[] embeddings = await embeddingEngine.Embed(subDoc);
+                            float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(subDoc.Content);
                             if (embeddings != null)
                             {
                                 await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
                                                     embeddings,
-                                                   "doc_parts" // collection name
-                                                   );
+                                                   "doc_parts", // collection name
+                                                   sourceName);
                             }
                         }
                     }
