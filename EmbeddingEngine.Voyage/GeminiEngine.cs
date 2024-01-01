@@ -43,7 +43,7 @@ namespace EmbeddingEngine.Gemini
         {
             try
             {
-                using HttpClient httpClient = new HttpClient();
+                using HttpClient httpClient = new();
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
                 var payload = new Payload
                 {
@@ -58,11 +58,6 @@ namespace EmbeddingEngine.Gemini
                 };
 
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key={m_providerKey}";
-
-                //HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
-                //string strPayload = JsonSerializer.Serialize(payload);
-                //request.Content = new StringContent(strPayload, Encoding.UTF8, "application/json");
-                //HttpResponseMessage response = await httpClient.SendAsync(request);
                 HttpResponseMessage response = await httpClient.PostAsJsonAsync(url, payload);
                 response.EnsureSuccessStatusCode();
 

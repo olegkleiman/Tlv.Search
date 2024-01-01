@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.HuggingFace;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Memory;
@@ -58,13 +59,18 @@ namespace SKCharDrive
             kernelbuilder.Services.AddLogging(c => c.AddConsole());
             var kernel = kernelbuilder.Build();
 
-#pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052, SKEXP0055
+#pragma warning disable SKEXP0003, SKEXP0011, SKEXP0020, SKEXP0026, SKEXP0050, SKEXP0052, SKEXP0055
+
+            HuggingFaceTextEmbeddingGenerationService embeddingService = new ("Orca-2-13b",
+                                                                              "https://api-inference.huggingface.co/models/microsoft/Orca-2-13b");
+            //"Authorization": "Bearer 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"
 
             ISemanticTextMemory memory = new MemoryBuilder()
                                          .WithLoggerFactory(kernel.LoggerFactory)
-                                         .WithAzureOpenAITextEmbeddingGeneration("ada2",
-                                                                    openaiEndpoint,
-                                                                    openaiAzureKey)
+                                         .WithTextEmbeddingGeneration(embeddingService)
+                                         //.WithAzureOpenAITextEmbeddingGeneration("ada2",
+                                         //                           openaiEndpoint,
+                                         //                           openaiAzureKey)
                                          .WithQdrantMemoryStore("http://localhost:6333", 1536)
                                          .Build();
 

@@ -29,9 +29,9 @@ namespace Tlv.Search
 {
     public class Search2
     {
-        private readonly ILogger<Search>? _logger;
+        private readonly ILogger<Search2>? _logger;
 
-        public Search2(ILogger<Search> log)
+        public Search2(ILogger<Search2> log)
         {
             _logger = log;
         }
@@ -43,15 +43,13 @@ namespace Tlv.Search
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
             string? prompt = req.Query["q"];
             if (string.IsNullOrEmpty(prompt))
                 return new BadRequestObjectResult("Please provide some input");
 
-            if (_logger is not null)
-                _logger.LogInformation($"Running search with prompt '{prompt}'");
+            _logger?.LogInformation($"Running search2 with prompt '{prompt}'");
 
             try
             {
@@ -121,8 +119,6 @@ namespace Tlv.Search
                         queryVector.Add(value);
                     }
                 }
-
-                collectionName = "doc_parts";
 
                 var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(),
                                             searchParams: sp, limit: 5);
