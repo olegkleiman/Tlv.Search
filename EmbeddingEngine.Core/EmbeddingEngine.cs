@@ -7,7 +7,7 @@ namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<Single[]?> Embed(Doc doc);
+        Task<float[]?> Embed(string modelName, Doc doc);
     }
 
     public enum EmbeddingsProviders
@@ -19,7 +19,7 @@ namespace EmbeddingEngine.Core
 
     public class EmbeddingEngine
     {
-        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey)
+        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey, string modelName)
         {
             Guard.Against.EnumOutOfRange(providerName);
 

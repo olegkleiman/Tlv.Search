@@ -35,11 +35,12 @@ namespace EmbeddingEngine.Gemini
         public Values? embedding { get; set; }
     }
 
-    public class GeminiEngine(string providerKey) : IEmbeddingEngine
+    public class GeminiEngine(string providerKey, string modelName) : IEmbeddingEngine
     {
         public string? m_providerKey { get; set; } = providerKey;
+        public string? m_modelName { get; set; } = modelName;
 
-        public async Task<Single[]?> Embed(Doc doc)
+        public async Task<Single[]?> Embed(string modelName, Doc doc)
         {
             try
             {

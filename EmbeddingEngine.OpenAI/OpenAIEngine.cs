@@ -11,7 +11,7 @@ namespace EmbeddingEngine.OpenAI
     {
         public string? m_providerKey { get; set; } = providerKey;
 
-        public async Task<Single[]?> Embed(Doc doc)
+        public async Task<Single[]?> Embed(string modelName, Doc doc)
         {
             try
             {
