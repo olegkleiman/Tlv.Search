@@ -3,7 +3,6 @@ using BenchmarkDotNet.Attributes;
 using EmbeddingEngine.Core;
 using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
-using Microsoft.SemanticKernel.Memory;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
@@ -78,40 +77,8 @@ namespace Odyssey
             return scrapper;
         }
 
-#pragma warning disable SKEXP0003
-        public async Task<bool> ScrapTo(ISemanticTextMemory memory)
-        {
-            if (memory == null)
-                return false;
-            if (m_siteMap is null
-                 || m_siteMap.items is null)
-                return false;
-
-            int docIndex = 0;
-            int subDocIndex = 0;
-            const string MemoryCollectionName = "site_docs2";
-
-            foreach (SiteMapItem item in m_siteMap.items)
-            {
-                string docSource = m_siteMap.m_url.ToString();
-                Doc? doc = await Scrap(item.Location, docSource);
-                if (doc is null)
-                    continue;
-
-                doc.Id = docIndex;
-                
-                await memory.SaveInformationAsync(MemoryCollectionName, 
-                                                    id: "info1", 
-                                                    text: doc.Text);
-            }
-
-            return true;
-        }
-#pragma warning restore SKEXP0003
-
         public async Task<bool> ScrapTo(IVectorDb vectorDb,
-                                        IEmbeddingEngine embeddingEngine,
-                                        string sourceName)
+                                        IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
                 || embeddingEngine is null)
@@ -145,24 +112,36 @@ namespace Odyssey
                     //}
                     Console.WriteLine($"processed {docIndex}");
 
+                    if (doc.subDocs is null)
+                        continue;
+
                     // process sub-docs
                     foreach (Doc subDoc in doc.subDocs)
                     {
-                        if (embeddingEngine is not null
-                            && vectorDb is not null)
+                        try
                         {
-                            subDoc.Title = doc.Title;
-                            subDoc.Description = doc.Description;
-                            subDoc.ImageUrl = doc.ImageUrl;
-
-                            float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(subDoc.Content);
-                            if (embeddings != null)
+                            if (embeddingEngine is not null
+                                && vectorDb is not null)
                             {
-                                await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
-                                                    embeddings,
-                                                   "doc_parts", // collection name
-                                                   sourceName);
+                                subDoc.Title = doc.Title;
+                                subDoc.Description = doc.Description;
+                                subDoc.ImageUrl = doc.ImageUrl;
+
+                                string input = subDoc.Content ?? string.Empty;
+                                float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
+                                if (embeddings != null)
+                                {
+                                    string embeddingProviderName = embeddingEngine.provider.ToString();
+                                    await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
+                                                        embeddings,
+                                                        $"doc_parts_{embeddingProviderName}" // collection name
+                                                       );
+                                }
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            await Console.Out.WriteLineAsync(ex.Message);
                         }
                     }
 
@@ -172,6 +151,23 @@ namespace Odyssey
             }
 
             return true;
+        }
+
+        private string clearText(string? _clearText)
+        {
+            if( string.IsNullOrEmpty( _clearText ) )
+                return string.Empty;
+
+            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+            _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
+            _clearText = HttpUtility.HtmlDecode(_clearText);
+            Regex trimmer = new Regex(@"\s\s+");
+            _clearText = trimmer.Replace(_clearText, " ");
+            _clearText = _clearText.Replace('"', '\'');
+            _clearText = _clearText.Replace('•', '*');
+            _clearText = Regex.Replace(_clearText, "[^\\p{L}\\d\t !@#$%^&*()_\\=+/+,<>?.:\\-`']", "");
+            return _clearText;
+            
         }
 
         [Benchmark]
@@ -216,9 +212,9 @@ namespace Odyssey
                 OpenGraph? openGraph = new (htmlNode);
                 if( openGraph is not null )
                 {
-                    description = openGraph.Description;
+                    description = clearText(openGraph.Description);
                     imageUrl = openGraph.Image;
-                    title = openGraph.Title;
+                    title = clearText(openGraph.Title);
                 }
 
                 Doc doc = new (url)
@@ -243,16 +239,8 @@ namespace Odyssey
                         Console.WriteLine($"Using {contentSelector}");
                         foreach (var node in htmlNodes)
                         {
-                            string _clearText = node.InnerText.Trim();
-                            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
-                            _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
-                            _clearText = HttpUtility.HtmlDecode(_clearText);
-                            Regex trimmer = new Regex(@"\s\s+");
-                            _clearText = trimmer.Replace(_clearText, " ");
-                            _clearText = _clearText.Replace('"', '\'');
-                            _clearText = _clearText.Replace('•', '*');
-                            doc.Text += " " + _clearText;
-
+                            string _clearText = " " + clearText(node.InnerText.Trim());
+                            doc.Text += _clearText;
                             doc.subDocs.Add(new Doc(url)
                             {
                                 Text = _clearText,

@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using EmbeddingEngine.Core;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using Tlv.Search.Common;
 using VectorDb.Core;
@@ -16,10 +17,11 @@ namespace VectorDb.SQLServer
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
-                                     float[] vector, 
-                                     string collectionName,
-                                     string sourceName)
+        public async Task<bool> Save(Doc doc,
+                        int docIndex,
+                        int parentDocId,
+                        float[] vector,
+                        string collectionName)
         {
             try
             {
@@ -34,6 +36,8 @@ namespace VectorDb.SQLServer
                     CommandType = CommandType.StoredProcedure
                 };
                 command.Parameters.Add("@lang", SqlDbType.NVarChar, -1).Value = doc.Lang;
+                //To-Do: extend stored procedure to include embeddingsProvider
+                //command.Parameters.Add("@embeddingsProvider", SqlDbType.NVarChar, -1).Value = embeddingProviderName;
                 command.Parameters.Add("@text", SqlDbType.NVarChar, -1).Value = doc.Text;
                 command.Parameters.Add("@description", SqlDbType.NVarChar, -1).Value = doc.Description;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
@@ -75,7 +79,7 @@ namespace VectorDb.SQLServer
                     tbl.Rows.Add(dr);
                 }
 
-                objbulk.WriteToServer(tbl);
+                await objbulk.WriteToServerAsync(tbl);
 
                 return true;
             }

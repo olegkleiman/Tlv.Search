@@ -30,6 +30,7 @@ namespace Tlv.Recall
         [Function(nameof(Recall))]
         [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
+        [OpenApiParameter(name: "p", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "Embedding provider name: OPENAI/GEMINI")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
@@ -47,18 +48,20 @@ namespace Tlv.Recall
 
                 #region Read Configuration
 
-                string embeddingModelName = GetConfigValue("EMBEDDING_MODEL_NAME");
-                string openaiKey = GetConfigValue("OPENAI_KEY");
                 string collectionName = GetConfigValue("COLLECTION_NAME");
                 string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
-                string qdrantVectorSize = GetConfigValue("QDRANT_VECTOR_SIZE");
-                int vectorSize = int.Parse(qdrantVectorSize);
 
-                #endregion 
+                #endregion
 
-                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.OpenAI,
-                                                            providerKey: openaiKey,
-                                                             modelName: embeddingModelName);
+                string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
+                EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
+
+                string configKeyName = $"{embeddingsProvider.ToString().ToUpper()}_KEY";
+                string? embeddingEngineKey = GetConfigValue(configKeyName);
+                Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
+                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
+                                                                                        providerKey: embeddingEngineKey);
                 Guard.Against.Null(embeddingEngine);
 
                 ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
@@ -66,7 +69,7 @@ namespace Tlv.Recall
                 IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbProviderKey);
                 Guard.Against.Null(vectorDb);
 
-                var searchResuls = await vectorDb.Search(collectionName, promptEmbedding);
+                var searchResuls = await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);
 
 
                 var response = req.CreateResponse(HttpStatusCode.OK);

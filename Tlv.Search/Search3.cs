@@ -20,6 +20,10 @@ using System.Text.Json;
 using Microsoft.Identity.Client;
 using Microsoft.Extensions.Logging;
 using Tlv.Search.Common;
+using EmbeddingEngine.Core;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Text.Encodings.Web;
+using System.Text;
 
 namespace Tlv.Search
 {
@@ -59,6 +63,8 @@ namespace Tlv.Search
         private async Task<Single[]?> GetEmbeddings(string embeddingEngineKey,
                                                      string input)
         {
+            const string modelName = "models/embedding-001";
+
             using HttpClient httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
             Text[] _parts = new Text[1];
@@ -74,13 +80,33 @@ namespace Tlv.Search
                     parts = _parts
                 }
             };
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key={embeddingEngineKey}";
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync(url, payload);
+            var options = new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+
+
+            string jsonPayload = JsonSerializer.Serialize(payload, options);
+
+            //TO-DO: "Request payload size can't exceeds the limit: 10000 bytes.",
+
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            var url = $"https://generativelanguage.googleapis.com/v1beta/{modelName}:embedContent?key={embeddingEngineKey}";
+            HttpResponseMessage response = await httpClient.PostAsync(url, content);
+
             response.EnsureSuccessStatusCode();
 
             string respContent = await response.Content.ReadAsStringAsync();
             GeminiResponse? geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(respContent);
             return geminiResponse?.embedding?.values;
+        }
+
+        private string GetConfigValue(string configKey)
+        {
+            string? value = Environment.GetEnvironmentVariable(configKey);
+            Guard.Against.NullOrEmpty(value, configKey, $"Couldn't find '{configKey}' in configuration");
+
+            return value;
         }
 
         [FunctionName(nameof(Search3))]
@@ -100,13 +126,17 @@ namespace Tlv.Search
             string? qDrantHost = Environment.GetEnvironmentVariable(configKey);
             Guard.Against.NullOrEmpty(qDrantHost, configKey, $"Couldn't find {configKey} in configuration");
 
-            configKey = "GEMINI_KEY";
-            string? embeddingEngineKey = Environment.GetEnvironmentVariable(configKey);
-            Guard.Against.NullOrEmpty(embeddingEngineKey, configKey, $"Couldn't find {configKey} in configuration");
+
+            string? embeddingsProviderName = req.Query["p"].ToString() ?? "OPENAI";
+            EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
+
+            string configKeyName = $"{embeddingsProvider.ToString().ToUpper()}_KEY";
+            string? embeddingEngineKey = GetConfigValue(configKeyName);
+            Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
             QdrantClient qdClient = new(qDrantHost);
 
-            string collectionName = "doc_parts";
+            string collectionName = $"doc_parts_{embeddingsProvider}";
             SearchParams sp = new()
             {
                 Exact = false
