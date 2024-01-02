@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
     <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
   </ItemGroup>
 

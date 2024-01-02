@@ -38,7 +38,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SKRAGDrive", "SKChatDrive\S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmbeddingEngine.Gemini", "EmbeddingEngine.Gemini\EmbeddingEngine.Gemini.csproj", "{C4E7A598-B83B-4038-A8EE-D7F2CF600F19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tlv.Recall", "Tlv.Recall\Tlv.Recall.csproj", "{3C931F5E-9949-447E-A1D2-9DBC6158387A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tlv.Recall", "Tlv.Recall\Tlv.Recall.csproj", "{3C931F5E-9949-447E-A1D2-9DBC6158387A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

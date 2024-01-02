@@ -4,21 +4,19 @@ namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<float[]>? GenerateEmbeddingsAsync(string input);
-
-        public string? m_modelName { get; set; }
+        public EmbeddingsProviders provider { get; }
+        Task<float[]?> GenerateEmbeddingsAsync(string input);
     }
 
     public enum EmbeddingsProviders
     {
-        OpenAI,
-        Gemini,
-        Voyage
+        OPENAI,
+        GEMINI
     }
 
     public class EmbeddingEngine
     {
-        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey, string modelName)
+        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey)
         {
             Guard.Against.EnumOutOfRange(providerName);
 
@@ -27,7 +25,7 @@ namespace EmbeddingEngine.Core
                    assemblyVersion = string.Empty,
                    assemblyCulture = string.Empty,
                    publicKeyToken = string.Empty;
-            if (providerName == EmbeddingsProviders.OpenAI)
+            if (providerName == EmbeddingsProviders.OPENAI)
             {
                 assemblyName = "EmbeddingEngine.OpenAI";
                 className = assemblyName + ".OpenAIEngine";
@@ -35,7 +33,7 @@ namespace EmbeddingEngine.Core
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";
             }
-            else if( providerName == EmbeddingsProviders .Gemini)
+            else if( providerName == EmbeddingsProviders.GEMINI)
             {
                 assemblyName = "EmbeddingEngine.Gemini";
                 className = assemblyName + ".GeminiEngine";
@@ -52,7 +50,7 @@ namespace EmbeddingEngine.Core
                 string typeName = $"{className}, {assemblyName}, Version={assemblyVersion}, Culture={assemblyCulture}, PublicKeyToken={publicKeyToken}";
                 Type? _type = Type.GetType(typeName);
                 if (_type is null) return null;
-                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: [providerKey,modelName]);
+                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: providerKey);
                 if (engine is null) return null;
                 return engine;
             }

@@ -1,4 +1,5 @@
-﻿using Qdrant.Client;
+﻿using EmbeddingEngine.Core;
+using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Collections;
 using System.Net.Sockets;
@@ -47,11 +48,10 @@ namespace VectorDb.QDrant
        }
 
         public async Task<bool> Save(Doc doc, 
-                                    int docIndex, 
-                                    int parentDocId,
-                                    float[] vector, 
-                                    string collectionName,
-                                    string sourceName)
+                        int docIndex,
+                        int parentDocId,
+                        float[] vector,
+                        string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 return false;
@@ -75,12 +75,12 @@ namespace VectorDb.QDrant
 
                 PointStruct ps = new()
                 {
-                    Id = (ulong)docIndex,
+                    Id = (ulong)docIndex ,
                     Payload =
                     {
                         ["text"] = doc.Text ?? string.Empty,
                         //["summary"] = doc.Summary ?? string.Empty,
-                        ["sourceName"] = sourceName,
+                        //["embeddingProvider"] = embeddingProviderName ?? string.Empty,
                         ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url ?? string.Empty,
