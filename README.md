@@ -10,6 +10,14 @@ The prompt is embedded into the same vector space at the search time and the clo
 
 The mathematical basis of the solution is the vector distance computation performed for the embedded prompt of the user and (large) corpus of the embedded documents previously pre-processed for this purpose. 
 
+## RAG
+This project is based on RAG (rerieval augumented generation) idea and consysts of two parts:
+
+<b>Indexing</b>: a pipeline for ingesting data from the external site and indexing it. <i>This happens offline.</i>
+
+<b>Retrieval ang generation</b> the actual RAG chain, which takes a query at runtime and retrieves the relevant data from the index, then passes that to the model.
+
+## Phases
 The first phase of the whole solution is docs ingesting. It is a relatively complex procedure consisting of extracting the text from someplace (SharePoint in our case), cleaning it up (standardization), tokenizing and finally embedding the text. This phase is performed when the content of the docs corpus is changed or updated. i.e. by relatively long intervals (once per day or even rarely).
 Embedding is the most important operation here. Simply put, it’s transforming the text into the real-numbers vector, some kind of vectorization, where the produced vector pretends to represent the semantic meaning of the sentence. 
 Embeddings are derived from extensive text data using techniques like Transformer-based models such BERT or GPT; GPT’s Embeddings API and corresponding Azure OpenAI services serve this purpose.

@@ -1,7 +1,9 @@
 ﻿using Ardalis.GuardClauses;
+using BenchmarkDotNet.Attributes;
 using EmbeddingEngine.Core;
 using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
+using Microsoft.SemanticKernel.Memory;
 using Odyssey.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
@@ -76,11 +78,43 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> ScrapTo(IVectorDb vectorDb, 
-                                        IEmbeddingEngine embeddingEngine)
+#pragma warning disable SKEXP0003
+        public async Task<bool> ScrapTo(ISemanticTextMemory memory)
+        {
+            if (memory == null)
+                return false;
+            if (m_siteMap is null
+                 || m_siteMap.items is null)
+                return false;
+
+            int docIndex = 0;
+            int subDocIndex = 0;
+            const string MemoryCollectionName = "site_docs2";
+
+            foreach (SiteMapItem item in m_siteMap.items)
+            {
+                string docSource = m_siteMap.m_url.ToString();
+                Doc? doc = await Scrap(item.Location, docSource);
+                if (doc is null)
+                    continue;
+
+                doc.Id = docIndex;
+                
+                await memory.SaveInformationAsync(MemoryCollectionName, 
+                                                    id: "info1", 
+                                                    text: doc.Text);
+            }
+
+            return true;
+        }
+#pragma warning restore SKEXP0003
+
+        public async Task<bool> ScrapTo(IVectorDb vectorDb,
+                                        IEmbeddingEngine embeddingEngine,
+                                        string sourceName)
         {
             if (vectorDb is null
-                || embeddingEngine is null )
+                || embeddingEngine is null)
                 return false;
             if (m_siteMap is null
                  || m_siteMap.items is null)
@@ -93,18 +127,22 @@ namespace Odyssey
             {
                 string docSource = m_siteMap.m_url.ToString();
                 Doc? doc = await Scrap(item.Location, docSource);
+                if (doc is null)
+                    continue;
+
                 doc.Id = docIndex;
-                
+
                 if (doc is not null)
                 {
-                    if (embeddingEngine is not null
-                        && vectorDb is not null )
-                    {
-                        float[] embeddings = await embeddingEngine.Embed(doc);
-                        if( embeddings != null )
-                            await vectorDb.Save(doc, docIndex, 0, embeddings, 
-                                                "site_docs");
-                    }
+                    //if (embeddingEngine is not null
+                    //    && vectorDb is not null)
+                    //{
+                    //    float[] embeddings = await embeddingEngine.GenerateEmbeddingsAsync(doc.Content);
+                    //    if (embeddings != null)
+                    //        await vectorDb.Save(doc, docIndex, 0, embeddings,
+                    //                            "site_docs",
+                    //                            sourceName);
+                    //}
                     Console.WriteLine($"processed {docIndex}");
 
                     // process sub-docs
@@ -117,13 +155,13 @@ namespace Odyssey
                             subDoc.Description = doc.Description;
                             subDoc.ImageUrl = doc.ImageUrl;
 
-                            float[] embeddings = await embeddingEngine.Embed(subDoc);
+                            float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(subDoc.Content);
                             if (embeddings != null)
                             {
                                 await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
                                                     embeddings,
-                                                   "doc_parts" // collection name
-                                                   );
+                                                   "doc_parts", // collection name
+                                                   sourceName);
                             }
                         }
                     }
@@ -136,6 +174,7 @@ namespace Odyssey
             return true;
         }
 
+        [Benchmark]
         private async Task<Doc?> Scrap(string url,
                                       string source)
         {
@@ -194,6 +233,10 @@ namespace Odyssey
                 // Get content(s)
                 foreach ( var contentSelector in this.m_ContentSelectors )
                 {
+                    //var inputs = htmlDoc.DocumentNode.SelectNodes(".//input[contains(@class, 'filterCheckBox')]");
+                    //var inputNode = inputs[1];
+                    //await m_page.ClickAsync(inputNode.XPath);
+
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
                     if( htmlNodes is not null )
                     {
@@ -202,9 +245,12 @@ namespace Odyssey
                         {
                             string _clearText = node.InnerText.Trim();
                             _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+                            _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
                             _clearText = HttpUtility.HtmlDecode(_clearText);
                             Regex trimmer = new Regex(@"\s\s+");
                             _clearText = trimmer.Replace(_clearText, " ");
+                            _clearText = _clearText.Replace('"', '\'');
+                            _clearText = _clearText.Replace('•', '*');
                             doc.Text += " " + _clearText;
 
                             doc.subDocs.Add(new Doc(url)

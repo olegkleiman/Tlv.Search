@@ -1,13 +1,12 @@
 ﻿using Ardalis.GuardClauses;
-using System.Reflection;
-using Tlv.Search.Common;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<Single[]> Embed(Doc doc);
+        Task<float[]>? GenerateEmbeddingsAsync(string input);
+
+        public string? m_modelName { get; set; }
     }
 
     public enum EmbeddingsProviders
@@ -19,7 +18,7 @@ namespace EmbeddingEngine.Core
 
     public class EmbeddingEngine
     {
-        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey)
+        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey, string modelName)
         {
             Guard.Against.EnumOutOfRange(providerName);
 
@@ -53,7 +52,7 @@ namespace EmbeddingEngine.Core
                 string typeName = $"{className}, {assemblyName}, Version={assemblyVersion}, Culture={assemblyCulture}, PublicKeyToken={publicKeyToken}";
                 Type? _type = Type.GetType(typeName);
                 if (_type is null) return null;
-                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: providerKey);
+                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: [providerKey,modelName]);
                 if (engine is null) return null;
                 return engine;
             }
