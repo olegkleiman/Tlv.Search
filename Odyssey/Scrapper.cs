@@ -110,6 +110,7 @@ namespace Odyssey
 #pragma warning restore SKEXP0003
 
         public async Task<bool> ScrapTo(IVectorDb vectorDb,
+                                        EmbeddingsProviders embeddingsProvider,
                                         IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
@@ -133,14 +134,14 @@ namespace Odyssey
 
                 if (doc is not null)
                 {
-                    //if (embeddingEngine is not null
-                    //    && vectorDb is not null)
-                    //{
-                    //    float[] embeddings = await embeddingEngine.Embed(doc);
-                    //    if (embeddings != null)
-                    //        await vectorDb.Save(doc, docIndex, 0, embeddings,
-                    //                            "site_docs");
-                    //}
+                    if (embeddingEngine is not null
+                        && vectorDb is not null)
+                    {
+                        float[] embeddings = await embeddingEngine.Embed(doc);
+                        if (embeddings != null)
+                            await vectorDb.Save(doc, docIndex, 0, embeddingsProvider, embeddings,
+                                                "site_docs");
+                    }
                     Console.WriteLine($"processed {docIndex}");
 
                     // process sub-docs
@@ -157,6 +158,7 @@ namespace Odyssey
                             if (embeddings != null)
                             {
                                 await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
+                                                    embeddingsProvider,
                                                     embeddings,
                                                    "doc_parts" // collection name
                                                    );

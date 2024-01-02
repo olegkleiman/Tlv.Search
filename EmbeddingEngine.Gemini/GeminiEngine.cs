@@ -1,11 +1,16 @@
 ﻿using EmbeddingEngine.Core;
 using System;
+using System.IO;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Tlv.Search.Common;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EmbeddingEngine.Gemini
 {
@@ -58,22 +63,34 @@ namespace EmbeddingEngine.Gemini
                     {
                         parts = [new Text()
                         {
-                            text = doc.Content
+                            text = Regex.Replace(doc.Content, "[^\\p{L}\\d\t !@#$%^&*()_\\=+/+,<>?.:\\-`']", "")
                         }]
                     }
                 };
 
+                var options = new JsonSerializerOptions
+                {
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
+
+
+                string json = JsonSerializer.Serialize(payload, options);
+
+
+                //TO-DO: "Request payload size can't exceeds the limit: 10000 bytes.",
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var url = $"https://generativelanguage.googleapis.com/v1beta/{m_modelName}:embedContent?key={m_providerKey}";
-                HttpResponseMessage response = await httpClient.PostAsJsonAsync(url, payload);
+                HttpResponseMessage response = await httpClient.PostAsync(url, content);
                 response.EnsureSuccessStatusCode();
 
                 string respContent = await response.Content.ReadAsStringAsync();
                 GeminiResponse? geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(respContent);
                 return geminiResponse?.embedding?.values;
             }
-            catch(Exception)
+            catch(Exception e)
             {
-                throw;
+                await Console.Out.WriteLineAsync($"Error in {doc.Url}");
+                return null;
             }
 
         }

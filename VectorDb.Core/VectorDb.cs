@@ -1,4 +1,5 @@
 ﻿using Ardalis.GuardClauses;
+using EmbeddingEngine.Core;
 using System.Runtime.Remoting;
 using Tlv.Search.Common;
 
@@ -6,7 +7,7 @@ namespace VectorDb.Core
 {
     public interface IVectorDb
     {
-        Task<bool> Save(Doc doc, int docIndex, int parentDocId, float[] vector, string collectionName);
+        Task<bool> Save(Doc doc, int docIndex, int parentDocId, EmbeddingsProviders embeddingsProvider, float[] vector, string collectionName);
         List<Doc> Search(string prompt);
 
         public string? m_providerKey { get; set; }

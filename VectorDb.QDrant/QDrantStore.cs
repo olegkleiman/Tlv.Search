@@ -1,4 +1,5 @@
-﻿using Qdrant.Client;
+﻿using EmbeddingEngine.Core;
+using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Collections;
 using Tlv.Search.Common;
@@ -17,7 +18,7 @@ namespace VectorDb.QDrant
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
+        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId, EmbeddingsProviders embeddingsProvider,
                                     float[] vector, string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
@@ -46,6 +47,7 @@ namespace VectorDb.QDrant
                     Id = (ulong)docIndex,
                     Payload =
                     {
+                        ["embeddingsProvider"] = embeddingsProvider.ToString(),
                         ["text"] = doc.Text ?? string.Empty,
                         //["summary"] = doc.Summary ?? string.Empty,
                         ["description"] = doc.Description ?? string.Empty,
