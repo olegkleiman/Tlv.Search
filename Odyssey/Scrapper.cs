@@ -1,4 +1,5 @@
 ﻿using Ardalis.GuardClauses;
+using BenchmarkDotNet.Attributes;
 using EmbeddingEngine.Core;
 using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
@@ -8,17 +9,16 @@ using PuppeteerSharp;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Web;
-using System.Xml.Linq;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
 namespace Odyssey
 {
-    public class Scrapper 
+    public class Scrapper
     {
-        private IBrowser?             m_browser;
-        private IPage?                m_page;
-        private readonly SiteMap?     m_siteMap;
+        private IBrowser? m_browser;
+        private IPage? m_page;
+        private readonly SiteMap? m_siteMap;
         public string[]? m_ContentSelectors { get; set; }
         public string? TitleSelector { get; set; }
         public string? AddressSelector { get; set; }
@@ -35,15 +35,15 @@ namespace Odyssey
                 Headless = false,
                 ExecutablePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
             });
-            
+
             m_page = await m_browser.NewPageAsync();
         }
 
-        public static Scrapper? Load(int scrapperId, 
+        public static Scrapper? Load(int scrapperId,
                                         SiteMap siteMap,
                                         string? connectionString)
         {
-            if( string.IsNullOrEmpty(connectionString) )
+            if (string.IsNullOrEmpty(connectionString))
                 return null;
 
             Scrapper scrapper = new(siteMap);
@@ -66,10 +66,10 @@ namespace Odyssey
                 }
                 if (!reader.IsDBNull(3))
                     scrapper.TitleSelector = reader.GetString(3);
-                if( !reader.IsDBNull(4) )
+                if (!reader.IsDBNull(4))
                     scrapper.AddressSelector = reader.GetString(4);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return null;
             }
@@ -77,11 +77,11 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> ScrapTo(IVectorDb vectorDb, 
+        public async Task<bool> ScrapTo(IVectorDb vectorDb,
                                         IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
-                || embeddingEngine is null )
+                || embeddingEngine is null)
                 return false;
             if (m_siteMap is null
                  || m_siteMap.items is null)
@@ -94,38 +94,54 @@ namespace Odyssey
             {
                 string docSource = m_siteMap.m_url.ToString();
                 Doc? doc = await Scrap(item.Location, docSource);
+                if (doc is null)
+                    continue;
+
                 doc.Id = docIndex;
-                
+
                 if (doc is not null)
                 {
-                    if (embeddingEngine is not null
-                        && vectorDb is not null )
-                    {
-                        float[] embeddings = await embeddingEngine.Embed(doc);
-                        if( embeddings != null )
-                            await vectorDb.Save(doc, docIndex, 0, embeddings, 
-                                                "site_docs");
-                    }
+                    //if (embeddingEngine is not null
+                    //    && vectorDb is not null)
+                    //{
+                    //    float[] embeddings = await embeddingEngine.GenerateEmbeddingsAsync(doc.Content);
+                    //    if (embeddings != null)
+                    //        await vectorDb.Save(doc, docIndex, 0, embeddings,
+                    //                            "site_docs",
+                    //                            sourceName);
+                    //}
                     Console.WriteLine($"processed {docIndex}");
+
+                    if (doc.subDocs is null)
+                        continue;
 
                     // process sub-docs
                     foreach (Doc subDoc in doc.subDocs)
                     {
-                        if (embeddingEngine is not null
-                            && vectorDb is not null)
+                        try
                         {
-                            subDoc.Title = doc.Title;
-                            subDoc.Description = doc.Description;
-                            subDoc.ImageUrl = doc.ImageUrl;
-
-                            float[] embeddings = await embeddingEngine.Embed(subDoc);
-                            if (embeddings != null)
+                            if (embeddingEngine is not null
+                                && vectorDb is not null)
                             {
-                                await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
-                                                    embeddings,
-                                                   "doc_parts" // collection name
-                                                   );
+                                subDoc.Title = doc.Title;
+                                subDoc.Description = doc.Description;
+                                subDoc.ImageUrl = doc.ImageUrl;
+
+                                string input = subDoc.Content ?? string.Empty;
+                                float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
+                                if (embeddings != null)
+                                {
+                                    string embeddingProviderName = embeddingEngine.provider.ToString();
+                                    await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
+                                                        embeddings,
+                                                        $"doc_parts_{embeddingProviderName}" // collection name
+                                                       );
+                                }
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            await Console.Out.WriteLineAsync(ex.Message);
                         }
                     }
 
@@ -137,6 +153,24 @@ namespace Odyssey
             return true;
         }
 
+        private string clearText(string? _clearText)
+        {
+            if (string.IsNullOrEmpty(_clearText))
+                return string.Empty;
+
+            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+            _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
+            _clearText = HttpUtility.HtmlDecode(_clearText);
+            Regex trimmer = new Regex(@"\s\s+");
+            _clearText = trimmer.Replace(_clearText, " ");
+            _clearText = _clearText.Replace('"', '\'');
+            _clearText = _clearText.Replace('•', '*');
+            _clearText = Regex.Replace(_clearText, "[^\\p{L}\\d\t !@#$%^&*()_\\=+/+,<>?.:\\-`']", "");
+            return _clearText;
+
+        }
+
+        [Benchmark]
         private async Task<Doc?> Scrap(string url,
                                       string source)
         {
@@ -144,13 +178,13 @@ namespace Odyssey
             if (m_page is null)
                 return null;
 
-            if ( m_ContentSelectors is null)
+            if (m_ContentSelectors is null)
                 return null;
 
             try
             {
                 IResponse? response = await m_page.GoToAsync(url);
-                if( !response.Ok )
+                if (!response.Ok)
                     throw new ApplicationException("Couldn't load page");
 
                 // Get entire content of the page
@@ -165,89 +199,68 @@ namespace Odyssey
 
                 // Get 'lang' of root html
                 HtmlNode? htmlNode = htmlDoc.DocumentNode.SelectSingleNode("./html");
-                if( htmlNode == null )
+                if (htmlNode == null)
                     throw new ApplicationException("Couldn't select root");
 
-                if ( htmlNode.Attributes != null)
+                if (htmlNode.Attributes != null)
                 {
                     lang = (from attr in htmlNode.Attributes
-                                where attr != null && attr.Name == "lang"
-                                select attr.Value).FirstOrDefault();
+                            where attr != null && attr.Name == "lang"
+                            select attr.Value).FirstOrDefault();
                 }
 
-                OpenGraph? openGraph = new (htmlNode);
-                if( openGraph is not null )
+                OpenGraph? openGraph = new(htmlNode);
+                if (openGraph is not null)
                 {
-                    description = openGraph.Description;
+                    description = clearText(openGraph.Description);
                     imageUrl = openGraph.Image;
-                    title = openGraph.Title;
+                    title = clearText(openGraph.Title);
                 }
 
-                Doc doc = new (url)
+                Doc doc = new(url)
                 {
                     Source = source,
                     Lang = lang,
-                    Description = clearText(description),
-                    ImageUrl = clearText(imageUrl),
-                    Title = clearText(title)
+                    Description = description,
+                    ImageUrl = imageUrl,
+                    Title = title
                 };
 
                 // Get content(s)
-                foreach ( var contentSelector in this.m_ContentSelectors )
+                foreach (var contentSelector in this.m_ContentSelectors)
                 {
+                    //var inputs = htmlDoc.DocumentNode.SelectNodes(".//input[contains(@class, 'filterCheckBox')]");
+                    //var inputNode = inputs[1];
+                    //await m_page.ClickAsync(inputNode.XPath);
+
                     HtmlNodeCollection htmlNodes = htmlDoc.DocumentNode.SelectNodes(contentSelector);
-                    if( htmlNodes is not null )
+                    if (htmlNodes is not null)
                     {
                         Console.WriteLine($"Using {contentSelector}");
                         foreach (var node in htmlNodes)
                         {
-                            string? _clearText = clearText(node.InnerText);
-                            doc.Text = _clearText;
-
-                            if ( node.HasChildNodes )
+                            string _clearText = " " + clearText(node.InnerText.Trim());
+                            doc.Text += _clearText;
+                            doc.subDocs.Add(new Doc(url)
                             {
-                                var subtitle = (from subNode in node.ChildNodes
-                                        where subNode.Name == "h3"
-                                        select subNode.InnerText)
-                                        .FirstOrDefault();
-
-                                doc.subDocs.Add(new Doc(url)
-                                {
-                                    Text = _clearText,
-                                    SubTitle = clearText(subtitle)
-                                });
-                            }
-
+                                Text = _clearText,
+                            });
                         }
 
                         break;
                     }
-                    
+
                 }
 
                 return doc;
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ApplicationException(ex.Message);
             }
         }
 
 
-
-        private string? clearText(string? text)
-        {
-            if( string.IsNullOrEmpty(text) )
-                return null;
-
-            string _clearText = text.Trim();
-            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
-            _clearText = HttpUtility.HtmlDecode(_clearText);
-            Regex trimmer = new Regex(@"\s\s+");
-            _clearText = trimmer.Replace(_clearText, " ");
-
-            return _clearText;
-        }
     }
 }

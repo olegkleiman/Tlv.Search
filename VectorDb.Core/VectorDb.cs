@@ -1,4 +1,5 @@
 ﻿using Ardalis.GuardClauses;
+using EmbeddingEngine.Core;
 using System.Runtime.Remoting;
 using Tlv.Search.Common;
 
@@ -6,8 +7,15 @@ namespace VectorDb.Core
 {
     public interface IVectorDb
     {
-        Task<bool> Save(Doc doc, int docIndex, int parentDocId, float[] vector, string collectionName);
-        List<Doc> Search(string prompt);
+        Task<bool> Save(Doc doc,
+                        int docIndex,
+                        int parentDocId,
+                        float[] vector,
+                        string collectionName);
+
+        public Task<List<SearchItem>> Search(string collectionName,
+                                            ReadOnlyMemory<float> queryVector,
+                                            ulong limit = 5);
 
         public string? m_providerKey { get; set; }
     }
@@ -19,18 +27,18 @@ namespace VectorDb.Core
         Elastic
     }
 
-    public class VectorDb 
+    public class VectorDb
     {
         public static IVectorDb? Create(VectorDbProviders providerName, string providerKey)
         {
             Guard.Against.EnumOutOfRange(providerName);
 
-            string assemblyName = string.Empty, 
-                   className = string.Empty, 
+            string assemblyName = string.Empty,
+                   className = string.Empty,
                    assemblyVersion = string.Empty,
                    assemblyCulture = string.Empty,
                    publicKeyToken = string.Empty;
-            if( providerName == VectorDbProviders.QDrant )
+            if (providerName == VectorDbProviders.QDrant)
             {
                 assemblyName = "VectorDb.QDrant";
                 className = assemblyName + ".QDrantStore";
@@ -38,7 +46,7 @@ namespace VectorDb.Core
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";
             }
-            else if( providerName == VectorDbProviders.SQLServer )
+            else if (providerName == VectorDbProviders.SQLServer)
             {
                 assemblyName = "VectorDb.SQLServer";
                 className = assemblyName + ".SQLServerStore";
@@ -59,12 +67,12 @@ namespace VectorDb.Core
                 if (store is null) return null;
                 return store;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return null;
             }
 
-            
+
         }
     }
 }

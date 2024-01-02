@@ -1,6 +1,5 @@
 ﻿using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using System.Collections;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
@@ -8,25 +7,55 @@ namespace VectorDb.QDrant
 {
     public class QDrantStore(string providerKey) : IVectorDb
     {
-        public string? m_providerKey { get; set; } = providerKey; 
+        public string? m_providerKey { get; set; } = providerKey;// This is a host name (like 'localhost') for this provider
+        QdrantClient m_qdClient = new(providerKey);
 
-        const ulong VECTOR_SIZE = 1536;
-
-        public List<Doc> Search(string prompt)
+        public async Task<List<SearchItem>> Search(string collectionName,
+                                                 ReadOnlyMemory<float> queryVector,
+                                                 ulong limit = 5)
         {
-            throw new NotImplementedException();
+            Filter filter = new Filter()
+            {
+
+            };
+            SearchParams sp = new SearchParams()
+            {
+                Exact = true
+            };
+
+            IReadOnlyList<ScoredPoint> scores = await m_qdClient.SearchAsync(collectionName,
+                                                    queryVector,
+                                                    filter: filter,
+                                                    searchParams: sp,
+                                                    limit: limit);
+
+
+            return (from score in scores
+                    let payload = score.Payload
+                    select new SearchItem()
+                    {
+                        id = score.Id.Num,
+                        title = payload["title"].StringValue,
+                        summary = payload["text"].StringValue,
+                        url = payload["url"].StringValue,
+                        imageUrl = payload["image_url"].StringValue,
+                        similarity = score.Score
+                    }).ToList();
+
         }
 
-        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
-                                    float[] vector, string collectionName)
+        public async Task<bool> Save(Doc doc,
+                        int docIndex,
+                        int parentDocId,
+                        float[] vector,
+                        string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 return false;
 
             try
             {
-                QdrantClient qdClient = new(m_providerKey); // This is a host name (like 'localhost') for this provider
-                var collections = await qdClient.ListCollectionsAsync();
+                var collections = await m_qdClient.ListCollectionsAsync();
                 var q = (from collection in collections
                          where collection == collectionName
                          select collection).FirstOrDefault();
@@ -38,7 +67,7 @@ namespace VectorDb.QDrant
                         Size = (ulong)vector.Length
                     };
 
-                    await qdClient.CreateCollectionAsync(collectionName, vp);
+                    await m_qdClient.CreateCollectionAsync(collectionName, vp);
                 }
 
                 PointStruct ps = new()
@@ -47,7 +76,8 @@ namespace VectorDb.QDrant
                     Payload =
                     {
                         ["text"] = doc.Text ?? string.Empty,
-                        ["subtitle"] = doc.SubTitle ?? string.Empty,
+                        //["summary"] = doc.Summary ?? string.Empty,
+                        //["embeddingProvider"] = embeddingProviderName ?? string.Empty,
                         ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url ?? string.Empty,
@@ -57,17 +87,17 @@ namespace VectorDb.QDrant
                     Vectors = vector
                 };
 
-                await qdClient.UpsertAsync(collectionName, [ps]);
+                await m_qdClient.UpsertAsync(collectionName, [ps]);
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;
             }
-                
-            
+
+
         }
 
     }

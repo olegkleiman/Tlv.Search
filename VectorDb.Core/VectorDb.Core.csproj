@@ -10,8 +10,9 @@
     <PackageReference Include="Ardalis.GuardClauses" Version="4.2.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
+		<ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
+	</ItemGroup>
 
 </Project>

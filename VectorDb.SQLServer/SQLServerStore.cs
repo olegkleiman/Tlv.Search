@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using EmbeddingEngine.Core;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using Tlv.Search.Common;
 using VectorDb.Core;
@@ -9,13 +10,18 @@ namespace VectorDb.SQLServer
     {
         public string m_providerKey { get; set; } = providerKey;
 
-        public List<Doc> Search(string prompt)
+        public Task<List<SearchItem>> Search(string collectionName,
+                                            ReadOnlyMemory<float> queryVector,
+                                            ulong limit = 5)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<bool> Save(Doc doc, int docIndex, int parentDocId,
-                                     float[] vector, string collectionName)
+        public async Task<bool> Save(Doc doc,
+                        int docIndex,
+                        int parentDocId,
+                        float[] vector,
+                        string collectionName)
         {
             try
             {
@@ -30,6 +36,8 @@ namespace VectorDb.SQLServer
                     CommandType = CommandType.StoredProcedure
                 };
                 command.Parameters.Add("@lang", SqlDbType.NVarChar, -1).Value = doc.Lang;
+                //To-Do: extend stored procedure to include embeddingsProvider
+                //command.Parameters.Add("@embeddingsProvider", SqlDbType.NVarChar, -1).Value = embeddingProviderName;
                 command.Parameters.Add("@text", SqlDbType.NVarChar, -1).Value = doc.Text;
                 command.Parameters.Add("@description", SqlDbType.NVarChar, -1).Value = doc.Description;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
@@ -60,7 +68,7 @@ namespace VectorDb.SQLServer
                 tbl.Columns.Add(new DataColumn("vector_value", typeof(float)));
                 tbl.Columns.Add(new DataColumn("model_id", typeof(int)));
 
-                for(int i = 0; i < vector.Length; i++)
+                for (int i = 0; i < vector.Length; i++)
                 {
                     DataRow dr = tbl.NewRow();
                     dr["doc_id"] = docIndex;
@@ -71,17 +79,17 @@ namespace VectorDb.SQLServer
                     tbl.Rows.Add(dr);
                 }
 
-                objbulk.WriteToServer(tbl);
+                await objbulk.WriteToServerAsync(tbl);
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;
             }
-                
-            
+
+
         }
     }
 }

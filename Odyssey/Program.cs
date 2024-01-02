@@ -5,7 +5,6 @@ using Odyssey.Models;
 using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
-using System.Diagnostics.Contracts;
 
 namespace Odyssey
 {
@@ -13,6 +12,7 @@ namespace Odyssey
     {
         static async Task Main(string[] args)
         {
+
             try
             {
                 //
@@ -23,20 +23,26 @@ namespace Odyssey
                                 .AddJsonFile("appsettings.json", optional: false);
                 IConfiguration config = builder.Build();
 
+                string configKeyName = "EMBEDIING_PROVIDER";
+                string? embeddingsProviderName = config[configKeyName];
+                Guard.Against.NullOrEmpty(embeddingsProviderName, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
+                EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
+
                 string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
                 Guard.Against.NullOrEmpty(connectionString);
 
-                string keyName = "OPENAI_KEY";
-                string? embeddingEngineKey = config[keyName];
-                Guard.Against.NullOrEmpty(embeddingEngineKey, keyName, $"Couldn't find {keyName} in configuration");
+                configKeyName = $"{embeddingsProvider.ToString().ToUpper()}_KEY";
+                string? embeddingEngineKey = config[configKeyName];
+                Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
-                keyName = "VECTOR_DB_PROVIDER_KEY";
-                string? providerKey = config[keyName];
-                Guard.Against.NullOrEmpty(providerKey, keyName, $"Couldn't find {keyName} in configuration");
+                configKeyName = "VECTOR_DB_PROVIDER_KEY";
+                string? providerKey = config[configKeyName];
+                Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
                 using var conn = new SqlConnection(connectionString);
                 string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
-                
+
                 conn.Open();
 
                 using var da = new SqlDataAdapter(query, connectionString);
@@ -44,18 +50,12 @@ namespace Odyssey
                 da.Fill(table);
 
                 IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
-                if (vectorDb is null)
-                {
-                    Console.WriteLine($"Couldn't create vector db store with key '{providerKey}'");
-                    return;
-                }
+                Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
 
-                IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(EmbeddingsProviders.OpenAI, embeddingEngineKey);
-                if( embeddingEngine is null )
-                {
-                    Console.WriteLine($"Couldn't create embedding engine with key '{embeddingEngineKey}'");
-                    return;
-                }
+                IEmbeddingEngine? embeddingEngine =
+                    EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
+                                                                providerKey: embeddingEngineKey);
+                Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
                 List<Task> tasks = [];
                 foreach (DataRow? row in table.Rows)
@@ -63,15 +63,15 @@ namespace Odyssey
                     Guard.Against.Null(row);
 
                     object? val = row["url"];
-                    if( val == null || val == DBNull.Value)
+                    if (val == null || val == DBNull.Value)
                         continue;
 
                     string? siteMapUrl = val.ToString();
-                    if( string.IsNullOrEmpty(siteMapUrl) )
+                    if (string.IsNullOrEmpty(siteMapUrl))
                         continue;
 
                     Console.WriteLine($"Start processing {siteMapUrl}");
-                    Uri uri = new(siteMapUrl); 
+                    Uri uri = new(siteMapUrl);
                     SiteMap? siteMap = SiteMap.Parse(uri);
                     if (siteMap == null)
                     {
@@ -86,7 +86,8 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine);
+                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
+                    //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
 

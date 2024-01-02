@@ -1,20 +1,17 @@
 ﻿using Ardalis.GuardClauses;
-using System.Reflection;
-using Tlv.Search.Common;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace EmbeddingEngine.Core
 {
     public interface IEmbeddingEngine
     {
-        Task<Single[]> Embed(Doc doc);
+        public EmbeddingsProviders provider { get; }
+        Task<float[]?> GenerateEmbeddingsAsync(string input);
     }
 
     public enum EmbeddingsProviders
     {
-        OpenAI,
-        Gemini,
-        Voyage
+        OPENAI,
+        GEMINI
     }
 
     public class EmbeddingEngine
@@ -28,7 +25,7 @@ namespace EmbeddingEngine.Core
                    assemblyVersion = string.Empty,
                    assemblyCulture = string.Empty,
                    publicKeyToken = string.Empty;
-            if (providerName == EmbeddingsProviders.OpenAI)
+            if (providerName == EmbeddingsProviders.OPENAI)
             {
                 assemblyName = "EmbeddingEngine.OpenAI";
                 className = assemblyName + ".OpenAIEngine";
@@ -36,7 +33,7 @@ namespace EmbeddingEngine.Core
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";
             }
-            else if( providerName == EmbeddingsProviders .Gemini)
+            else if (providerName == EmbeddingsProviders.GEMINI)
             {
                 assemblyName = "EmbeddingEngine.Gemini";
                 className = assemblyName + ".GeminiEngine";
