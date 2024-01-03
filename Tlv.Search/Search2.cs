@@ -57,17 +57,17 @@ namespace Tlv.Search
             try
             {
                 string? qDrantHost = Environment.GetEnvironmentVariable("QDRANT_HOST");
-                Guard.Against.NullOrEmpty(qDrantHost, "QDRANT_HOST", "Couldn't find QDRANT_HOST in configuration");
+                Guard.Against.NullOrEmpty(qDrantHost, "qDrantHost", "Couldn't find QDRANT_HOST in configuration");
 
-                string ? collectionName = Environment.GetEnvironmentVariable("QDRANT_COLLECTOIN_NAME");
-                Guard.Against.NullOrEmpty(collectionName, "QDRANT_COLLECTOIN_NAME", "Couldn't find QDRANT_COLLECTOIN_NAME in configuration");
+                string ? collectionName = Environment.GetEnvironmentVariable("QDRANT_COLLECTION_NAME");
+                Guard.Against.NullOrEmpty(collectionName, collectionName, "Couldn't find QDRANT_COLLECTOIN_NAME in configuration");
 
                 string ? vectorSize = Environment.GetEnvironmentVariable("QDRANT_VECTOR_SIZE");
                 Guard.Against.NullOrEmpty(vectorSize, "VECTOR_SIZE", "Couldn't find VECTOR_SIZE in configuration");
                 ulong uVectorSize = ulong.Parse(vectorSize);
 
                 string? providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
-                Guard.Against.NullOrEmpty(providerKey, "OPENAI_KEY", "No OpenAI Key found in configuration");
+                Guard.Against.NullOrEmpty(providerKey, providerKey, "No OpenAI Key found in configuration");
 
                 QdrantClient qdClient = new(qDrantHost);
                 var collections = await qdClient.ListCollectionsAsync();

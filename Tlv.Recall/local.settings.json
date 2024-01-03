@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "OPENAI_KEY": "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",
+    "OPENAI_MODEL": "text-embedding-ada-002",
+    "CuriosityDB": "Server=tcp:tlvsearch.database.windows.net,1433;Initial Catalog=curiosity;Persist Security Info=False;User ID=okey;Password=dfnc94^*;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+    "VECTOR_DB_PROVIDER_KEY": "localhost",
+    "COLLECTION_NAME": "doc_parts",
+    "QDRANT_VECTOR_SIZE": 1536,
+    "GEMINI_KEY": "AIzaSyDc30akovocMvM3HzMGLR52ei5MiefqS78"
+  },
+  "Host": {
+    "CORS": "*"
+  }
+}
