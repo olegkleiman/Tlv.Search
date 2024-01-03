@@ -71,7 +71,6 @@ namespace Tlv.Recall
 
                 var searchResuls = await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);
 
-
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 await response.WriteAsJsonAsync(searchResuls);
                 return response;

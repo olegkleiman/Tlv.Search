@@ -15,11 +15,16 @@ namespace EmbeddingEngine.Gemini
     {
         public Text[] parts { get; set; }
     }
-    class Payload
+    class ContentPayload
     {
         public string model { get; set; }
         public string task_type { get; set; }
         public Content content { get; set; }
+    }
+
+    class TextPayload
+    {
+        public string text { get; set; }
     }
 
     class Values
@@ -27,9 +32,19 @@ namespace EmbeddingEngine.Gemini
         public float[]? values { get; set; }
     }
 
+    class Value
+    {
+        public float[]? value { get; set; }
+    }
+
     class GeminiResponse
     {
         public Values? embedding { get; set; }
+    }
+
+    class GeminiResponseText
+    {
+        public Value? embedding { get; set; }
     }
 
     public class GeminiEngine(string providerKey) : IEmbeddingEngine
@@ -45,21 +60,25 @@ namespace EmbeddingEngine.Gemini
 
             try
             {
-                const string modelName = "models/embedding-001";
+                const string modelName = "models/embedding-gecko-001"; //"models/embedding-001";
 
                 using HttpClient httpClient = new();
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
-                var payload = new Payload
+                //var payload = new Payload
+                //{
+                //    model = modelName,
+                //    //task_type = "RETRIEVAL_QUERY",
+                //    content = new Content()
+                //    {
+                //        parts = [new Text()
+                //        {
+                //            text = input
+                //        }]
+                //    }
+                //};
+                var payload = new TextPayload()
                 {
-                    model = modelName,
-                    //task_type = "RETRIEVAL_QUERY",
-                    content = new Content()
-                    {
-                        parts = [new Text()
-                        {
-                            text = input
-                        }]
-                    }
+                    text = input
                 };
 
                 var options = new JsonSerializerOptions
@@ -73,14 +92,14 @@ namespace EmbeddingEngine.Gemini
                 //TO-DO: "Request payload size can't exceeds the limit: 10000 bytes.",
 
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                var url = $"https://generativelanguage.googleapis.com/v1beta/{modelName}:embedContent?key={m_providerKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/{modelName}:embedText?key={m_providerKey}";
                 HttpResponseMessage response = await httpClient.PostAsync(url, content);
 
                 response.EnsureSuccessStatusCode();
 
                 string respContent = await response.Content.ReadAsStringAsync();
-                GeminiResponse? geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(respContent);
-                return geminiResponse?.embedding?.values;
+                GeminiResponseText? geminiResponse = JsonSerializer.Deserialize<GeminiResponseText>(respContent);
+                return geminiResponse?.embedding?.value;
             }
             catch (Exception)
             {
