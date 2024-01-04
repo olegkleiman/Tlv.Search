@@ -1,15 +1,21 @@
 ﻿using Qdrant.Client;
 using Qdrant.Client.Grpc;
+using System.Collections.Generic;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
 namespace VectorDb.QDrant
 {
-    public class QDrantStore(string providerKey) : IVectorDb
+    public class QDrantStore : IVectorDb
     {
-        public string? m_providerKey { get; set; } = providerKey;// This is a host name (like 'localhost') for this provider
-        QdrantClient m_qdClient = new(providerKey);
+        public string? m_providerKey { get; set; }// This is a host name (like 'localhost') for this provider
+        QdrantClient m_qdClient;
 
+        public QDrantStore(string providerKey)
+        {
+            m_providerKey = providerKey;
+            m_qdClient = new QdrantClient(providerKey);
+        }
         public async Task<List<SearchItem>> Search(string collectionName,
                                                  ReadOnlyMemory<float> queryVector,
                                                  ulong limit = 5)
@@ -87,7 +93,7 @@ namespace VectorDb.QDrant
                     Vectors = vector
                 };
 
-                await m_qdClient.UpsertAsync(collectionName, [ps]);
+                await m_qdClient.UpsertAsync(collectionName, new List<PointStruct>() { ps } );
 
                 return true;
             }

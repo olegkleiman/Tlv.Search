@@ -7,11 +7,15 @@ using Tlv.Search.Common;
 
 namespace EmbeddingEngine.OpenAI
 {
-    public class OpenAIEngine(string providerKey) : IEmbeddingEngine
+    public class OpenAIEngine : IEmbeddingEngine
     {
-        public string? m_providerKey { get; set; } = providerKey;
+        public string? m_providerKey { get; set; }
 
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.OPENAI;
+        public OpenAIEngine(string providerKey)
+        {
+            m_providerKey = providerKey;
+        }
         public async Task<float[]>? GenerateEmbeddingsAsync(string input)
         {
             try
@@ -41,10 +45,10 @@ namespace EmbeddingEngine.OpenAI
 
                 string? content = input;
                 if (string.IsNullOrEmpty(content))
-                    return [];
+                    return new float[] {};
 
                 EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
-                                            input: [content]);
+                                            input: new List<string>() { content });
                 Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
                 if (response is not null)
                 {
@@ -53,7 +57,7 @@ namespace EmbeddingEngine.OpenAI
                     return items[0].Embedding.ToArray();
                 }
 
-                return [];
+                return new float[] { };
 
             }
             catch (Exception ex)
