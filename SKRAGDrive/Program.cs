@@ -63,7 +63,8 @@ namespace SKCharDrive
 
             ISemanticTextMemory memory = new MemoryBuilder()
                                          .WithLoggerFactory(kernel.LoggerFactory)
-                                         .WithTextEmbeddingGeneration(embeddingService)
+                                         //.WithTextEmbeddingGeneration(embeddingService)
+                                         .WithAzureOpenAITextEmbeddingGeneration("ada2", openaiEndpoint, openaiAzureKey)
                                          //.WithAzureOpenAITextEmbeddingGeneration("ada2",
                                          //                           openaiEndpoint,
                                          //                           openaiAzureKey)

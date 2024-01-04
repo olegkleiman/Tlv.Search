@@ -14,6 +14,9 @@
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.21.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.0.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi" Version="1.5.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.0.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.0.1-alpha" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
@@ -25,6 +28,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="local.settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

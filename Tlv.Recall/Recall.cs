@@ -10,21 +10,13 @@ using VectorDb.Core;
 
 namespace Tlv.Recall
 {
-    public class Recall
+    public class Recall : SearchBase
     {
         private readonly ILogger _logger;
 
         public Recall(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<Recall>();
-        }
-
-        private string GetConfigValue(string configKey)
-        {
-            string? value = Environment.GetEnvironmentVariable(configKey);
-            Guard.Against.NullOrEmpty(value, configKey, $"Couldn't find '{configKey}' in configuration");
-
-            return value;
         }
 
         [Function(nameof(Recall))]
@@ -56,7 +48,7 @@ namespace Tlv.Recall
                 string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
                 EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
 
-                string configKeyName = $"{embeddingsProvider.ToString().ToUpper()}_KEY";
+                string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
                 string? embeddingEngineKey = GetConfigValue(configKeyName);
                 Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
@@ -70,7 +62,6 @@ namespace Tlv.Recall
                 Guard.Against.Null(vectorDb);
 
                 var searchResuls = await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);
-
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 await response.WriteAsJsonAsync(searchResuls);
