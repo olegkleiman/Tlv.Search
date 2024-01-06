@@ -3,10 +3,6 @@ using EmbeddingEngine.Core;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Memory;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
@@ -45,7 +41,9 @@ namespace Tlv.Recall
         protected async ValueTask<List<SearchItem>> Search(string apiKey,
                                                            string endpoint,
                                                            string collectionName,
-                                                           string prompt)
+                                                           string qdrantHost,
+                                                           string prompt,
+                                                           int limit = 1)
         {
             var embeddingService =
                 new AzureOpenAITextEmbeddingGenerationService("ada2", endpoint, apiKey);
@@ -53,18 +51,22 @@ namespace Tlv.Recall
                                         .WithTextEmbeddingGeneration(embeddingService)
                                         //.WithAzureOpenAITextEmbeddingGeneration("ada2", endpoint, apiKey)
                                         //.WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", apiKey)
-                                        .WithQdrantMemoryStore("http://localhost:6333", 1536)
+                                        .WithQdrantMemoryStore($"http://{qdrantHost}:6333", 1536) //"http://localhost:6333", 1536)
                                         .Build();
             var collections = await memory.GetCollectionsAsync();
             if (!collections.Contains(collectionName))
                 return [];
 
-            IAsyncEnumerable<MemoryQueryResult> memories = memory.SearchAsync(collectionName, prompt, limit: 1);
+            IAsyncEnumerable<MemoryQueryResult> memories = memory.SearchAsync(collectionName, prompt, limit: limit);
 
             var q = from res in memories
+                    let metadata = res.Metadata
                     select new SearchItem()
                     {
-                        summary = res.Metadata.Text,
+                        //id = ulong.Parse(res.Metadata.Id),
+                        summary = metadata.Text,
+                        similarity = res.Relevance,
+
                     };
             return q.ToListAsync().Result;
         }

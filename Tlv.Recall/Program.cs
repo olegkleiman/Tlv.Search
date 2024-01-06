@@ -20,8 +20,6 @@ var host = new HostBuilder()
             return new ChatHistory();
         });
 
-        services.AddSingleton<Kernel>();
-
         services.AddSingleton<Kernel>(sp =>
         {
             IConfiguration configuration = sp.GetRequiredService<IConfiguration>();

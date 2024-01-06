@@ -120,7 +120,16 @@
   <data name="embeddings_count" xml:space="preserve">
     <value>embeddings count</value>
   </data>
+  <data name="no_classification" xml:space="preserve">
+    <value>Couldn't classify user's chat message</value>
+  </data>
   <data name="no_embeddings_for_prompt" xml:space="preserve">
     <value>Couldn't generate embedding for prompt</value>
+  </data>
+  <data name="no_history" xml:space="preserve">
+    <value>Couldn't re-create message history</value>
+  </data>
+  <data name="no_prompt" xml:space="preserve">
+    <value>Couldn't find prompt in request query</value>
   </data>
 </root>
