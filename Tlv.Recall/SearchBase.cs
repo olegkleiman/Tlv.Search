@@ -46,13 +46,13 @@ namespace Tlv.Recall
                                                            string endpoint,
                                                            string collectionName,
                                                            string prompt)
-        {   
-            //var embeddingService =
-            //    new AzureOpenAITextEmbeddingGenerationService("ada2", endpoint, apiKey);
+        {
+            var embeddingService =
+                new AzureOpenAITextEmbeddingGenerationService("ada2", endpoint, apiKey);
             ISemanticTextMemory memory = new MemoryBuilder()
-                                        //.WithTextEmbeddingGeneration(embeddingService)
+                                        .WithTextEmbeddingGeneration(embeddingService)
                                         //.WithAzureOpenAITextEmbeddingGeneration("ada2", endpoint, apiKey)
-                                        .WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", apiKey)
+                                        //.WithOpenAITextEmbeddingGeneration("text-embedding-ada-002", apiKey)
                                         .WithQdrantMemoryStore("http://localhost:6333", 1536)
                                         .Build();
             var collections = await memory.GetCollectionsAsync();

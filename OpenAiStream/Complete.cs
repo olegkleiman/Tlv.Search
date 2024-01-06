@@ -45,7 +45,7 @@ public class OpenAiFunction : SearchBase
 
             #region Read Configuration
 
-            string collectionName = GetConfigValue("QDRANT_COLLECTOIN_NAME");
+            string collectionName = GetConfigValue("QDRANT_COLLECTION_NAME");
             string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
 
 
@@ -90,7 +90,7 @@ public class OpenAiFunction : SearchBase
     {
         using (HttpClient httpClient = new HttpClient())
         {
-            httpClient.DefaultRequestHeaders.Authorization = new("Bearer", "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");
+            httpClient.DefaultRequestHeaders.Authorization = new("Bearer", "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");
 
             var combinedList = new List<Message>
             {

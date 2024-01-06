@@ -10,7 +10,7 @@ internal class OpenAiService
 {
 
     private readonly HttpClient _httpClient;
-    private readonly string _openAiKey = "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"; // Replace with your actual OpenAI API key
+    private readonly string _openAiKey = "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"; // Replace with your actual OpenAI API key
 
     public OpenAiService()
     {

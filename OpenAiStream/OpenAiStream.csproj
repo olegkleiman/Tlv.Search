@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
@@ -6,10 +6,11 @@
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" Version="4.2.0" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.1" />
-    <!--<PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.0.1" />
+	<!--
+	  <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.1" />
+	  <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.0.1" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.0.1-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.1" />-->
-    <!--<PackageReference Include="System.Linq.Async" Version="6.0.1" />-->
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />-->
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
