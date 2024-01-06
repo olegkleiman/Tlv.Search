@@ -54,11 +54,11 @@ namespace Tlv.Recall
                 #region Read Configuration
 
                 string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
-                string openaiEndpoint = GetConfigValue("OPENAI_ENDPOINT");
-                string openaiAzureKey = GetConfigValue("OPENAI_AZURE_KEY");
-                string collectionName = GetConfigValue("COLLECTION_NAME");
-                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
-                string configKeyName = $"{embeddingsProviderName.ToString().ToUpper()}_KEY";
+                string? openaiEndpoint = GetConfigValue("OPENAI_ENDPOINT");
+                string? openaiAzureKey = GetConfigValue("OPENAI_AZURE_KEY");
+                string? collectionName = GetConfigValue("COLLECTION_NAME");
+                string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
+                string? configKeyName = $"{embeddingsProviderName.ToString().ToUpper()}_KEY";
 
                 configKeyName = $"{embeddingsProviderName.ToString().ToUpper()}_AZURE_KEY";
                 string? azureApiKey = GetConfigValue(configKeyName);

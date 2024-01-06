@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 internal class OpenAiService
 {
-
     private readonly HttpClient _httpClient;
-    private readonly string _openAiKey = "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"; // Replace with your actual OpenAI API key
+    private readonly string _openAiKey;
 
-    public OpenAiService()
+    public OpenAiService(string providerKey)
     {
         _httpClient = new HttpClient();
+        _openAiKey = providerKey;
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _openAiKey);
     }
 

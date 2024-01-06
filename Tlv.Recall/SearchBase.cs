@@ -14,7 +14,7 @@ namespace Tlv.Recall
 {
     public class SearchBase
     {
-        protected string GetConfigValue(string configKey)
+        protected string? GetConfigValue(string configKey)
         {
             string? value = Environment.GetEnvironmentVariable(configKey);
             Guard.Against.NullOrEmpty(value, configKey, $"Couldn't find '{configKey}' in configuration");

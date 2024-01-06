@@ -15,8 +15,6 @@ var host = new HostBuilder()
 
         services.AddHttpClient();
 
-        //services.AddSingleton<IHttpResponderService, DefaultHttpResponderService>();
-
         services.AddSingleton(sp =>
         {
             return new ChatHistory();

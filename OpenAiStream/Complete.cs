@@ -16,9 +16,8 @@ using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
 using System.Linq;
 
-public class OpenAiFunction : SearchBase
+public class Complete : SearchBase
 {
-    private static readonly OpenAiService _openAiService = new OpenAiService();
 
     [FunctionName("complete")]
     public async Task<IActionResult> Run(
@@ -40,36 +39,34 @@ public class OpenAiFunction : SearchBase
 
         try
         {
-            
-
-
             #region Read Configuration
 
-            string collectionName = GetConfigValue("QDRANT_COLLECTION_NAME");
-            string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
-
-
+            string? collectionName = GetConfigValue("QDRANT_COLLECTION_NAME");
+            string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
 
             string? embeddingsProviderName = "OPENAI";
             EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
 
             string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
-            string? embeddingEngineKey = GetConfigValue(configKeyName);
-            Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
+            string? providerKey = GetConfigValue(configKeyName);
+            Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
             #endregion
+
+            OpenAiService _openAiService = new OpenAiService(providerKey);
 
             //var processedQ = await _openAiService.ProcessUserInput(question, history);
             var intent = await _openAiService.DetermineIntent(question);
             if (intent == "database_query")
             {
                 var processedQ = await _openAiService.ProcessUserInput(question, history);
-                var results = await Search(embeddingsProviderName, embeddingEngineKey, vectorDbProviderKey, collectionName, processedQ);
+                var results = await Search(embeddingsProviderName, providerKey, vectorDbProviderKey, collectionName, processedQ);
                 var ctx = results[0].summary;
                 question = await _openAiService.FrameQuestion(results.Select(p => p.summary).ToList(), processedQ);
             }
 
 
-            var responseStream = await StreamOpenAI(question, history);
+            var responseStream = await StreamOpenAI(question, history, providerKey);
             return new OkObjectResult(responseStream);
         }
         catch (Exception ex)
@@ -79,18 +76,13 @@ public class OpenAiFunction : SearchBase
         }
     }
 
-    // ... [Previous Code Definitions]
-
-    public class Payload
-    {
-
-    }
-
-    private static async Task<Stream> StreamOpenAI(string message, Message[] history)
+   private static async Task<Stream> StreamOpenAI(string message, 
+                                                   Message[] history,
+                                                   string providerKey)
     {
         using (HttpClient httpClient = new HttpClient())
         {
-            httpClient.DefaultRequestHeaders.Authorization = new("Bearer", "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");
+            httpClient.DefaultRequestHeaders.Authorization = new("Bearer", providerKey);
 
             var combinedList = new List<Message>
             {
