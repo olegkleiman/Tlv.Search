@@ -16,36 +16,15 @@ namespace EmbeddingEngine.OpenAI
         {
             m_providerKey = providerKey;
         }
-        public async Task<float[]>? GenerateEmbeddingsAsync(string input)
+        public async Task<float[]?> GenerateEmbeddingsAsync(string input)
         {
             try
             {
                 var client = new OpenAIClient(m_providerKey, new OpenAIClientOptions());
-                //string userMessage = "סכם בבקשה את הטקסט הבא \n: ";
-
-                //ChatCompletionsOptions cco = new()
-                //{
-                //    DeploymentName = "gpt-3.5-turbo-1106", //,"gpt-4"
-                //    Messages =
-                //        {
-                //            new ChatRequestSystemMessage(@"You are a help assistant that summarized the user input."),
-                //            new ChatRequestUserMessage(userMessage + doc.Text)
-                //        },
-                //    Temperature = (float)0.7,
-                //    MaxTokens = 800,
-                //    NucleusSamplingFactor = (float)0.95,
-                //    FrequencyPenalty = 0,
-                //    PresencePenalty = 0,
-                //};
-
-                //Response<ChatCompletions> responseWithoutStream = await client.GetChatCompletionsAsync(cco);
-                //ChatResponseMessage summaryMessage = responseWithoutStream.Value.Choices[0].Message;
-                //string summary = summaryMessage.Content;
-                //doc.Summary = summary;
 
                 string? content = input;
                 if (string.IsNullOrEmpty(content))
-                    return new float[] {};
+                    return Array.Empty<float>();
 
                 EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
                                             input: new List<string>() { content });
@@ -63,7 +42,7 @@ namespace EmbeddingEngine.OpenAI
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return null;
+                return Array.Empty<float>();
             }
         }
 

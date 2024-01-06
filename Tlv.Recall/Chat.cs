@@ -20,23 +20,21 @@ using QueueTriggerAttribute = Microsoft.Azure.Functions.Worker.QueueTriggerAttri
 
 namespace Tlv.Recall
 {
-    public class Complete : SearchBase
+    public class Chat : SearchBase
     {
         private readonly ILogger _logger;
         private readonly IChatCompletionService _chat;
         private readonly ChatHistory _chatHistory;
 
-        public Complete(ILoggerFactory loggerFactory,
+        public Chat(ILoggerFactory loggerFactory,
                         Kernel kernel)
-                        //ChatHistory chatHistory,
-                        //IChatCompletionService chat)
         {
-            _logger = loggerFactory.CreateLogger<Complete>();
+            _logger = loggerFactory.CreateLogger<Chat>();
             _chat = kernel.GetRequiredService<IChatCompletionService>();
             _chatHistory = new ChatHistory();
            }
 
-        [Function(nameof(Complete))]
+        [Function(nameof(Chat))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             try
@@ -49,7 +47,7 @@ namespace Tlv.Recall
                     return _response;
                 }
 
-                _logger.LogInformation($"Executing {nameof(Complete)} with prompt {prompt}");
+                _logger.LogInformation($"Executing {nameof(Chat)} with prompt {prompt}");
 
                 #region Read Configuration
 
@@ -85,23 +83,25 @@ namespace Tlv.Recall
 
                 _chatHistory.Clear();
 
-                if ( result.Content.Contains("question", StringComparison.OrdinalIgnoreCase) )
+                if (result.Content.Contains("question", StringComparison.OrdinalIgnoreCase))
                 {
-                    
                     var searchResuls = await Search(openaiAzureKey,
-                                                openaiEndpoint,
-                                                collectionName,
-                                                prompt);
+                                                    openaiEndpoint,
+                                                    collectionName,
+                                                    prompt);
 
                     if (searchResuls.Count > 0)
                     {
                         string? summary = searchResuls[0].summary;
                         if (!string.IsNullOrEmpty(summary))
-                            _chatHistory.AddUserMessage($"Based on the following information:\n\n{summary}\n\nWhat insights can we draw about:\n\n{prompt}");
+                            _chatHistory.AddUserMessage($"Based on the following information:\n\n{summary}\n\nWhat insights can we draw about:\n\n{prompt}. Answer in Hebrew.");
                     }
                 }
-                
-                IAsyncEnumerable<StreamingChatMessageContent>
+                else
+                    _chatHistory.AddUserMessage(prompt);
+
+
+                IAsyncEnumerable <StreamingChatMessageContent>
                     streamingResult = _chat.GetStreamingChatMessageContentsAsync(_chatHistory,
                                                         executionSettings: openAIPromptExecutionSettings);
 
