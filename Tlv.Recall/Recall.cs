@@ -10,13 +10,21 @@ using VectorDb.Core;
 
 namespace Tlv.Recall
 {
-    public class Recall : SearchBase
+    public class Recall // : SearchBase
     {
         private readonly ILogger _logger;
 
         public Recall(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<Recall>();
+        }
+
+        protected string? GetConfigValue(string configKey)
+        {
+            string? value = Environment.GetEnvironmentVariable(configKey);
+            Guard.Against.NullOrEmpty(value, configKey, $"Couldn't find '{configKey}' in configuration");
+
+            return value;
         }
 
         [Function(nameof(Recall))]
@@ -40,8 +48,8 @@ namespace Tlv.Recall
 
                 #region Read Configuration
 
-                string collectionName = GetConfigValue("COLLECTION_NAME");
-                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
+                string? collectionName = GetConfigValue("COLLECTION_NAME");
+                string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
 
                 #endregion
 

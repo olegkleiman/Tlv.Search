@@ -1,31 +1,53 @@
 using Ardalis.GuardClauses;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Tlv.Recall.Services;
 using HttpTriggerAttribute = Microsoft.Azure.Functions.Worker.HttpTriggerAttribute;
 
 namespace Tlv.Recall
 {
-    public class Chat : SearchBase
+    public class Chat // : SearchBase
     {
         private readonly ILogger _logger;
         private readonly IChatCompletionService _chat;
+        private readonly SearchService _searchService;
         private ChatHistory? _chatHistory;
 
         public Chat(ILoggerFactory loggerFactory,
-                    Kernel kernel)
+                    Kernel kernel,
+                    SearchService searchService)
         {
             _logger = loggerFactory.CreateLogger<Chat>();
             _chat = kernel.GetRequiredService<IChatCompletionService>();
+            _searchService = searchService;
+            //var context = kernel.Plugins.
         }
 
+        protected static string? GetConfigValue(string configKey)
+        {
+            string? value = Environment.GetEnvironmentVariable(configKey);
+            Guard.Against.NullOrEmpty(value, configKey, $"Couldn't find '{configKey}' in configuration");
+
+            return value;
+        }
+
+        /// <summary>
+        /// Invokes the chat function to get a response from the bot.
+        /// </summary>
         [Function(nameof(Chat))]
+        [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
+        [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
+        [OpenApiParameter(name: "h", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "chat history as json array")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             try
@@ -48,15 +70,15 @@ namespace Tlv.Recall
 
                 #endregion
 
-                #region Read Configuration
+                //#region Read Configuration
 
-                string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
-                string? openaiEndpoint = GetConfigValue("OPENAI_ENDPOINT");
-                string? openaiAzureKey = GetConfigValue("OPENAI_AZURE_KEY");
-                string? collectionName = GetConfigValue("COLLECTION_NAME");
-                string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
+                //string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
+                //string? openaiEndpoint = GetConfigValue("OPENAI_ENDPOINT");
+                //string? openaiAzureKey = GetConfigValue("OPENAI_AZURE_KEY");
+                //string? collectionName = GetConfigValue("COLLECTION_NAME");
+                //string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
 
-                #endregion
+                //#endregion
 
                 Guard.Against.Null(_chat);
 
@@ -68,8 +90,9 @@ namespace Tlv.Recall
                 };
 
                 ChatHistory tempChatHistory = new($"Classify the following user input as either a question or a statement:\n\n\"{prompt}\". Answer in English");
-                ChatMessageContent result = await _chat.GetChatMessageContentAsync(tempChatHistory,
-                                                                        executionSettings: openAIPromptExecutionSettings);
+                ChatMessageContent result = 
+                    await _chat.GetChatMessageContentAsync(tempChatHistory,
+                                                           executionSettings: openAIPromptExecutionSettings);
                 Guard.Against.Null(result, string.Empty, Resource.no_classification);
                 if (result is null || result.Content is null)
                     throw new ApplicationException(Resource.no_classification);
@@ -80,19 +103,21 @@ namespace Tlv.Recall
                                              where message.Role == AuthorRole.User
                                              select message.Content);
 
-                    var searchResuls = await Search(openaiAzureKey,
-                                                    openaiEndpoint,
-                                                    collectionName,
-                                                    vectorDbProviderKey,
-                                                    q, //prompt,
-                                                    limit: 5);
+                    var searchResuls = await _searchService.Search(q, limit: 5);
+
+                    //searchResuls = await Search(openaiAzureKey,
+                    //                                openaiEndpoint,
+                    //                                collectionName,
+                    //                                vectorDbProviderKey,
+                    //                                q, //prompt,
+                    //                                limit: 5);
 
                     StringBuilder sb = new("Based on the following information:\n\n");
                     foreach (var item in searchResuls)
                     {
                         sb.Append($"{item.summary}\n\n");
                     }
-                    sb.Append($"What insights can we draw about:\n\n{prompt}.\n\nAnswer in Hebrew.");
+                    sb.Append($"What insights can be drawn about:\n\n{prompt}.\n\nAnswer in Hebrew.");
 
                     string chatMessage = sb.ToString();
                     _chatHistory.AddUserMessage(chatMessage);
@@ -110,12 +135,11 @@ namespace Tlv.Recall
                 HttpResponseData response = req.CreateResponse(HttpStatusCode.OK);
 
                 StreamWriter sw = new(response.Body);
-                await foreach (StreamingChatMessageContent line in streamingResult)
+                await foreach (StreamingChatMessageContent content in streamingResult)
                 {
-                    //sw.WriteLine(line.Content);
-                    if (line.Content is not null)
+                    if (content.Content is not null)
                     {
-                        var _line = JsonSerializer.Serialize(line);
+                        var _line = JsonSerializer.Serialize(content);
                         sw.WriteLine(_line);
                     }
                 }
