@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<links>
+	<url>
+		<source>https://www.tel-aviv.gov.il/_vti_bin/TlvSP2013PublicSite/TlvList.svc/GetListItemsByFieldFilterString/https;3A;2F;2Fwww.tel-aviv.gov.il;2FResidents;2FArnona/ArnonaDiscount/%D7%9B%D7%9C%20%D7%94%D7%A4%D7%A8%D7%99%D7%98%D7%99%D7%9D/null/null/null</source>
+		<handler>http://localhost:7280/api/DiscountTypesArnona</handler>
+	</url>
+	<url>
+		<source>https://www.tel-aviv.gov.il/_vti_bin/TlvSP2013PublicSite/TlvList.svc/GetListItemsByFieldFilterString/https;3A;2F;2Fwww.tel-aviv.gov.il;2FResidents;2FArnona/ArnonaDiscount/%D7%9B%D7%9C%20%D7%94%D7%A4%D7%A8%D7%99%D7%98%D7%99%D7%9D/null/null/null</source>
+		<handler>http://localhost:7280/api/DiscountTypesParking</handler>
+	</url>
+</links>

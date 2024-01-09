@@ -5,6 +5,7 @@ using Odyssey.Models;
 using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
+using System.Xml.Linq;
 
 namespace Odyssey
 {
@@ -15,6 +16,17 @@ namespace Odyssey
 
             try
             {
+
+                XDocument xDoc = XDocument.Load("arnona_ex.xml");
+
+                // read all 'url' tags
+
+                // foreach tag
+                // 1. execute 'source' attribute
+                // 1a. Get the response as JSON
+                // 2. Call to handler url and pass a JSON as body
+
+
                 //
                 // Process sitemaps
                 //
