@@ -10,7 +10,7 @@ using VectorDb.Core;
 
 namespace Tlv.Recall
 {
-    public class Recall // : SearchBase
+    public class Recall
     {
         private readonly ILogger _logger;
 
@@ -48,13 +48,14 @@ namespace Tlv.Recall
 
                 #region Read Configuration
 
-                string? collectionName = GetConfigValue("COLLECTION_NAME");
-                string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
+                string collectionName = GetConfigValue("COLLECTION_NAME")!; // ! because of previous Guard
+                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY")!;
 
                 #endregion
 
                 string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
-                EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
+                EmbeddingsProviders embeddingsProvider = 
+                    (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
 
                 string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
                 string? embeddingEngineKey = GetConfigValue(configKeyName);
@@ -66,10 +67,12 @@ namespace Tlv.Recall
 
                 ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbProviderKey);
+                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, 
+                                                                    vectorDbProviderKey);
                 Guard.Against.Null(vectorDb);
 
-                var searchResuls = await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);
+                var searchResuls = await vectorDb.Search(collectionName,
+                                                        promptEmbedding);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 await response.WriteAsJsonAsync(searchResuls);

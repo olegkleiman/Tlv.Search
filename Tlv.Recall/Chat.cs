@@ -15,16 +15,16 @@ using HttpTriggerAttribute = Microsoft.Azure.Functions.Worker.HttpTriggerAttribu
 
 namespace Tlv.Recall
 {
-    public class Chat // : SearchBase
+    public class Chat
     {
         private readonly ILogger _logger;
         private readonly IChatCompletionService _chat;
-        private readonly SearchService _searchService;
+        private readonly ISearchService _searchService;
         private ChatHistory? _chatHistory;
 
         public Chat(ILoggerFactory loggerFactory,
                     Kernel kernel,
-                    SearchService searchService)
+                    ISearchService searchService)
         {
             _logger = loggerFactory.CreateLogger<Chat>();
             _chat = kernel.GetRequiredService<IChatCompletionService>();
@@ -70,16 +70,6 @@ namespace Tlv.Recall
 
                 #endregion
 
-                //#region Read Configuration
-
-                //string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
-                //string? openaiEndpoint = GetConfigValue("OPENAI_ENDPOINT");
-                //string? openaiAzureKey = GetConfigValue("OPENAI_AZURE_KEY");
-                //string? collectionName = GetConfigValue("COLLECTION_NAME");
-                //string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
-
-                //#endregion
-
                 Guard.Against.Null(_chat);
 
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
@@ -87,8 +77,10 @@ namespace Tlv.Recall
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                     Temperature = 0,
                     MaxTokens = 1000
+                    //StopSequences
                 };
 
+                // Create a history with a system message
                 ChatHistory tempChatHistory = new($"Classify the following user input as either a question or a statement:\n\n\"{prompt}\". Answer in English");
                 ChatMessageContent result = 
                     await _chat.GetChatMessageContentAsync(tempChatHistory,
@@ -105,21 +97,15 @@ namespace Tlv.Recall
 
                     var searchResuls = await _searchService.Search(q, limit: 5);
 
-                    //searchResuls = await Search(openaiAzureKey,
-                    //                                openaiEndpoint,
-                    //                                collectionName,
-                    //                                vectorDbProviderKey,
-                    //                                q, //prompt,
-                    //                                limit: 5);
-
-                    StringBuilder sb = new("Based on the following information:\n\n");
+                    //StringBuilder sb = new("Based on the following information:\n\n");
+                    StringBuilder sb = new("Answer in Hebrew the question based on the context below\n\nContext: ");
                     foreach (var item in searchResuls)
                     {
                         sb.Append($"{item.summary}\n\n");
                     }
-                    sb.Append($"What insights can be drawn about:\n\n{prompt}.\n\nAnswer in Hebrew.");
-
-                    string chatMessage = sb.ToString();
+                    string context = sb.ToString();
+                    //sb.Append($"What insights can be drawn about:\n\n{prompt}.\n\nAnswer in Hebrew.");
+                    string chatMessage = $"{context}\n\n---\n\nQuestion: {prompt}\nAnswer:";
                     _chatHistory.AddUserMessage(chatMessage);
                 }
                 else

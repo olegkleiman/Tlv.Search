@@ -1,8 +1,10 @@
 ﻿using Qdrant.Client;
 using Qdrant.Client.Grpc;
+using System.Collections;
 using System.Collections.Generic;
 using Tlv.Search.Common;
 using VectorDb.Core;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace VectorDb.QDrant
 {
@@ -16,19 +18,49 @@ namespace VectorDb.QDrant
             m_providerKey = providerKey;
             m_qdClient = new QdrantClient(providerKey);
         }
+
+        public async Task SearchGroups(string collectionName,
+                                       string groupBy,
+                                       ReadOnlyMemory<float> queryVector,
+                                       uint limit = 5,
+                                       uint groupSize = 20)
+        {
+            var scores = await m_qdClient.SearchGroupsAsync(collectionName,
+                                         queryVector,
+                                         groupBy,
+                                         limit: limit,
+                                         groupSize: groupSize);
+            foreach (var score in scores)
+            {
+                await Console.Out.WriteLineAsync(score.Id.ToString());
+                new SearchGroupByItem()
+                {
+                    id = score.Id.StringValue,
+                };
+            }
+        }
+
         public async Task<List<SearchItem>> Search(string collectionName,
                                                  ReadOnlyMemory<float> queryVector,
                                                  ulong limit = 5)
         {
             Filter filter = new Filter()
             {
-
+                
             };
             SearchParams sp = new SearchParams()
             {
-                Exact = true
+                Exact = true,
             };
 
+            await SearchGroups(collectionName,
+                        "parent_doc_id",
+                        queryVector,
+                        limit: 200,
+                        groupSize: 20);
+
+
+            // Retrieves closest points based on vector similarity
             IReadOnlyList<ScoredPoint> scores = await m_qdClient.SearchAsync(collectionName,
                                                     queryVector,
                                                     filter: filter,
@@ -45,6 +77,7 @@ namespace VectorDb.QDrant
                         summary = payload["text"].StringValue,
                         url = payload["url"].StringValue,
                         imageUrl = payload["image_url"].StringValue,
+                        parentDocId = payload["parent_doc_id"].IntegerValue,
                         similarity = score.Score
                     }).ToList();
 

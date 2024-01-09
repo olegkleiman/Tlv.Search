@@ -8,17 +8,18 @@ using VectorDb.Core;
 
 namespace Tlv.Recall.Services
 {
-    public class SearchService(string apiKey,
+    public class OpenAISearchService(string apiKey,
                                string endpoint,
                                string collectionName,
                                string vectorDbProviderKey)
+        : ISearchService
     {
         private readonly string _apiKey = apiKey;
         private readonly string _endpoint = endpoint;
         private readonly string _collectionName = collectionName;
         private readonly string _qdrantHost = vectorDbProviderKey;
 
-        protected async Task<List<SearchItem>> Search(string embeddingsProviderName,
+        public async Task<List<SearchItem>> Search(string embeddingsProviderName,
                                                       string prompt,
                                                       ulong limit = 1)
         {
@@ -68,5 +69,7 @@ namespace Tlv.Recall.Services
 
 #pragma warning restore SKEXP0003, SKEXP0011, SKEXP0026
         }
+
+
     }
 }

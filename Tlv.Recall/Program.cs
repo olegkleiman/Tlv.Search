@@ -15,7 +15,7 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        services.AddSingleton<SearchService>(sp =>
+        services.AddSingleton<ISearchService>(sp =>
         {
             #region Read Configuration
 
@@ -27,11 +27,11 @@ var host = new HostBuilder()
 
             #endregion
 
-            var searchService = new SearchService(openaiAzureKey, 
+            var searchService = new OpenAISearchService(openaiAzureKey, 
                                                   openaiEndpoint,
                                                   collectionName,
                                                   vectorDbProviderKey);
-            Console.WriteLine("SearchService built");
+            Console.WriteLine("OpenAISearchService built");
             return searchService;
         });
 
