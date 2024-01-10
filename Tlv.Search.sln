@@ -44,7 +44,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAiStream", "OpenAiStrea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tlv.Search.Tests", "Tlv.Search.Tests\Tlv.Search.Tests.csproj", "{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OdusseyFunctions", "OdusseyFunctions\OdusseyFunctions.csproj", "{55BF7962-89BA-4D68-8EE5-26F713533273}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OdysseyFunctions", "OdusseyFunctions\OdysseyFunctions.csproj", "{55BF7962-89BA-4D68-8EE5-26F713533273}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

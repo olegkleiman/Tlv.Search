@@ -42,9 +42,10 @@ public class Complete : SearchBase
             #region Read Configuration
 
             string? collectionName = GetConfigValue("QDRANT_COLLECTION_NAME");
-            string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY");
+            string? vectorDbHost = GetConfigValue("VECTOR_DB_HOST");
+            string? vectorDbProviderKey = GetConfigValue("VECTOR_DB_KEY");
 
-            string? embeddingsProviderName = "OPENAI";
+            string ? embeddingsProviderName = "OPENAI";
             EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
 
             string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
@@ -60,7 +61,8 @@ public class Complete : SearchBase
             if (intent == "database_query")
             {
                 var processedQ = await _openAiService.ProcessUserInput(question, history);
-                var results = await Search(embeddingsProviderName, providerKey, vectorDbProviderKey, collectionName, processedQ);
+                var results = await Search(embeddingsProviderName, providerKey,
+                                            vectorDbHost, vectorDbProviderKey, collectionName, processedQ);
                 var ctx = results[0].summary;
                 question = await _openAiService.FrameQuestion(results.Select(p => p.summary).ToList(), processedQ);
             }

@@ -15,6 +15,11 @@ namespace Tlv.Search.Common
         public string? ImageUrl { get; set; }
         public string? Source { get; set; }
 
+        public Doc()
+        {
+
+        }
+
         public Doc(string url)
         {
             Url = Guard.Against.NullOrEmpty(url);

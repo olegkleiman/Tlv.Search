@@ -11,13 +11,15 @@ namespace Tlv.Recall.Services
     public class OpenAISearchService(string apiKey,
                                string endpoint,
                                string collectionName,
+                               string vendorDbHostUrl,
                                string vectorDbProviderKey)
         : ISearchService
     {
         private readonly string _apiKey = apiKey;
         private readonly string _endpoint = endpoint;
         private readonly string _collectionName = collectionName;
-        private readonly string _qdrantHost = vectorDbProviderKey;
+        private readonly string _qdrantKey = vectorDbProviderKey;
+        private readonly string _qdrantHost = vendorDbHostUrl;
 
         public async Task<List<SearchItem>> Search(string embeddingsProviderName,
                                                       string prompt,
@@ -31,7 +33,7 @@ namespace Tlv.Recall.Services
 
             ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, _qdrantHost);
+            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, _qdrantHost, _qdrantHost);
             Guard.Against.Null(vectorDb);
 
             return await vectorDb.Search($"{_collectionName}_{embeddingsProviderName}",

@@ -7,6 +7,9 @@ namespace VectorDb.Core
 {
     public interface IVectorDb
     {
+        /// <summary>
+        /// Save the document into named collection 
+        /// </summary>
         Task<bool> Save(Doc doc,
                         int docIndex,
                         int parentDocId,
@@ -29,7 +32,9 @@ namespace VectorDb.Core
 
     public class VectorDb
     {
-        public static IVectorDb? Create(VectorDbProviders providerName, string providerKey)
+        public static IVectorDb? Create(VectorDbProviders providerName, 
+                                        string hostUrl, 
+                                        string providerKey)
         {
             Guard.Against.EnumOutOfRange(providerName);
 
@@ -63,7 +68,14 @@ namespace VectorDb.Core
                 string typeName = $"{className}, {assemblyName}, Version={assemblyVersion}, Culture={assemblyCulture}, PublicKeyToken={publicKeyToken}";
                 Type? _type = Type.GetType(typeName);
                 if (_type is null) return null;
-                IVectorDb? store = (IVectorDb?)Activator.CreateInstance(_type, args: providerKey);
+
+                object[] _args = new object[]
+                {
+                    new string(hostUrl),
+                    new string(providerKey)
+
+                };
+                IVectorDb? store = (IVectorDb?)Activator.CreateInstance(_type, args: _args);
                 if (store is null) return null;
                 return store;
             }

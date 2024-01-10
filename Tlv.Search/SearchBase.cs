@@ -25,6 +25,7 @@ namespace Tlv.Recall
 
         protected async Task<List<SearchItem>> Search(string embeddingsProviderName,
                                                         string embeddingEngineKey,
+                                                        string vectorDbHostUrl,
                                                         string vectorDbProviderKey,
                                                         string collectionName,
                                                         string prompt)
@@ -36,7 +37,7 @@ namespace Tlv.Recall
 
             ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbProviderKey);
+            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHostUrl, vectorDbProviderKey);
             Guard.Against.Null(vectorDb);
 
             return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);

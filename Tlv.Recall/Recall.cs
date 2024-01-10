@@ -49,7 +49,8 @@ namespace Tlv.Recall
                 #region Read Configuration
 
                 string collectionName = GetConfigValue("COLLECTION_NAME")!; // ! because of previous Guard
-                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY")!;
+                string vectorDbHost = GetConfigValue("VECTOR_DB_HOST")!;
+                string vectorDbKey = GetConfigValue("VECTOR_DB_KEY")!;
 
                 #endregion
 
@@ -67,8 +68,9 @@ namespace Tlv.Recall
 
                 ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, 
-                                                                    vectorDbProviderKey);
+                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant,
+                                                                    vectorDbHost,
+                                                                    vectorDbKey);
                 Guard.Against.Null(vectorDb);
 
                 var searchResuls = await vectorDb.Search(collectionName,

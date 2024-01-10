@@ -23,14 +23,16 @@ var host = new HostBuilder()
             string openaiAzureKey = configuration["OPENAI_AZURE_KEY"];
             string openaiEndpoint = configuration["OPENAI_ENDPOINT"];
             string collectionName = configuration["COLLECTION_NAME"];
+            string vectorDbHostUrl = configuration["VECTOR_DB_PROVIDER_HOST"];
             string vectorDbProviderKey = configuration["VECTOR_DB_PROVIDER_KEY"];
 
             #endregion
 
             var searchService = new OpenAISearchService(openaiAzureKey, 
-                                                  openaiEndpoint,
-                                                  collectionName,
-                                                  vectorDbProviderKey);
+                                                          openaiEndpoint,
+                                                          collectionName,
+                                                          vectorDbHostUrl,
+                                                          vectorDbProviderKey);
             Console.WriteLine("OpenAISearchService built");
             return searchService;
         });

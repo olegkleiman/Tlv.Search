@@ -23,6 +23,7 @@ public class SearchBase
 
     protected async Task<List<SearchItem>> Search(string embeddingsProviderName,
                                                     string embeddingEngineKey,
+                                                    string vendorDbHostUrl,
                                                     string vectorDbProviderKey,
                                                     string collectionName,
                                                     string prompt)
@@ -34,7 +35,7 @@ public class SearchBase
 
         ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-        IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbProviderKey);
+        IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vendorDbHostUrl, vectorDbProviderKey);
         Guard.Against.Null(vectorDb);
 
         return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);

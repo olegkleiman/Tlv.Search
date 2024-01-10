@@ -6,6 +6,8 @@ using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
 using System.Xml.Linq;
+using Tlv.Search.Common;
+using Azure.AI.OpenAI;
 
 namespace Odyssey
 {
@@ -48,7 +50,11 @@ namespace Odyssey
                 string? embeddingEngineKey = config[configKeyName];
                 Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
-                configKeyName = "VECTOR_DB_PROVIDER_KEY";
+                configKeyName = "VECTOR_DB_HOST";
+                string? vectorDbHost = config[configKeyName];
+                Guard.Against.NullOrEmpty(vectorDbHost, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
+                configKeyName = "VECTOR_DB_KEY";
                 string? providerKey = config[configKeyName];
                 Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
@@ -61,7 +67,7 @@ namespace Odyssey
                 var table = new DataTable();
                 da.Fill(table);
 
-                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
+                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, providerKey);
                 Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
 
                 IEmbeddingEngine? embeddingEngine =
@@ -96,6 +102,38 @@ namespace Odyssey
                     Scrapper? scrapper = Scrapper.Load(scrapperId, siteMap, connectionString);
                     if (scrapper == null)
                         continue;
+
+                    //
+                    // Start test
+                    List<Doc> docs =
+                    [
+                        new Doc()   
+                        {
+                            Id = 1000,
+                            Title = "אזרח ותיק",
+                            Text = @" - אזרחים ותיקים המקבלים קצבה מהמוסד לביטוח לאומי\\n\\n\  
+     - אזרחים ותיקים המקבלים קצבה מהמוסד לביטוח לאומי ובנוסף מקבלים גמלת הבטחת הכנסה\\n\\n
+- אזרחים ותיקים (הנחה על פי מבחן הכנסה)\\n\\n,
+אזרחים ותיקים המקבלים קצבת זקנה לנכה - \n\n\
+מקבלי גמלת סיעוד",
+                        },
+
+                    ];
+                    foreach (var _doc in docs)
+                    {
+
+                        string input = _doc.Content ?? string.Empty;
+                        float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
+
+                        await vectorDb.Save(_doc,
+                                        _doc.Id,
+                                        0, // parent doc id
+                                        embeddings,
+                                        $"doc_parts_OPENAI" // collection name
+                               );
+                    }
+                    //
+                    // End Test
 
                     await scrapper.Init();
                     Task task = scrapper.ScrapTo(vectorDb, embeddingEngine!);

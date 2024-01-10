@@ -10,13 +10,16 @@ namespace VectorDb.QDrant
 {
     public class QDrantStore : IVectorDb
     {
-        public string? m_providerKey { get; set; }// This is a host name (like 'localhost') for this provider
+        public string? m_hostUrl; // This is a host name (like 'localhost') for this provider
+        public string? m_providerKey { get; set; }
         QdrantClient m_qdClient;
 
-        public QDrantStore(string providerKey)
+        public QDrantStore(string providerKey,
+                           string hostUrl)
         {
+            m_hostUrl = hostUrl;
             m_providerKey = providerKey;
-            m_qdClient = new QdrantClient(providerKey);
+            m_qdClient = new QdrantClient(m_hostUrl, apiKey: m_providerKey); 
         }
 
         public async Task SearchGroups(string collectionName,
@@ -84,10 +87,10 @@ namespace VectorDb.QDrant
         }
 
         public async Task<bool> Save(Doc doc,
-                        int docIndex,
-                        int parentDocId,
-                        float[] vector,
-                        string collectionName)
+                                    int docIndex,
+                                    int parentDocId,
+                                    float[] vector,
+                                    string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 return false;
