@@ -50,7 +50,7 @@ namespace Tlv.Recall
                 #region Read Configuration
 
                 string collectionName = GetConfigValue("COLLECTION_NAME")!; // ! because of previous Guard
-                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_PROVIDER_KEY")!;
+                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_HOST")!;
 
                 #endregion
 
