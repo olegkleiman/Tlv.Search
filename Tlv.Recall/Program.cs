@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,10 +7,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Plugins.Core;
+using System.Net;
 using Tlv.Recall.Services;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureFunctionsWebApplication()
     .ConfigureServices((hostContext, services) =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
@@ -45,11 +47,22 @@ var host = new HostBuilder()
 
             #endregion
 
+            String proxyURL = "http://forticache:8080";
+            WebProxy webProxy = new WebProxy(proxyURL);
+            // make the HttpClient instance use a proxy
+            // in its requests
+            HttpClientHandler httpClientHandler = new HttpClientHandler
+            {
+                //Proxy = webProxy
+            };
+            var httpClient = new HttpClient(httpClientHandler);
+
             // Initialize the SK
             IKernelBuilder kernelBuilder = Kernel.CreateBuilder()
                                         .AddAzureOpenAIChatCompletion("gpt35", //"gpt4", // Azure OpenAI Deployment Name,
                                                                  openaiEndpoint,
-                                                                 openaiAzureKey);
+                                                                 openaiAzureKey,
+                                                                 httpClient: httpClient);
             kernelBuilder.Services.AddLogging( logginBuilder =>
             {
                 logginBuilder.AddFilter(level => true);

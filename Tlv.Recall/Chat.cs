@@ -1,6 +1,8 @@
 using Ardalis.GuardClauses;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
@@ -9,9 +11,9 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Net;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Tlv.Recall.Services;
-using HttpTriggerAttribute = Microsoft.Azure.Functions.Worker.HttpTriggerAttribute;
 
 namespace Tlv.Recall
 {
@@ -47,11 +49,11 @@ namespace Tlv.Recall
         [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiParameter(name: "h", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "chat history as json array")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
             try
             {
+
                 #region Read Query Parameters
 
                 string? prompt = req.Query["q"];
@@ -60,8 +62,10 @@ namespace Tlv.Recall
                 _logger?.LogInformation($"Executing {nameof(Chat)} with prompt {prompt}");
 
                 string errorMessage = Resource.no_history;
-                string? historyJson = req.Query["h"] ?? "[]";
-                Guard.Against.NullOrEmpty(historyJson, errorMessage);
+
+
+                string? historyJson = req.Query["h"];//implicit cast to string?
+                historyJson ??= "[]";
 
                 ChatMessageContent[]? history = JsonSerializer.Deserialize<ChatMessageContent[]>(historyJson);
                 Guard.Against.Null(history, errorMessage);
@@ -71,6 +75,11 @@ namespace Tlv.Recall
                 #endregion
 
                 Guard.Against.Null(_chat);
+
+
+                var response = req.HttpContext.Response;
+                response.Headers.Append("Content-Type", "text/event-stream");
+
 
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                 {
@@ -97,15 +106,21 @@ namespace Tlv.Recall
 
                     var searchResuls = await _searchService.Search(q, limit: 5);
 
-                    //StringBuilder sb = new("Based on the following information:\n\n");
-                    StringBuilder sb = new("Answer in Hebrew the question based on the context below\n\nContext: ");
+                    //searchResuls = await Search(openaiAzureKey,
+                    //                                openaiEndpoint,
+                    //                                collectionName,
+                    //                                vectorDbProviderKey,
+                    //                                q, //prompt,
+                    //                                limit: 5);
+
+                    StringBuilder sb = new("Based on the following information:\n\n");
                     foreach (var item in searchResuls)
                     {
                         sb.Append($"{item.summary}\n\n");
                     }
-                    string context = sb.ToString();
-                    //sb.Append($"What insights can be drawn about:\n\n{prompt}.\n\nAnswer in Hebrew.");
-                    string chatMessage = $"{context}\n\n---\n\nQuestion: {prompt}\nAnswer:";
+                    sb.Append($"What insights can be drawn about:\n\n{prompt}.\n\nAnswer in Hebrew.");
+
+                    string chatMessage = sb.ToString();
                     _chatHistory.AddUserMessage(chatMessage);
                 }
                 else
@@ -118,29 +133,38 @@ namespace Tlv.Recall
                     streamingResult = _chat.GetStreamingChatMessageContentsAsync(_chatHistory,
                                                         executionSettings: openAIPromptExecutionSettings);
 
-                HttpResponseData response = req.CreateResponse(HttpStatusCode.OK);
-
-                StreamWriter sw = new(response.Body);
                 await foreach (StreamingChatMessageContent content in streamingResult)
                 {
                     if (content.Content is not null)
                     {
-                        var _line = JsonSerializer.Serialize(content);
-                        sw.WriteLine(_line);
+                        var line = JsonSerializer.Serialize(content);
+                        await response.WriteAsync($"data: {line}\n\n");
+                        await response.Body.FlushAsync();
+                        await Task.Delay(30);
                     }
                 }
-                sw.Flush();
-                response.Body.Position = 0;
 
-                return response;
+                await response.WriteAsync("[DONE]");
+                await response.Body.FlushAsync();
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex.Message);
+            }
 
-                var _response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                _response.WriteString(ex.Message);
-                return _response;
+        }
+        private async Task<string> GetMessage(int n)
+        {
+            await Task.Delay(10);
+            return $"data: Message1 #{n}\n\n";
+        }
+
+        async IAsyncEnumerable<string> GetMessages(int max)
+        {
+            for (var i = 1; i <= max; i++)
+            {
+                var message = await GetMessage(i);
+                yield return message;
             }
         }
     }

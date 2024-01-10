@@ -1,11 +1,14 @@
 using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System.Net;
+using System.Web.Http;
 using VectorDb.Core;
 
 namespace Tlv.Recall
@@ -32,16 +35,14 @@ namespace Tlv.Recall
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiParameter(name: "p", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "Embedding provider name: OPENAI/GEMINI")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
             try
             {
                 string? prompt = req.Query["q"];
                 if (string.IsNullOrEmpty(prompt))
                 {
-                    var _response = req.CreateResponse(HttpStatusCode.BadRequest);
-                    await _response.WriteStringAsync("Please provide some input, i.e. add ?q=... to invocation url");
-                    return _response;
+                    return new BadRequestObjectResult("Please provide some input, i.e. add ?q=... to invocation url");
                 }
 
                 _logger.LogInformation($"Executing {nameof(Recall)} with prompt {prompt}");
@@ -53,9 +54,9 @@ namespace Tlv.Recall
 
                 #endregion
 
-                string? embeddingsProviderName = req.Query["p"] ?? "OPENAI";
-                EmbeddingsProviders embeddingsProvider = 
-                    (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
+                string? embeddingsProviderName = req.Query["p"]; //implicit cast 
+                embeddingsProviderName ??= "OPENAI";
+                EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
 
                 string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
                 string? embeddingEngineKey = GetConfigValue(configKeyName);
@@ -74,16 +75,15 @@ namespace Tlv.Recall
                 var searchResuls = await vectorDb.Search(collectionName,
                                                         promptEmbedding);
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(searchResuls);
-                return response;
-
+                return new OkObjectResult(searchResuls);
             }
             catch (Exception ex)
             {
-                var _response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                _response.WriteString(ex.Message);
-                return _response;
+                return new ObjectResult(new { ex.Message })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+
             }
         }
     }
