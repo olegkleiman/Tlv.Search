@@ -40,6 +40,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tlv.Recall", "Tlv.Recall\Tl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SKRAGDrive", "SKRAGDrive\SKRAGDrive.csproj", "{D1E0A713-C9BD-47C9-8E30-C20C6C27A839}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAiStream", "OpenAiStream\OpenAiStream.csproj", "{FBBB5C11-933F-4999-9303-06CF92C674AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tlv.Search.Tests", "Tlv.Search.Tests\Tlv.Search.Tests.csproj", "{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,6 +114,14 @@ Global
 		{D1E0A713-C9BD-47C9-8E30-C20C6C27A839}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1E0A713-C9BD-47C9-8E30-C20C6C27A839}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1E0A713-C9BD-47C9-8E30-C20C6C27A839}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBBB5C11-933F-4999-9303-06CF92C674AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBBB5C11-933F-4999-9303-06CF92C674AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBBB5C11-933F-4999-9303-06CF92C674AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBBB5C11-933F-4999-9303-06CF92C674AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

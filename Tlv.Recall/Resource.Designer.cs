@@ -70,11 +70,38 @@ namespace Tlv.Recall {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Couldn&apos;t classify user&apos;s chat message.
+        /// </summary>
+        internal static string no_classification {
+            get {
+                return ResourceManager.GetString("no_classification", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Couldn&apos;t generate embedding for prompt.
         /// </summary>
         internal static string no_embeddings_for_prompt {
             get {
                 return ResourceManager.GetString("no_embeddings_for_prompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn&apos;t re-create message history.
+        /// </summary>
+        internal static string no_history {
+            get {
+                return ResourceManager.GetString("no_history", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn&apos;t find prompt in request query.
+        /// </summary>
+        internal static string no_prompt {
+            get {
+                return ResourceManager.GetString("no_prompt", resourceCulture);
             }
         }
     }

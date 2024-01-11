@@ -132,7 +132,8 @@ namespace Odyssey
                                 if (embeddings != null)
                                 {
                                     string embeddingProviderName = embeddingEngine.provider.ToString();
-                                    await vectorDb.Save(subDoc, subDocIndex++, doc.Id, // parent doc id
+                                    await vectorDb.Save(subDoc, subDocIndex++, 
+                                                        doc.Id, // parent doc id
                                                         embeddings,
                                                         $"doc_parts_{embeddingProviderName}" // collection name
                                                        );

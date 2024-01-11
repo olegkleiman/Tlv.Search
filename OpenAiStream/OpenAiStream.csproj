@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>	  
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Ardalis.GuardClauses" Version="4.2.0" />
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.1" />
+	<!--
+	  <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.0.1" />
+	  <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.0.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.0.1-alpha" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />-->
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
+    <ProjectReference Include="..\EmbeddingEngine.OpenAI\EmbeddingEngine.OpenAI.csproj" />
+    <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
+    <ProjectReference Include="..\VectorDb.Core\VectorDb.Core.csproj" />
+    <ProjectReference Include="..\VectorDb.QDrant\VectorDb.QDrant.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="local.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+</Project>

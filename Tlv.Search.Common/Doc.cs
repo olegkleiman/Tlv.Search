@@ -3,7 +3,7 @@ using System;
 
 namespace Tlv.Search.Common
 {
-    public class Doc(string url)
+    public class Doc
     {
         public int Id { get; set; }
         public string? Lang { get; set; }
@@ -11,21 +11,16 @@ namespace Tlv.Search.Common
         public string? Description { get; set; }
         public string? Title { get; set; }
         public string? SubTitle { get; set; }
-        public string? Url { get; private set; } = Guard.Against.NullOrEmpty(url);
+        public string? Url { get; private set; }
         public string? ImageUrl { get; set; }
         public string? Source { get; set; }
 
-        public Doc(Doc prev)
-            : this(prev.Url)
+        public Doc(string url)
         {
-            Id = prev.Id;
-            Lang = prev.Lang;
-            Text = prev.Text;
-            Title = prev.Title;
-            Source = prev.Source;
+            Url = Guard.Against.NullOrEmpty(url);
         }
 
-        public List<Doc> subDocs = [];
+        public List<Doc> subDocs = new ();
 
         public string? Content
         {

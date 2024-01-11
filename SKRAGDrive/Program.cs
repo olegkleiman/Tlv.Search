@@ -11,6 +11,7 @@ using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Text;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SKCharDrive
@@ -63,7 +64,8 @@ namespace SKCharDrive
 
             ISemanticTextMemory memory = new MemoryBuilder()
                                          .WithLoggerFactory(kernel.LoggerFactory)
-                                         .WithTextEmbeddingGeneration(embeddingService)
+                                         //.WithTextEmbeddingGeneration(embeddingService)
+                                         .WithAzureOpenAITextEmbeddingGeneration("ada2", openaiEndpoint, openaiAzureKey)
                                          //.WithAzureOpenAITextEmbeddingGeneration("ada2",
                                          //                           openaiEndpoint,
                                          //                           openaiAzureKey)
@@ -118,6 +120,7 @@ namespace SKCharDrive
             while (true)
             {
                 Console.Write("User > ");
+                //kernel.InvokeAsync(Console.ReadLine()!);
                 var question = Console.ReadLine()!;
 
                 var searchResults = memory.SearchAsync(collectionName, question, limit: 1);
@@ -136,6 +139,11 @@ namespace SKCharDrive
                                                                  executionSettings: openAIPromptExecutionSettings);
                 Console.WriteLine($"Assistant > {result}");
                 history.AddMessage(result.Role, result.Content);
+
+                var historyJson = JsonSerializer.Serialize(history.ToList(),
+                                                            new JsonSerializerOptions { 
+                                                                WriteIndented = true 
+                                                            });
             }
         }
     }
