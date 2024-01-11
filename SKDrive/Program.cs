@@ -7,6 +7,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.HuggingFace;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
+using Microsoft.SemanticKernel.Embeddings;
 using Microsoft.SemanticKernel.Memory;
 using System.Collections;
 using System.Net;
@@ -51,15 +52,27 @@ namespace SKDrive
                 // Azure OpenAI package
                 //var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
 
-                //const string model = "microsoft/Orca-2-13b";
-                const string Endpoint = "https://api-inference.huggingface.co/models/microsoft/Orca-2-13b";
+                var htToken = config["HF_TOKEN"];
+                string model_id = "sentence-transformers/all-MiniLM-L6-v2"; //"intfloat/multilingual-e5-base"
+                string endpoint = $"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_id}";
 
-                string model = "google/canine-c"; // intfloat /multilingual-e5-large"; // sentence -transformers/all-MiniLM-L6-v2";
+                //string proxyURL = "http://forticache:8080";
+                //WebProxy webProxy = new WebProxy(proxyURL);
+
+                //HttpClientHandler httpClientHandler = new HttpClientHandler
+                //{
+                //    Proxy = webProxy,
+                //};
+                HttpClient httpClient = new HttpClient(); // httpClientHandler);
+
+                httpClient.BaseAddress = new Uri("https://api-inference.huggingface.co/pipeline/feature-extraction/");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", htToken);
+
 
                 IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
                 kernelBuilder.Services.AddLogging(c => c.AddConsole());
-#pragma warning disable SKEXP0003, SKEXP0020, SKEXP0026
-                //kernelBuilder.AddHuggingFaceTextEmbeddingGeneration(model);
+#pragma warning disable SKEXP0001, SKEXP0003, SKEXP0020, SKEXP0026
+                    kernelBuilder.AddHuggingFaceTextEmbeddingGeneration(model_id, httpClient: httpClient);
                 //kernelBuilder.AddHuggingFaceTextGeneration(model,
                 //    "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",
                 //    Endpoint);
@@ -74,23 +87,24 @@ namespace SKDrive
 
                 var kernel = kernelBuilder.Build();
 
-                #pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
+                var service = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+                var _embeddings = await service.GenerateEmbeddingsAsync(["how old are you"]);
+
+#pragma warning disable SKEXP0001, SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
+
+
+
 
                 var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
 
 
-                string proxyURL = "http://forticache:8080";
-                WebProxy webProxy = new WebProxy(proxyURL);
 
-                HttpClientHandler httpClientHandler = new HttpClientHandler
-                {
-                    Proxy = webProxy,
-                };
-                HttpClient client = new HttpClient(httpClientHandler);
-                client.BaseAddress = new Uri("https://api-inference.huggingface.co/models/");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "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");
 
-                HuggingFaceTextEmbeddingGenerationService embeddingService = new(model, client);
+
+                HuggingFaceTextEmbeddingGenerationService embeddingService = new(model_id, httpClient);
+                //TextEmbeddingResponse _resp = await embeddingService.GenerateEmbeddingsAsync(["How do I get a replacement Medicare card?"]);
+                var emdeddings = await embeddingService.GenerateEmbeddingsAsync(["How do I get a replacement Medicare card?"]);
+                
                 var memoryBuilder = new MemoryBuilder()
                     .WithLoggerFactory(kernel.LoggerFactory)
                     .WithTextEmbeddingGeneration(embeddingService)
