@@ -23,18 +23,20 @@ public class SearchBase
 
     protected async Task<List<SearchItem>> Search(string embeddingsProviderName,
                                                     string embeddingEngineKey,
+                                                    string vectorDbHost,
                                                     string vectorDbProviderKey,
                                                     string collectionName,
                                                     string prompt)
     {
         EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
         IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
-                                                                                providerKey: embeddingEngineKey);
+                                                                                providerKey: embeddingEngineKey,
+                                                                                "text-embedding-ada-002");
         Guard.Against.Null(embeddingEngine);
 
         ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-        IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbProviderKey);
+        IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, vectorDbProviderKey);
         Guard.Against.Null(vectorDb);
 
         return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);

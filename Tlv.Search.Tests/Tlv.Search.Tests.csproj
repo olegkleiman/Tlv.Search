@@ -23,7 +23,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
+    <ProjectReference Include="..\EmbeddingEngine.HuggingFace\EmbeddingEngine.HuggingFace.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.OpenAI\EmbeddingEngine.OpenAI.csproj" />
+    <ProjectReference Include="..\VectorDb.Core\VectorDb.Core.csproj" />
+    <ProjectReference Include="..\VectorDb.QDrant\VectorDb.QDrant.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="testsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

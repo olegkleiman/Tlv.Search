@@ -22,17 +22,19 @@ var host = new HostBuilder()
             #region Read Configuration
 
             IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-            string openaiAzureKey = configuration["OPENAI_AZURE_KEY"];
-            string openaiEndpoint = configuration["OPENAI_ENDPOINT"];
-            string collectionName = configuration["COLLECTION_NAME"];
-            string vectorDbHost = configuration["VECTOR_DB_HOST"];
+            string? openaiAzureKey = configuration["OPENAI_AZURE_KEY"];
+            string? openaiEndpoint = configuration["OPENAI_ENDPOINT"];
+            string? collectionName = configuration["COLLECTION_NAME"];
+            string? vectorDbHost = configuration["VECTOR_DB_HOST"];
+            string? vectorDbKey = configuration["VECTOR_DB_KEY"];
 
             #endregion
 
             var searchService = new OpenAISearchService(openaiAzureKey, 
                                                           openaiEndpoint,
                                                           collectionName,
-                                                          vectorDbHost);
+                                                          vectorDbHost,
+                                                          vectorDbKey);
             Console.WriteLine("OpenAISearchService built");
             return searchService;
         });
@@ -42,20 +44,25 @@ var host = new HostBuilder()
             #region Read Configuration
 
             IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-            string openaiAzureKey = configuration["OPENAI_AZURE_KEY"];
-            string openaiEndpoint = configuration["OPENAI_ENDPOINT"];
+            string? openaiAzureKey = configuration["OPENAI_AZURE_KEY"];
+            string? openaiEndpoint = configuration["OPENAI_ENDPOINT"];
+            string? proxyUrl = configuration["PROXY_URL"];
 
             #endregion
 
-            String proxyURL = "http://forticache:8080";
-            WebProxy webProxy = new WebProxy(proxyURL);
-            // make the HttpClient instance use a proxy
-            // in its requests
-            HttpClientHandler httpClientHandler = new HttpClientHandler
+            HttpClientHandler? httpClientHandler = null;
+            if ( !string.IsNullOrEmpty(proxyUrl) )
             {
-                //Proxy = webProxy
-            };
-            var httpClient = new HttpClient(httpClientHandler);
+                WebProxy webProxy = new(proxyUrl);
+                // make the HttpClient instance use a proxy
+                // in its requests
+                httpClientHandler = new HttpClientHandler
+                {
+                    Proxy = webProxy
+                };
+            }
+            HttpClient httpClient = httpClientHandler is null ? new HttpClient()
+                                                                : new (httpClientHandler);
 
             // Initialize the SK
             IKernelBuilder kernelBuilder = Kernel.CreateBuilder()

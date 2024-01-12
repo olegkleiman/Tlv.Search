@@ -50,7 +50,9 @@ namespace Tlv.Recall
                 #region Read Configuration
 
                 string collectionName = GetConfigValue("COLLECTION_NAME")!; // ! because of previous Guard
-                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_HOST")!;
+                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_KEY")!;
+                string vectorDbProviderHost = GetConfigValue("VECTOR_DB_HOST")!;
+                string embeddingModelName = GetConfigValue("EMBEDDING_MODEL_NAME")!;
 
                 #endregion
 
@@ -63,12 +65,14 @@ namespace Tlv.Recall
                 Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
                 IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
-                                                                                        providerKey: embeddingEngineKey);
+                                                                                        providerKey: embeddingEngineKey,
+                                                                                        embeddingModelName);
                 Guard.Against.Null(embeddingEngine);
 
                 ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
                 IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, 
+                                                                    vectorDbProviderHost,
                                                                     vectorDbProviderKey);
                 Guard.Against.Null(vectorDb);
 

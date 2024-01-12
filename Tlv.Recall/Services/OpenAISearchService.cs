@@ -11,13 +11,15 @@ namespace Tlv.Recall.Services
     public class OpenAISearchService(string apiKey,
                                string endpoint,
                                string collectionName,
+                               string vectorDbProviderHostName,
                                string vectorDbProviderKey)
         : ISearchService
     {
         private readonly string _apiKey = apiKey;
         private readonly string _endpoint = endpoint;
         private readonly string _collectionName = collectionName;
-        private readonly string _qdrantHost = vectorDbProviderKey;
+        private readonly string _qdrantHostName = vectorDbProviderHostName;
+        private readonly string _vectorDbProviderKey = vectorDbProviderKey;
 
         public async Task<List<SearchItem>> Search(string embeddingsProviderName,
                                                       string prompt,
@@ -26,12 +28,13 @@ namespace Tlv.Recall.Services
             EmbeddingsProviders embeddingsProvider =
                 (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
             IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
-                                                                                    providerKey: _apiKey);
+                                                                                    providerKey: _apiKey,
+                                                                                    "text-embedding-ada-002");
             Guard.Against.Null(embeddingEngine);
 
             ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
 
-            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, _qdrantHost);
+            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, _qdrantHostName, _vectorDbProviderKey);
             Guard.Against.Null(vectorDb);
 
             return await vectorDb.Search($"{_collectionName}_{embeddingsProviderName}",
@@ -47,7 +50,7 @@ namespace Tlv.Recall.Services
                 new AzureOpenAITextEmbeddingGenerationService("ada2", _endpoint, _apiKey);
             ISemanticTextMemory memory = new MemoryBuilder()
                                             .WithTextEmbeddingGeneration(embeddingService)
-                                            .WithQdrantMemoryStore($"http://{_qdrantHost}:6333", 1536)
+                                            .WithQdrantMemoryStore($"http://{_qdrantHostName}:6333", 1536)
                                             .Build();
 
 

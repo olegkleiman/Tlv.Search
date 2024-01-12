@@ -131,11 +131,10 @@ namespace Odyssey
                                 float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
                                 if (embeddings != null)
                                 {
-                                    string embeddingProviderName = embeddingEngine.provider.ToString();
                                     await vectorDb.Save(subDoc, subDocIndex++, 
                                                         doc.Id, // parent doc id
                                                         embeddings,
-                                                        $"doc_parts_{embeddingProviderName}" // collection name
+                                                        $"doc_parts_{embeddingEngine.ProviderName}_{embeddingEngine.ModelName}" // collection name
                                                        );
                                 }
                             }
@@ -218,7 +217,7 @@ namespace Odyssey
                     title = clearText(openGraph.Title);
                 }
 
-                Doc doc = new(url)
+                Doc doc = new(new Uri(url))
                 {
                     Source = source,
                     Lang = lang,
@@ -242,7 +241,7 @@ namespace Odyssey
                         {
                             string _clearText = " " + clearText(node.InnerText.Trim());
                             doc.Text += _clearText;
-                            doc.subDocs.Add(new Doc(url)
+                            doc.subDocs.Add(new Doc(new Uri(url))
                             {
                                 Text = _clearText,
                             });

@@ -35,8 +35,17 @@ namespace EmbeddingEngine.Gemini
     public class GeminiEngine(string providerKey) : IEmbeddingEngine
     {
         public string? m_providerKey { get; set; } = providerKey;
+        public const string m_modelName = "models/embedding-001";
 
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.GEMINI;
+
+        public string ModelName
+        {
+            get
+            {
+                return m_modelName;
+            }
+        }
 
         public async Task<float[]?> GenerateEmbeddingsAsync(string input)
         {
@@ -45,13 +54,12 @@ namespace EmbeddingEngine.Gemini
 
             try
             {
-                const string modelName = "models/embedding-001";
-
+ 
                 using HttpClient httpClient = new();
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
                 var payload = new Payload
                 {
-                    model = modelName,
+                    model = m_modelName,
                     //task_type = "RETRIEVAL_QUERY",
                     content = new Content()
                     {
@@ -73,7 +81,7 @@ namespace EmbeddingEngine.Gemini
                 //TO-DO: "Request payload size can't exceeds the limit: 10000 bytes.",
 
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                var url = $"https://generativelanguage.googleapis.com/v1beta/{modelName}:embedContent?key={m_providerKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/{m_modelName}:embedContent?key={m_providerKey}";
                 HttpResponseMessage response = await httpClient.PostAsync(url, content);
 
                 response.EnsureSuccessStatusCode();
@@ -89,5 +97,9 @@ namespace EmbeddingEngine.Gemini
 
         }
 
+        public Task<T?> GenerateEmbeddingsAsync<T>(string input)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

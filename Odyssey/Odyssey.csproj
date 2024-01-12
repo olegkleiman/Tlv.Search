@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.Gemini\EmbeddingEngine.Gemini.csproj" />
+    <ProjectReference Include="..\EmbeddingEngine.HuggingFace\EmbeddingEngine.HuggingFace.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.OpenAI\EmbeddingEngine.OpenAI.csproj" />
     <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
     <ProjectReference Include="..\VectorDb.Core\VectorDb.Core.csproj" />

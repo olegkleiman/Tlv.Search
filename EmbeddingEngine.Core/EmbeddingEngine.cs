@@ -6,17 +6,30 @@ namespace EmbeddingEngine.Core
     {
         public EmbeddingsProviders provider { get; }
         Task<float[]?> GenerateEmbeddingsAsync(string input);
+        Task<T?> GenerateEmbeddingsAsync<T>(string input);
+
+        public string ModelName { get; }
+        public string ProviderName
+        {
+            get
+            {
+                return provider.ToString();
+            }
+        }
     }
 
     public enum EmbeddingsProviders
     {
         OPENAI,
-        GEMINI
+        GEMINI,
+        HUGGING_FACE
     }
 
     public class EmbeddingEngine
     {
-        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, string providerKey)
+        public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, 
+                                                string providerKey,
+                                                string modelName)
         {
             Guard.Against.EnumOutOfRange(providerName);
 
@@ -41,6 +54,14 @@ namespace EmbeddingEngine.Core
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";
             }
+            else if (providerName == EmbeddingsProviders.HUGGING_FACE)
+            {
+                assemblyName = "EmbeddingEngine.HuggingFace";
+                className = assemblyName + ".HuggingFaceEngine";
+                assemblyVersion = "1.0.0.0";
+                assemblyCulture = "neutral";
+                publicKeyToken = "null";
+            }
 
             Guard.Against.NullOrEmpty(assemblyName);
             Guard.Against.NullOrEmpty(className);
@@ -50,7 +71,9 @@ namespace EmbeddingEngine.Core
                 string typeName = $"{className}, {assemblyName}, Version={assemblyVersion}, Culture={assemblyCulture}, PublicKeyToken={publicKeyToken}";
                 Type? _type = Type.GetType(typeName);
                 if (_type is null) return null;
-                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: providerKey);
+
+                object[] arguments = new object[] { providerKey, modelName };
+                IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: arguments);
                 if (engine is null) return null;
                 return engine;
             }
