@@ -2,6 +2,8 @@
 using EmbeddingEngine.Core;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Embeddings;
+using Polly;
+using Polly.Extensions.Http;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -64,10 +66,24 @@ namespace EmbeddingEngine.HuggingFace
                 using HttpClient httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", m_providerKey);
 
-                HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post,
-                                                            $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}");
+                string inferenceApi = $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}";
+
+                HttpRequestMessage requestMessage = new(HttpMethod.Post,
+                                                        inferenceApi);
                 requestMessage.Content = JsonContent.Create($"query: {input}");
-                HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
+
+                var maxRetryAttempts = 3;
+                var pauseBetweenAttemps = TimeSpan.FromSeconds(2);
+
+                var retryPolicy = HttpPolicyExtensions
+                    .HandleTransientHttpError()
+                    .WaitAndRetryAsync(maxRetryAttempts, i => pauseBetweenAttemps);
+                HttpResponseMessage responseMessage = await retryPolicy.ExecuteAsync(async () =>
+                            {
+                                return await httpClient.SendAsync(requestMessage);
+                            });
+
+                //HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
                 responseMessage.EnsureSuccessStatusCode();
 
                 var body = await responseMessage.Content.ReadAsStringAsync();
@@ -89,7 +105,18 @@ namespace EmbeddingEngine.HuggingFace
             HttpRequestMessage requestMessage = new(HttpMethod.Post,
                                                     $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}");
             requestMessage.Content = JsonContent.Create($"query: {input}");
-            HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
+            var maxRetryAttempts = 3;
+            var pauseBetweenAttemps = TimeSpan.FromSeconds(2);
+
+            var retryPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(maxRetryAttempts, i => pauseBetweenAttemps);
+            HttpResponseMessage responseMessage = await retryPolicy.ExecuteAsync(async () =>
+            {
+                return await httpClient.SendAsync(requestMessage);
+            });
+
+            //HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
             responseMessage.EnsureSuccessStatusCode();
 
             var body = await responseMessage.Content.ReadAsStringAsync();
@@ -103,8 +130,6 @@ namespace EmbeddingEngine.HuggingFace
                 var embeddingResponse = JsonSerializer.Deserialize<float[][][]>(body);
                 return embeddingResponse[0][0] ?? Array.Empty<float>();
             }
-
-            return Array.Empty<float>();
 
             //IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
             //kernelBuilder.Services.AddLogging(c => c.AddConsole());
