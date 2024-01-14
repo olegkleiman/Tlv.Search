@@ -77,18 +77,33 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> ScrapTo(IVectorDb vectorDb,
-                                        IEmbeddingEngine embeddingEngine)
+        private void countWords(string input, Dictionary<string, int> dict)
+        {
+            var wordPattern = new Regex(@"\w+");
+            foreach (Match match in wordPattern.Matches(input))
+            {
+                int currentCount = 0;
+                dict.TryGetValue(match.Value, out currentCount);
+
+                currentCount++;
+                dict[match.Value] = currentCount;
+            }
+        }
+
+    public async Task<Dictionary<string, int>> ScrapTo(IVectorDb vectorDb,
+                                    IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
                 || embeddingEngine is null)
-                return false;
+                return null;
             if (m_siteMap is null
                  || m_siteMap.items is null)
-                return false;
+                return null;
 
             int docIndex = 0;
             int subDocIndex = 0;
+
+            var wordsDictionary = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
 
             foreach (SiteMapItem item in m_siteMap.items)
             {
@@ -128,6 +143,8 @@ namespace Odyssey
                                 subDoc.ImageUrl = doc.ImageUrl;
 
                                 string input = subDoc.Content ?? string.Empty;
+                                countWords(input, wordsDictionary);
+
                                 float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
                                 if (embeddings != null)
                                 {
@@ -150,7 +167,7 @@ namespace Odyssey
 
             }
 
-            return true;
+            return wordsDictionary;
         }
 
         private string clearText(string? _clearText)

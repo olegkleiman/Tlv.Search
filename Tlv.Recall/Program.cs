@@ -7,7 +7,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Plugins.Core;
+using StackExchange.Redis;
+using System.Configuration;
 using System.Net;
+using Tlv.Recall;
 using Tlv.Recall.Services;
 
 var host = new HostBuilder()
@@ -16,6 +19,16 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
+
+        services.AddSingleton<IPromptProcessingService>(sp =>
+        {
+            IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
+
+            var connectionString = configuration.GetConnectionString("Redis");
+            var connection = ConnectionMultiplexer.Connect(connectionString);
+            Console.WriteLine("Redis connected");
+            return new PromptProcessingService(connection);
+        });
 
         services.AddSingleton<ISearchService>(sp =>
         {

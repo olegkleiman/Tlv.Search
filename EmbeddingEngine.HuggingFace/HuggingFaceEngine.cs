@@ -70,7 +70,8 @@ namespace EmbeddingEngine.HuggingFace
 
                 HttpRequestMessage requestMessage = new(HttpMethod.Post,
                                                         inferenceApi);
-                requestMessage.Content = JsonContent.Create($"query: {input}");
+                //requestMessage.Content = JsonContent.Create($"query: {input}");
+                requestMessage.Content = JsonContent.Create(input);
 
                 var maxRetryAttempts = 3;
                 var pauseBetweenAttemps = TimeSpan.FromSeconds(2);

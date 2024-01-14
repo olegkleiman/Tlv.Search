@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System.Net;
 using System.Web.Http;
+using Tlv.Recall.Services;
 using VectorDb.Core;
 
 namespace Tlv.Recall
@@ -16,10 +17,13 @@ namespace Tlv.Recall
     public class Recall
     {
         private readonly ILogger _logger;
+        private readonly IPromptProcessingService _promptService;
 
-        public Recall(ILoggerFactory loggerFactory)
+        public Recall(ILoggerFactory loggerFactory,
+                      IPromptProcessingService promptService)
         {
             _logger = loggerFactory.CreateLogger<Recall>();
+            _promptService = promptService;
         }
 
         protected string? GetConfigValue(string configKey)
@@ -47,10 +51,12 @@ namespace Tlv.Recall
 
                 _logger.LogInformation($"Executing {nameof(Recall)} with prompt {prompt}");
 
+                //if( _promptService is not null )
+                //    prompt = _promptService.FilterKeywords(prompt);
+
                 #region Read Configuration
 
-                string collectionName = GetConfigValue("COLLECTION_NAME")!; // ! because of previous Guard
-                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_KEY")!;
+                string vectorDbProviderKey = GetConfigValue("VECTOR_DB_KEY")!; // ! because of previous Guard
                 string vectorDbProviderHost = GetConfigValue("VECTOR_DB_HOST")!;
                 string embeddingModelName = GetConfigValue("EMBEDDING_MODEL_NAME")!;
 
@@ -76,8 +82,10 @@ namespace Tlv.Recall
                                                                     vectorDbProviderKey);
                 Guard.Against.Null(vectorDb);
 
-                var searchResuls = await vectorDb.Search(collectionName,
-                                                        promptEmbedding);
+                string collectionName = $"doc_parts_{embeddingEngine.ProviderName}_{embeddingEngine.ModelName}";
+                string _collectionName = collectionName.Replace('/', '_');
+                var searchResuls = await vectorDb.Search(_collectionName,
+                                                         promptEmbedding);
 
                 return new OkObjectResult(searchResuls);
             }

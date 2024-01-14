@@ -26,7 +26,7 @@ namespace Tlv.Search.Common
         {
             get
             {
-                return $"{Title?.Trim()} {SubTitle?.Trim()}";
+                return $"{Title?.Trim()} {Text?.Trim()}";
             }
         }
     }

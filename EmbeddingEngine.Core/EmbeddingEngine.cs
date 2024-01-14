@@ -22,7 +22,8 @@ namespace EmbeddingEngine.Core
     {
         OPENAI,
         GEMINI,
-        HUGGING_FACE
+        HUGGING_FACE,
+        ALEPH_ALPHA
     }
 
     public class EmbeddingEngine
@@ -58,6 +59,14 @@ namespace EmbeddingEngine.Core
             {
                 assemblyName = "EmbeddingEngine.HuggingFace";
                 className = assemblyName + ".HuggingFaceEngine";
+                assemblyVersion = "1.0.0.0";
+                assemblyCulture = "neutral";
+                publicKeyToken = "null";
+            }
+            else if( providerName == EmbeddingsProviders.ALEPH_ALPHA )
+            {
+                assemblyName = "EmbeddingEngine.AlephAlpha";
+                className = assemblyName + ".AlephAlphaEngine";
                 assemblyVersion = "1.0.0.0";
                 assemblyCulture = "neutral";
                 publicKeyToken = "null";

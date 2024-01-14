@@ -5,6 +5,8 @@ using Odyssey.Models;
 using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
+using Humanizer.Configuration;
+using StackExchange.Redis;
 
 namespace Odyssey
 {
@@ -66,7 +68,7 @@ namespace Odyssey
                                                                 modelName);
                 Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
-                List<Task> tasks = [];
+                List<Task<Dictionary<string, int>>> tasks = [];
                 foreach (DataRow? row in table.Rows)
                 {
                     Guard.Against.Null(row);
@@ -95,12 +97,29 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
+                    Task<Dictionary<string, int>> task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
                     //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
 
-                Task.WaitAll([.. tasks]);
+                await Task.WhenAll([.. tasks]);
+                tasks.ForEach( task => 
+                {
+                    var dict = task.Result;
+
+                    var connectionString = config.GetConnectionString("Redis");
+                    Guard.Against.NullOrEmpty(connectionString);
+                   
+                    var _multiplexer = ConnectionMultiplexer.Connect(connectionString);
+                    IDatabase cache = _multiplexer.GetDatabase();
+
+                    foreach (var dictKey in dict.Keys)
+                    {
+                        int count = dict[dictKey];
+                        cache.StringSet(dictKey, count);
+                    }
+
+                });
 
             }
             catch (Exception ex)

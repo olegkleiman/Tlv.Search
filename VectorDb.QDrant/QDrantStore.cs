@@ -57,13 +57,6 @@ namespace VectorDb.QDrant
                 Exact = true,
             };
 
-            await SearchGroups(collectionName,
-                        "parent_doc_id",
-                        queryVector,
-                        limit: 200,
-                        groupSize: 20);
-
-
             // Retrieves closest points based on vector similarity
             IReadOnlyList<ScoredPoint> scores = await m_qdClient.SearchAsync(collectionName,
                                                     queryVector,
