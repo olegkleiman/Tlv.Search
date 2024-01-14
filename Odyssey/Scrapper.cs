@@ -159,6 +159,7 @@ namespace Odyssey
             if (string.IsNullOrEmpty(_clearText))
                 return string.Empty;
 
+            _clearText = _clearText.Trim();
             _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
             _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
             _clearText = HttpUtility.HtmlDecode(_clearText);
@@ -217,6 +218,11 @@ namespace Odyssey
                     imageUrl = openGraph.Image;
                     title = clearText(openGraph.Title);
                 }
+
+                // Get last H1 instead of OpenGraph data
+                var nodes = htmlDoc.DocumentNode.SelectNodes(".//h1");
+                htmlNode = nodes.Last();
+                title = clearText(htmlNode.InnerText);
 
                 Doc doc = new(url)
                 {
