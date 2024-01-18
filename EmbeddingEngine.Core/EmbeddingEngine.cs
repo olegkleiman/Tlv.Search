@@ -5,9 +5,20 @@ namespace EmbeddingEngine.Core
     public interface IEmbeddingEngine
     {
         public EmbeddingsProviders provider { get; }
-        Task<float[]?> GenerateEmbeddingsAsync(string input);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="representation">
+        /// "symmetric": Symmetric embeddings assume that the text to be compared is interchangeable. Usage examples for symmetric embeddings are clustering, classification, anomaly detection or visualisation tasks. "symmetric" embeddings should be compared with other "symmetric" embeddings.
+        /// "document" and "query": Asymmetric embeddings assume that there is a difference between queries and documents. They are used together in use cases such as search where you want to compare shorter queries against larger documents.
+        /// "query" - embeddings are optimized for shorter texts, such as questions or keywords.
+        /// "document" - embeddings are optimized for larger pieces of text to compare queries against.
+        /// </param>
+        /// <returns></returns>
+        Task<float[]?> GenerateEmbeddingsAsync(string input, 
+                                                string representation = "query");
         Task<T?> GenerateEmbeddingsAsync<T>(string input);
-
         public string ModelName { get; }
         public string ProviderName
         {

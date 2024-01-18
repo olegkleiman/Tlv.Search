@@ -22,12 +22,14 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.0.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.1.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.0.1-alpha" />
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.1-alpha" />
     <PackageReference Include="StackExchange.Redis" Version="2.7.10" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EmbeddingEngine.AlephAlpha\EmbeddingEngine.AlephAlpha.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.Gemini\EmbeddingEngine.Gemini.csproj" />
     <ProjectReference Include="..\EmbeddingEngine.HuggingFace\EmbeddingEngine.HuggingFace.csproj" />

@@ -90,8 +90,8 @@ namespace Odyssey
             }
         }
 
-    public async Task<Dictionary<string, int>> ScrapTo(IVectorDb vectorDb,
-                                    IEmbeddingEngine embeddingEngine)
+    public async Task<Dictionary<string, int>?> ScrapTo(IVectorDb vectorDb,
+                                                       IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
                 || embeddingEngine is null)
@@ -113,9 +113,14 @@ namespace Odyssey
                     continue;
 
                 doc.Id = docIndex;
+                string collectionName = $"doc_parts_{embeddingEngine?.ProviderName}_{embeddingEngine?.ModelName}";
+                collectionName = collectionName.Replace('/', '_');
 
-                if (doc is not null)
+                if ( doc is not null)
                 {
+                    if (doc.Lang?.CompareTo("he") != 0)
+                        collectionName += "{doc.Lang}";
+
                     //if (embeddingEngine is not null
                     //    && vectorDb is not null)
                     //{
@@ -145,13 +150,13 @@ namespace Odyssey
                                 string input = subDoc.Content ?? string.Empty;
                                 countWords(input, wordsDictionary);
 
-                                float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
+                                float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input, "passage");
                                 if (embeddings != null)
                                 {
                                     await vectorDb.Save(subDoc, subDocIndex++, 
                                                         doc.Id, // parent doc id
                                                         embeddings,
-                                                        $"doc_parts_{embeddingEngine.ProviderName}_{embeddingEngine.ModelName}" // collection name
+                                                        collectionName
                                                        );
                                 }
                             }
@@ -175,6 +180,7 @@ namespace Odyssey
             if (string.IsNullOrEmpty(_clearText))
                 return string.Empty;
 
+            _clearText = _clearText.Trim();
             _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
             _clearText = Regex.Replace(_clearText, @"\t", string.Empty);
             _clearText = HttpUtility.HtmlDecode(_clearText);
@@ -233,6 +239,11 @@ namespace Odyssey
                     imageUrl = openGraph.Image;
                     title = clearText(openGraph.Title);
                 }
+
+                // Get last H1 instead of OpenGraph data
+                var nodes = htmlDoc.DocumentNode.SelectNodes(".//h1");
+                htmlNode = nodes.Last();
+                title = clearText(htmlNode.InnerText);
 
                 Doc doc = new(new Uri(url))
                 {

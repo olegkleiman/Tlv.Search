@@ -91,11 +91,9 @@ namespace VectorDb.QDrant
 
             try
             {
-                string _collectionName = collectionName.Replace('/', '_');
-
                 var collections = await m_qdClient.ListCollectionsAsync();
                 var q = (from collection in collections
-                         where collection == _collectionName
+                         where collection == collectionName
                          select collection).FirstOrDefault();
                 if (q == null)
                 {
@@ -105,7 +103,7 @@ namespace VectorDb.QDrant
                         Size = (ulong)vector.Length
                     };
 
-                    await m_qdClient.CreateCollectionAsync(_collectionName, vp);
+                    await m_qdClient.CreateCollectionAsync(collectionName, vp);
                 }
 
                 PointStruct ps = new()
@@ -125,7 +123,7 @@ namespace VectorDb.QDrant
                     Vectors = vector
                 };
 
-                await m_qdClient.UpsertAsync(_collectionName, new List<PointStruct>() { ps } );
+                await m_qdClient.UpsertAsync(collectionName, new List<PointStruct>() { ps } );
 
                 return true;
             }

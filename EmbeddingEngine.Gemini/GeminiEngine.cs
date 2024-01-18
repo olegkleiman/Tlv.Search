@@ -47,7 +47,8 @@ namespace EmbeddingEngine.Gemini
             }
         }
 
-        public async Task<float[]?> GenerateEmbeddingsAsync(string input)
+        public async Task<float[]?> GenerateEmbeddingsAsync(string input,
+                                                            string representation = "query")
         {
             if (string.IsNullOrEmpty(input))
                 return null;

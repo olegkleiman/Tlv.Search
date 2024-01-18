@@ -1,7 +1,5 @@
 using Ardalis.GuardClauses;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Extensions.Logging;
@@ -9,24 +7,23 @@ using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using System.Net;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using Tlv.Recall.Services;
 
 namespace Tlv.Recall
 {
+#pragma warning disable SKEXP0001, SKEXP0003    
     public class Chat
     {
         private readonly ILogger _logger;
         private readonly IChatCompletionService _chat;
-        private readonly ISearchService _searchService;
+        private readonly SearchService _searchService;
         private ChatHistory? _chatHistory;
 
         public Chat(ILoggerFactory loggerFactory,
                     Kernel kernel,
-                    ISearchService searchService)
+                    SearchService searchService)
         {
             _logger = loggerFactory.CreateLogger<Chat>();
             _chat = kernel.GetRequiredService<IChatCompletionService>();
@@ -63,7 +60,6 @@ namespace Tlv.Recall
 
                 string errorMessage = Resource.no_history;
 
-
                 string? historyJson = req.Query["h"];//implicit cast to string?
                 historyJson ??= "[]";
 
@@ -76,10 +72,13 @@ namespace Tlv.Recall
 
                 Guard.Against.Null(_chat);
 
-
                 var response = req.HttpContext.Response;
                 response.Headers.Append("Content-Type", "text/event-stream");
 
+                string? embeddingsProviderName = GetConfigValue("EMBEDIING_PROVIDER");
+                string? modelName = GetConfigValue("EMBEDDING_MODEL_NAME");
+                string collectionName = $"doc_parts_{embeddingsProviderName}_{modelName}";
+                collectionName = collectionName.Replace('/', '_');
 
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                 {
@@ -91,7 +90,7 @@ namespace Tlv.Recall
 
                 // Create a history with a system message
                 ChatHistory tempChatHistory = new($"Classify the following user input as either a question or a statement:\n\n\"{prompt}\". Answer in English");
-                ChatMessageContent result = 
+                ChatMessageContent result =
                     await _chat.GetChatMessageContentAsync(tempChatHistory,
                                                            executionSettings: openAIPromptExecutionSettings);
                 Guard.Against.Null(result, string.Empty, Resource.no_classification);
@@ -104,7 +103,11 @@ namespace Tlv.Recall
                                              where message.Role == AuthorRole.User
                                              select message.Content);
 
-                    var searchResuls = await _searchService.Search(q, limit: 5);
+                    var searchResuls = await _searchService.Search(prompt);
+
+                    //ReadOnlyMemory<float> promptEmbedding = await _embeddingEngine.GenerateEmbeddingsAsync(prompt);
+                    //var searchResuls = await _vectorDb.Search(collectionName,
+                    //                                         promptEmbedding);
 
                     //searchResuls = await Search(openaiAzureKey,
                     //                                openaiEndpoint,
@@ -168,4 +171,5 @@ namespace Tlv.Recall
             }
         }
     }
+#pragma warning restore SKEXP0001, SKEXP0003
 }

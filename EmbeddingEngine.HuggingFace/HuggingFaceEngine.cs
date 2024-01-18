@@ -63,15 +63,17 @@ namespace EmbeddingEngine.HuggingFace
         {
             try
             {
-                using HttpClient httpClient = new HttpClient();
+                using HttpClient httpClient = new();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", m_providerKey);
 
                 string inferenceApi = $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}";
 
                 HttpRequestMessage requestMessage = new(HttpMethod.Post,
-                                                        inferenceApi);
-                //requestMessage.Content = JsonContent.Create($"query: {input}");
-                requestMessage.Content = JsonContent.Create(input);
+                                                        inferenceApi)
+                {
+                    //requestMessage.Content = JsonContent.Create($"query: {input}");
+                    Content = JsonContent.Create(input)
+                };
 
                 var maxRetryAttempts = 3;
                 var pauseBetweenAttemps = TimeSpan.FromSeconds(2);
@@ -98,14 +100,16 @@ namespace EmbeddingEngine.HuggingFace
             }
         }
 
-        public async Task<float[]?> GenerateEmbeddingsAsync(string input)
+        public async Task<float[]?> GenerateEmbeddingsAsync(string input, 
+                                                            string representation = "query")
         {
             using HttpClient httpClient = new HttpClient(new RetryHandler(new HttpClientHandler()));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", m_providerKey);
 
             HttpRequestMessage requestMessage = new(HttpMethod.Post,
                                                     $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}");
-            requestMessage.Content = JsonContent.Create($"query: {input}");
+            string payload = string.IsNullOrEmpty(representation) ? input : $"{representation}: {input}";
+            requestMessage.Content = JsonContent.Create(payload);
             var maxRetryAttempts = 3;
             var pauseBetweenAttemps = TimeSpan.FromSeconds(2);
 

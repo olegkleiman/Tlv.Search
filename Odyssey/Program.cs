@@ -68,7 +68,7 @@ namespace Odyssey
                                                                 modelName);
                 Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
-                List<Task<Dictionary<string, int>>> tasks = [];
+                List<Task<Dictionary<string, int>?>> tasks = [];
                 foreach (DataRow? row in table.Rows)
                 {
                     Guard.Against.Null(row);
@@ -97,7 +97,7 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task<Dictionary<string, int>> task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
+                    Task<Dictionary<string, int>?> task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
                     //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
@@ -106,6 +106,8 @@ namespace Odyssey
                 tasks.ForEach( task => 
                 {
                     var dict = task.Result;
+                    if (dict is null)
+                        return;
 
                     var connectionString = config.GetConnectionString("Redis");
                     Guard.Against.NullOrEmpty(connectionString);

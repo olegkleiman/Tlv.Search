@@ -58,7 +58,8 @@ namespace EmbeddingEngine.OpenAI
             }
         }
 
-        public async Task<float[]?> GenerateEmbeddingsAsync(string input)
+        public async Task<float[]?> GenerateEmbeddingsAsync(string input, 
+                                                            string representation = "query")
         {
             try
             {
