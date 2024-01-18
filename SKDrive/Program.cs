@@ -88,7 +88,7 @@ namespace SKDrive
                 var kernel = kernelBuilder.Build();
 
                 var service = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
-                var _embeddings = await service.GenerateEmbeddingsAsync(["how old are you"]);
+                //var _embeddings = await service.GenerateEmbeddingsAsync(["how old are you"]);
 
 #pragma warning disable SKEXP0001, SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052
 
@@ -96,9 +96,6 @@ namespace SKDrive
 
 
                 var qdClient = new QdrantVectorDbClient("http://localhost:6333", 1536);
-
-
-
 
 
                 HuggingFaceTextEmbeddingGenerationService embeddingService = new(model_id, httpClient);

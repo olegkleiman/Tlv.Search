@@ -11,13 +11,13 @@ namespace Tlv.Search.Common
         public string? Description { get; set; }
         public string? Title { get; set; }
         public string? SubTitle { get; set; }
-        public string? Url { get; private set; }
+        public Uri? Url { get; private set; }
         public string? ImageUrl { get; set; }
         public string? Source { get; set; }
 
-        public Doc(string url)
+        public Doc(Uri uri)
         {
-            Url = Guard.Against.NullOrEmpty(url);
+            Url = Guard.Against.Null(uri);
         }
 
         public List<Doc> subDocs = new ();
@@ -26,7 +26,7 @@ namespace Tlv.Search.Common
         {
             get
             {
-                return $"{Title?.Trim()} {SubTitle?.Trim()}";
+                return $"{Title?.Trim()} {Text?.Trim()}";
             }
         }
     }

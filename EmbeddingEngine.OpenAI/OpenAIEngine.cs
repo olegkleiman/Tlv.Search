@@ -9,14 +9,57 @@ namespace EmbeddingEngine.OpenAI
 {
     public class OpenAIEngine : IEmbeddingEngine
     {
-        public string? m_providerKey { get; set; }
+        public string m_providerKey { get; set; }
+        public string m_modelName { get; set; }
 
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.OPENAI;
-        public OpenAIEngine(string providerKey)
+        public OpenAIEngine(string providerKey,
+                            string modelName)
         {
             m_providerKey = providerKey;
+            m_modelName = modelName;
         }
-        public async Task<float[]?> GenerateEmbeddingsAsync(string input)
+
+        public string ModelName
+        {
+            get
+            {
+                return m_modelName;
+            }
+        }
+
+        public async Task<T?> GenerateEmbeddingsAsync<T>(string input)
+        {
+            try
+            {
+                var client = new OpenAIClient(m_providerKey, new OpenAIClientOptions());
+
+                string? content = input;
+                if (string.IsNullOrEmpty(content))
+                    return default;
+
+                EmbeddingsOptions eo = new(deploymentName: m_modelName,
+                                            input: new List<string>() { content });
+                Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
+                if (response is not null)
+                {
+                    var items = response.Value.Data;
+                    Guard.Against.Zero(items.Count);
+                    return (T)Convert.ChangeType(items[0].Embedding.ToArray(), typeof(T));
+                }
+
+                return default;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return default;
+            }
+        }
+
+        public async Task<float[]?> GenerateEmbeddingsAsync(string input, 
+                                                            string representation = "query")
         {
             try
             {
@@ -26,7 +69,7 @@ namespace EmbeddingEngine.OpenAI
                 if (string.IsNullOrEmpty(content))
                     return Array.Empty<float>();
 
-                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
+                EmbeddingsOptions eo = new(deploymentName: m_modelName,
                                             input: new List<string>() { content });
                 Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
                 if (response is not null)

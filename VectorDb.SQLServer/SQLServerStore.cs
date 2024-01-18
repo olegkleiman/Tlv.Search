@@ -8,7 +8,7 @@ namespace VectorDb.SQLServer
 {
     public class SQLServerStore(string providerKey) : IVectorDb
     {
-        public string m_providerKey { get; set; } = providerKey;
+        public string m_Host { get; set; } = providerKey;
 
         public Task<List<SearchItem>> Search(string collectionName,
                                             ReadOnlyMemory<float> queryVector,

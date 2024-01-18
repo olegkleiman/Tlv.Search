@@ -1,4 +1,5 @@
-﻿using Qdrant.Client;
+﻿using Ardalis.GuardClauses;
+using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,20 +11,23 @@ namespace VectorDb.QDrant
 {
     public class QDrantStore : IVectorDb
     {
-        public string? m_providerKey { get; set; }// This is a host name (like 'localhost') for this provider
+        public string? m_hostUrl; // This is a host name (like 'localhost') for this provider
+        public string? m_providerKey { get; set; }
         QdrantClient m_qdClient;
 
-        public QDrantStore(string providerKey)
+        public QDrantStore(string hostUrl,
+                           string providerKey)
         {
+            m_hostUrl = hostUrl;
             m_providerKey = providerKey;
-            m_qdClient = new QdrantClient(providerKey);
+            m_qdClient = new QdrantClient(m_hostUrl, apiKey: m_providerKey);
         }
 
         public async Task SearchGroups(string collectionName,
-                                       string groupBy,
-                                       ReadOnlyMemory<float> queryVector,
-                                       uint limit = 5,
-                                       uint groupSize = 20)
+                                        string groupBy,
+                                        ReadOnlyMemory<float> queryVector,
+                                        uint limit = 5,
+                                        uint groupSize = 20)
         {
             var scores = await m_qdClient.SearchGroupsAsync(collectionName,
                                          queryVector,
@@ -52,13 +56,6 @@ namespace VectorDb.QDrant
             {
                 Exact = true,
             };
-
-            await SearchGroups(collectionName,
-                        "parent_doc_id",
-                        queryVector,
-                        limit: 200,
-                        groupSize: 20);
-
 
             // Retrieves closest points based on vector similarity
             IReadOnlyList<ScoredPoint> scores = await m_qdClient.SearchAsync(collectionName,
@@ -89,8 +86,8 @@ namespace VectorDb.QDrant
                         float[] vector,
                         string collectionName)
         {
-            if (string.IsNullOrEmpty(collectionName))
-                return false;
+            Guard.Against.NullOrEmpty(collectionName);
+            Guard.Against.Null(vector);
 
             try
             {
@@ -119,7 +116,7 @@ namespace VectorDb.QDrant
                         //["embeddingProvider"] = embeddingProviderName ?? string.Empty,
                         ["description"] = doc.Description ?? string.Empty,
                         ["title"] = doc.Title ?? string.Empty,
-                        ["url"] = doc.Url ?? string.Empty,
+                        ["url"] = doc.Url.ToString() ?? string.Empty,
                         ["image_url"] = doc.ImageUrl ?? string.Empty,
                         ["parent_doc_id"] = parentDocId
                     },

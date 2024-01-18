@@ -77,18 +77,33 @@ namespace Odyssey
             return scrapper;
         }
 
-        public async Task<bool> ScrapTo(IVectorDb vectorDb,
-                                        IEmbeddingEngine embeddingEngine)
+        private void countWords(string input, Dictionary<string, int> dict)
+        {
+            var wordPattern = new Regex(@"\w+");
+            foreach (Match match in wordPattern.Matches(input))
+            {
+                int currentCount = 0;
+                dict.TryGetValue(match.Value, out currentCount);
+
+                currentCount++;
+                dict[match.Value] = currentCount;
+            }
+        }
+
+    public async Task<Dictionary<string, int>?> ScrapTo(IVectorDb vectorDb,
+                                                       IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
                 || embeddingEngine is null)
-                return false;
+                return null;
             if (m_siteMap is null
                  || m_siteMap.items is null)
-                return false;
+                return null;
 
             int docIndex = 0;
             int subDocIndex = 0;
+
+            var wordsDictionary = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
 
             foreach (SiteMapItem item in m_siteMap.items)
             {
@@ -98,9 +113,14 @@ namespace Odyssey
                     continue;
 
                 doc.Id = docIndex;
+                string collectionName = $"doc_parts_{embeddingEngine?.ProviderName}_{embeddingEngine?.ModelName}";
+                collectionName = collectionName.Replace('/', '_');
 
-                if (doc is not null)
+                if ( doc is not null)
                 {
+                    if (doc.Lang?.CompareTo("he") != 0)
+                        collectionName += "{doc.Lang}";
+
                     //if (embeddingEngine is not null
                     //    && vectorDb is not null)
                     //{
@@ -128,14 +148,15 @@ namespace Odyssey
                                 subDoc.ImageUrl = doc.ImageUrl;
 
                                 string input = subDoc.Content ?? string.Empty;
-                                float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input);
+                                countWords(input, wordsDictionary);
+
+                                float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input, "passage");
                                 if (embeddings != null)
                                 {
-                                    string embeddingProviderName = embeddingEngine.provider.ToString();
                                     await vectorDb.Save(subDoc, subDocIndex++, 
                                                         doc.Id, // parent doc id
                                                         embeddings,
-                                                        $"doc_parts_{embeddingProviderName}" // collection name
+                                                        collectionName
                                                        );
                                 }
                             }
@@ -151,7 +172,7 @@ namespace Odyssey
 
             }
 
-            return true;
+            return wordsDictionary;
         }
 
         private string clearText(string? _clearText)
@@ -224,7 +245,7 @@ namespace Odyssey
                 htmlNode = nodes.Last();
                 title = clearText(htmlNode.InnerText);
 
-                Doc doc = new(url)
+                Doc doc = new(new Uri(url))
                 {
                     Source = source,
                     Lang = lang,
@@ -248,7 +269,7 @@ namespace Odyssey
                         {
                             string _clearText = " " + clearText(node.InnerText.Trim());
                             doc.Text += _clearText;
-                            doc.subDocs.Add(new Doc(url)
+                            doc.subDocs.Add(new Doc(new Uri(url))
                             {
                                 Text = _clearText,
                             });

@@ -5,6 +5,8 @@ using Odyssey.Models;
 using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
+using Humanizer.Configuration;
+using StackExchange.Redis;
 
 namespace Odyssey
 {
@@ -36,9 +38,17 @@ namespace Odyssey
                 string? embeddingEngineKey = config[configKeyName];
                 Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
-                configKeyName = "VECTOR_DB_PROVIDER_KEY";
+                configKeyName = "VECTOR_DB_KEY";
                 string? providerKey = config[configKeyName];
                 Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
+                configKeyName = "VECTOR_DB_HOST";
+                string? vectorDbHost = config[configKeyName];
+                Guard.Against.NullOrEmpty(vectorDbHost, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
+                configKeyName = "EMBEDDING_MODEL_NAME";
+                string? modelName = config[configKeyName];
+                Guard.Against.NullOrEmpty(modelName, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
                 using var conn = new SqlConnection(connectionString);
                 string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
@@ -49,15 +59,16 @@ namespace Odyssey
                 var table = new DataTable();
                 da.Fill(table);
 
-                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
+                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, providerKey);
                 Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
 
                 IEmbeddingEngine? embeddingEngine =
                     EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
-                                                                providerKey: embeddingEngineKey);
+                                                                providerKey: embeddingEngineKey,
+                                                                modelName);
                 Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
-                List<Task> tasks = [];
+                List<Task<Dictionary<string, int>?>> tasks = [];
                 foreach (DataRow? row in table.Rows)
                 {
                     Guard.Against.Null(row);
@@ -86,12 +97,31 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
+                    Task<Dictionary<string, int>?> task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
                     //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
 
-                Task.WaitAll([.. tasks]);
+                await Task.WhenAll([.. tasks]);
+                tasks.ForEach( task => 
+                {
+                    var dict = task.Result;
+                    if (dict is null)
+                        return;
+
+                    var connectionString = config.GetConnectionString("Redis");
+                    Guard.Against.NullOrEmpty(connectionString);
+                   
+                    var _multiplexer = ConnectionMultiplexer.Connect(connectionString);
+                    IDatabase cache = _multiplexer.GetDatabase();
+
+                    foreach (var dictKey in dict.Keys)
+                    {
+                        int count = dict[dictKey];
+                        cache.StringSet(dictKey, count);
+                    }
+
+                });
 
             }
             catch (Exception ex)

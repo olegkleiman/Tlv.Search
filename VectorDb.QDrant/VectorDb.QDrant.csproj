@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Qdrant.Client" Version="1.7.0" />
+	  <PackageReference Include="Ardalis.GuardClauses" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
