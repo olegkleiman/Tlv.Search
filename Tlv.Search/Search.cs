@@ -1,185 +1,69 @@
+using Ardalis.GuardClauses;
+using EmbeddingEngine.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using Microsoft.SqlServer.Types;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.Net;
-using System.Threading.Tasks;
-using Tlv.Search.models;
+using Tlv.Search.Services;
+using VectorDb.Core;
 
 namespace Tlv.Search
 {
     public class Search
     {
-        private readonly ILogger<Search>? _logger;
+        private readonly ILogger _logger;
+        private readonly IPromptProcessingService _promptService;
+        private readonly SearchService _searchService;
 
-        public Search(ILogger<Search> log)
+        public Search(ILoggerFactory loggerFactory,
+                      IPromptProcessingService promptService,
+                      SearchService searchService)
         {
-            _logger = log;
+            _logger = loggerFactory.CreateLogger<Search>();
+            _promptService = promptService;
+            _searchService = searchService;
         }
 
-        SearchContext? analyzePrompt(ref string prompt)
+        protected string? GetConfigValue(string configKey)
         {
-            SearchContext sc = new();
+            string? value = Environment.GetEnvironmentVariable(configKey);
+            Guard.Against.NullOrEmpty(value, configKey, $"Couldn't find '{configKey}' in configuration");
 
-            string? connStr = Environment.GetEnvironmentVariable("CuriosityDB");
-
-            try
-            {
-                using SqlConnection? conn = new(connStr);
-                conn.Open();
-
-                SqlCommand? command = new("select * from regions order by tokens_num desc", conn);
-                using SqlDataAdapter? da = new();
-                da.SelectCommand = command;
-
-                DataSet? ds = new();
-                da.Fill(ds);
-
-                bool contextFound = false;
-                DataTable? dt = ds.Tables[0];
-                foreach (DataRow row in dt.Rows)
-                {
-                    if (contextFound)
-                        break;
-
-                    string names = (string)row["names"];
-                    string[] tokens = names.Split(",");
-                    for (int i = 0; i < tokens.Length; i++)
-                    {
-                        var index = prompt.IndexOf(tokens[i]);
-                        if (index >= 0)
-                        {
-                            sc.type = ContextType.Geography;
-                            SqlGeography geo = (SqlGeography)row["polygon"];
-                            _logger.LogInformation(geo.ToString());
-                            sc.geo = geo;
-                            sc.name = tokens[i].Trim();
-                            contextFound = true;
-
-                            prompt = prompt.Remove(index - 1/*preposition*/ - 1/*space*/,
-                                                 tokens[i].Length + 1/*preposition*/ + 1/*space*/);
-
-                            break;
-                        }
-                    }
-                }
-
-                return sc;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-            }
-
-            return null;
+            return value;
         }
 
-        [FunctionName(nameof(Search))]
+        [Function(nameof(Search))]
         [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
-
-            string? prompt = req.Query["q"];
-            _logger.LogInformation($"Running search with prompt '{prompt}'");
-
-            SearchContext? sc = analyzePrompt(ref prompt);
-
-            //string? providerKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
-            ////Azure OpenAI package
-            //OpenAIClient client = new(providerKey);
-            //Response<Embeddings>? response =
-            //    client.GetEmbeddings("text-embedding-ada-002",
-            //                         new EmbeddingsOptions(prompt)
-            //                         );
-            //var _embedding = response.Value.Data[0].Embedding;
-
-            string? connStr = Environment.GetEnvironmentVariable("CuriosityDB");
             try
             {
-                using (SqlConnection? conn = new(connStr))
+                string? prompt = req.Query["q"];
+                if (string.IsNullOrEmpty(prompt))
                 {
-                    conn.Open();
-
-                    SqlCommand? command = new("[dbo].[find_Nearest]", conn)
-                    {
-                        CommandType = CommandType.StoredProcedure
-                    };
-                    List<SearchItem>? searchItems = new();
-
-                    command.Parameters.Add("@inputText", SqlDbType.NVarChar, -1).Value
-                        = prompt;
-                    command.Parameters.Add("@top", SqlDbType.Int).Value = 5;
-
-                    if (sc != null)
-                    {
-                        SqlParameter p = new()
-                        {
-                            ParameterName = "@inRegion",
-                            Value = sc.geo,
-                            SqlDbType = SqlDbType.Udt,
-                            UdtTypeName = "geography"
-                        };
-                        command.Parameters.Add(p);
-                    }
-
-                    using (SqlDataAdapter? da = new())
-                    {
-                        da.SelectCommand = command;
-                        da.SelectCommand.CommandType = CommandType.StoredProcedure;
-
-                        DataSet? ds = new();
-
-                        Stopwatch sw = new();
-                        sw.Start();
-
-                        da.Fill(ds, "result_name");
-
-                        sw.Stop();
-                        Console.WriteLine(@$"SP executed for {sw.ElapsedMilliseconds} ms.");
-
-                        DataTable? dt = ds.Tables["result_name"];
-                        if (dt != null)
-                        {
-                            foreach (DataRow row in dt.Rows)
-                            {
-                                searchItems.Add(new SearchItem()
-                                {
-                                    id = (ulong)row[0],
-                                    title = (string)row[1],
-                                    url = (string)row[2],
-                                    imageUrl = (string)row[3]
-                                    //distance = (double)row[4]
-                                });
-                            }
-                        }
-                    }
-
-                    return new JsonResult(searchItems)
-                    {
-                        StatusCode = (int)HttpStatusCode.OK,
-                        ContentType = "application/json"
-                    };
+                    return new BadRequestObjectResult("Please provide some input, i.e. add ?q=... to invocation url");
                 }
+
+                _logger?.LogInformation($"Executing {nameof(Search)} with prompt {prompt}");
+
+                var searchResuls = await _searchService.Search(prompt, limit: 5);
+                return new OkObjectResult(searchResuls);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
-                throw;
-            }
+                _logger?.LogError(ex.Message);
 
+                return new ObjectResult(new { ex.Message })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+
+            }
         }
     }
 }
-

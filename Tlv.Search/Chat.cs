@@ -9,9 +9,9 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Text;
 using System.Text.Json;
-using Tlv.Recall.Services;
+using Tlv.Search.Services;
 
-namespace Tlv.Recall
+namespace Tlv.Search
 {
 #pragma warning disable SKEXP0001, SKEXP0003    
     public class Chat
@@ -75,11 +75,6 @@ namespace Tlv.Recall
                 var response = req.HttpContext.Response;
                 response.Headers.Append("Content-Type", "text/event-stream");
 
-                string? embeddingsProviderName = GetConfigValue("EMBEDIING_PROVIDER");
-                string? modelName = GetConfigValue("EMBEDDING_MODEL_NAME");
-                string collectionName = $"doc_parts_{embeddingsProviderName}_{modelName}";
-                collectionName = collectionName.Replace('/', '_');
-
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                 {
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
@@ -104,17 +99,6 @@ namespace Tlv.Recall
                                              select message.Content);
 
                     var searchResuls = await _searchService.Search(prompt);
-
-                    //ReadOnlyMemory<float> promptEmbedding = await _embeddingEngine.GenerateEmbeddingsAsync(prompt);
-                    //var searchResuls = await _vectorDb.Search(collectionName,
-                    //                                         promptEmbedding);
-
-                    //searchResuls = await Search(openaiAzureKey,
-                    //                                openaiEndpoint,
-                    //                                collectionName,
-                    //                                vectorDbProviderKey,
-                    //                                q, //prompt,
-                    //                                limit: 5);
 
                     StringBuilder sb = new("Based on the following information:\n\n");
                     foreach (var item in searchResuls)

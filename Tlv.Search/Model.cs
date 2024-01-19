@@ -1,10 +1,10 @@
-    using System.Net;
+using System.Net;
 using Ardalis.GuardClauses;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Tlv.Recall
+namespace Tlv.Search
 {
     public class Model
     {

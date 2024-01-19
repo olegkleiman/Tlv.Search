@@ -110,6 +110,7 @@ namespace EmbeddingEngine.HuggingFace
                                                     $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}");
             string payload = string.IsNullOrEmpty(representation) ? input : $"{representation}: {input}";
             requestMessage.Content = JsonContent.Create(payload);
+            
             var maxRetryAttempts = 3;
             var pauseBetweenAttemps = TimeSpan.FromSeconds(2);
 
@@ -143,7 +144,7 @@ namespace EmbeddingEngine.HuggingFace
             //var kernel = kernelBuilder.Build();
 
             //var service = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
-            //var _embeddings = await service.GenerateEmbeddingsAsync(["how old are you"]);
+            //var _embeddings = await service.GenerateEmbeddingsAsync([input]);
         }
     }
 }
