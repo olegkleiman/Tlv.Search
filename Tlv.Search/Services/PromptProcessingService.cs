@@ -1,11 +1,6 @@
 ﻿using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Tlv.Recall.Services
+namespace Tlv.Search.Services
 {
     public class PromptProcessingService : IPromptProcessingService
     {
@@ -30,11 +25,11 @@ namespace Tlv.Recall.Services
             //var keys = server.Keys(pattern: "*");
             IDatabase cache = _multiplexer.GetDatabase();
 
-            foreach(var keyword in fromKeyWords)
+            foreach (var keyword in fromKeyWords)
             {
                 // if key does not exists in Redis - StringGet() safely returns 0
                 int count = (int)cache.StringGet(keyword); // explicit cast
-                if( count > excludeFrequency )
+                if (count > excludeFrequency)
                     _input = input.Replace(keyword, string.Empty);
             }
 

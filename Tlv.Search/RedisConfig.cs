@@ -1,11 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Tlv.Recall
+namespace Tlv.Search
 {
     public class RedisConfig
     {
@@ -25,14 +20,14 @@ namespace Tlv.Recall
             //    result = config.GetSection("RedisConfig").Get<RedisConfig>();
             //else
             //{
-                var minThreads = config["RedisConfig:minThreads"];
-                minThreads ??= "500";
+            var minThreads = config["RedisConfig:minThreads"];
+            minThreads ??= "500";
 
-                result = new RedisConfig()
-                {
-                    connectionString = config["RedisConfig:connectionString"],
-                    minThreads = int.Parse(minThreads)
-                };
+            result = new RedisConfig()
+            {
+                connectionString = config["RedisConfig:connectionString"],
+                minThreads = int.Parse(minThreads)
+            };
             //}
 
             // Be sure all properties were loaded

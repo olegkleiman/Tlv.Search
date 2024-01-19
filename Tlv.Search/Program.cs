@@ -1,27 +1,20 @@
 using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
-using Microsoft.SemanticKernel.Embeddings;
-using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Plugins.Core;
 using StackExchange.Redis;
-using System.Configuration;
 using System.Net;
-using Tlv.Recall;
-using Tlv.Recall.Services;
+using Tlv.Search.Services;
 using VectorDb.Core;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
-    .ConfigureServices( (hostContext, services) =>
+    .ConfigureServices((hostContext, services) =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
@@ -49,7 +42,7 @@ var host = new HostBuilder()
 
             string? embeddingsProviderName = configuration["EMBEDIING_PROVIDER"];
             Guard.Against.NullOrEmpty(embeddingsProviderName);
-            EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), 
+            EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders),
                                                                                      embeddingsProviderName);
             Guard.Against.Null(embeddingsProvider);
 
@@ -83,47 +76,6 @@ var host = new HostBuilder()
                                      _collectionName);
         });
 
-        //services.AddSingleton<IVectorDb>(sp =>
-        //{
-        //    #region Read Configuration
-
-        //    IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-
-        //    string? vectorDbHost = configuration["VECTOR_DB_HOST"];
-        //    string? vectorDbKey = configuration["VECTOR_DB_KEY"];
-
-        //    #endregion
-
-        //    return VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant,
-        //                                        vectorDbHost,
-        //                                        vectorDbKey);
-        //});
-
-        //services.AddSingleton<IEmbeddingEngine>(sp =>
-        //{
-        //    #region Read Configuration
-
-        //    IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-
-        //    string? embeddingsProviderName = configuration["EMBEDIING_PROVIDER"];
-        //    EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
-
-        //    string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
-        //    string? embeddingEngineKey = configuration[configKeyName];
-
-        //    configKeyName = $"{embeddingsProviderName.ToUpper()}_ENDPOINT";
-        //    string? endpoint = configuration[configKeyName];
-
-        //    configKeyName = "EMBEDDING_MODEL_NAME";
-        //    string? modelName = configuration[configKeyName];
-            
-        //    #endregion
-
-        //    return EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
-        //                                                        providerKey: embeddingEngineKey,
-        //                                                        modelName);
-        //});
-
         services.AddSingleton<Kernel>(sp =>
         {
             #region Read Configuration
@@ -136,7 +88,7 @@ var host = new HostBuilder()
             #endregion
 
             HttpClientHandler? httpClientHandler = null;
-            if ( !string.IsNullOrEmpty(proxyUrl) )
+            if (!string.IsNullOrEmpty(proxyUrl))
             {
                 WebProxy webProxy = new(proxyUrl);
                 // make the HttpClient instance use a proxy
@@ -147,7 +99,7 @@ var host = new HostBuilder()
                 };
             }
             HttpClient httpClient = httpClientHandler is null ? new HttpClient()
-                                                                : new (httpClientHandler);
+                                                                : new(httpClientHandler);
 
             // Initialize the SK
             IKernelBuilder kernelBuilder = Kernel.CreateBuilder()
@@ -155,12 +107,12 @@ var host = new HostBuilder()
                                                                  openaiEndpoint,
                                                                  openaiAzureKey,
                                                                  httpClient: httpClient);
-            kernelBuilder.Services.AddLogging( logginBuilder =>
+            kernelBuilder.Services.AddLogging(logginBuilder =>
             {
                 logginBuilder.AddFilter(level => true);
                 logginBuilder.AddConsole();
             });
-                
+
 #pragma warning disable SKEXP0050
             kernelBuilder.Plugins.AddFromType<HttpPlugin>();
 #pragma warning restore  SKEXP0050

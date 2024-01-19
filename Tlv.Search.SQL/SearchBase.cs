@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Tlv.Search.Common;
 using VectorDb.Core;
 
-namespace Tlv.Recall
+namespace Tlv.Search
 {
     public class SearchBase
     {
