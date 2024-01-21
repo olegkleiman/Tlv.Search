@@ -44,7 +44,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAiStream", "OpenAiStrea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tlv.Search.Tests", "Tlv.Search.Tests\Tlv.Search.Tests.csproj", "{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OdusseyFunctions", "OdusseyFunctions\OdusseyFunctions.csproj", "{55BF7962-89BA-4D68-8EE5-26F713533273}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OdysseyFunctions", "OdysseyFunctions\OdysseyFunctions.csproj", "{150C1CD4-AC8F-4E5D-B2DB-47525E43C202}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -124,10 +124,10 @@ Global
 		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2603ECFC-5E92-4C89-9660-EEC9C97AAA4D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55BF7962-89BA-4D68-8EE5-26F713533273}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55BF7962-89BA-4D68-8EE5-26F713533273}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55BF7962-89BA-4D68-8EE5-26F713533273}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55BF7962-89BA-4D68-8EE5-26F713533273}.Release|Any CPU.Build.0 = Release|Any CPU
+		{150C1CD4-AC8F-4E5D-B2DB-47525E43C202}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{150C1CD4-AC8F-4E5D-B2DB-47525E43C202}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{150C1CD4-AC8F-4E5D-B2DB-47525E43C202}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{150C1CD4-AC8F-4E5D-B2DB-47525E43C202}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

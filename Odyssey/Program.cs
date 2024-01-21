@@ -6,6 +6,10 @@ using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
 using System.Xml.Linq;
+using System.Text;
+using System.Xml;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace Odyssey
 {
@@ -19,12 +23,60 @@ namespace Odyssey
 
                 XDocument xDoc = XDocument.Load("arnona_ex.xml");
 
-                // read all 'url' tags
+                var root = xDoc.Root;
+                if (root is not null)
+                {
 
-                // foreach tag
-                // 1. execute 'source' attribute
-                // 1a. Get the response as JSON
-                // 2. Call to handler url and pass a JSON as body
+                    IEnumerable<XElement> childElements = root.Elements();
+
+                    // Iterate through the child elements and print their information
+                    foreach (XElement childElement in childElements)
+                    {
+                        var childElement2 = childElement.Elements();
+
+
+                        var sourceInfo = childElement2?.Where(x => x.Name == "source").FirstOrDefault();
+                        if (sourceInfo is not null)
+                        {
+                            using (HttpClient httpClient = new HttpClient())
+                            {
+
+                                HttpResponseMessage response = httpClient.GetAsync(sourceInfo.Value).Result;
+
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    
+                                    string? destinationInfo = null; ;
+                                    string content = response.Content.ReadAsStringAsync().Result;
+                                    var handler  = childElement2?.Where(x => x.Name == "handler").FirstOrDefault();
+                                    if (handler != null)
+                                        destinationInfo = handler.Value;
+                                    if (destinationInfo is not null)
+                                    {
+                                       
+                                        StringContent jsonContent = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
+                                        response = httpClient.PostAsync(destinationInfo, jsonContent).Result;
+
+                                        if (response.IsSuccessStatusCode)
+                                            Console.WriteLine("success odyssey");
+                                    }
+
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"Request failed with status code: {response.StatusCode}");
+                                }
+                            };
+                        }
+
+                    }
+
+
+                }
+            
+
+
+
 
 
                 //
@@ -33,79 +85,79 @@ namespace Odyssey
                 var builder = new ConfigurationBuilder()
                                 .SetBasePath(Directory.GetCurrentDirectory())
                                 .AddJsonFile("appsettings.json", optional: false);
-                IConfiguration config = builder.Build();
+            IConfiguration config = builder.Build();
 
-                string configKeyName = "EMBEDIING_PROVIDER";
-                string? embeddingsProviderName = config[configKeyName];
-                Guard.Against.NullOrEmpty(embeddingsProviderName, configKeyName, $"Couldn't find {configKeyName} in configuration");
+            string configKeyName = "EMBEDIING_PROVIDER";
+            string? embeddingsProviderName = config[configKeyName];
+            Guard.Against.NullOrEmpty(embeddingsProviderName, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
-                EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
+            EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
 
-                string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
-                Guard.Against.NullOrEmpty(connectionString);
+            string? connectionString = config.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+            Guard.Against.NullOrEmpty(connectionString);
 
-                configKeyName = $"{embeddingsProvider.ToString().ToUpper()}_KEY";
-                string? embeddingEngineKey = config[configKeyName];
-                Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
+            configKeyName = $"{embeddingsProvider.ToString().ToUpper()}_KEY";
+            string? embeddingEngineKey = config[configKeyName];
+            Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
-                configKeyName = "VECTOR_DB_PROVIDER_KEY";
-                string? providerKey = config[configKeyName];
-                Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
+            configKeyName = "VECTOR_DB_PROVIDER_KEY";
+            string? providerKey = config[configKeyName];
+            Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
-                using var conn = new SqlConnection(connectionString);
-                string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
+            using var conn = new SqlConnection(connectionString);
+            string query = "select url,scrapper_id  from doc_sources where [type] = 'sitemap' and [isEnabled] = 1";
 
-                conn.Open();
+            conn.Open();
 
-                using var da = new SqlDataAdapter(query, connectionString);
-                var table = new DataTable();
-                da.Fill(table);
+            using var da = new SqlDataAdapter(query, connectionString);
+            var table = new DataTable();
+            da.Fill(table);
 
-                IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
-                Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
+            IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, providerKey);
+            Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
 
-                IEmbeddingEngine? embeddingEngine =
-                    EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
-                                                                providerKey: embeddingEngineKey);
-                Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
+            IEmbeddingEngine? embeddingEngine =
+                EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
+                                                            providerKey: embeddingEngineKey);
+            Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
-                List<Task> tasks = [];
-                foreach (DataRow? row in table.Rows)
+            List<Task> tasks = [];
+            foreach (DataRow? row in table.Rows)
+            {
+                Guard.Against.Null(row);
+
+                object? val = row["url"];
+                if (val == null || val == DBNull.Value)
+                    continue;
+
+                string? siteMapUrl = val.ToString();
+                if (string.IsNullOrEmpty(siteMapUrl))
+                    continue;
+
+                Console.WriteLine($"Start processing {siteMapUrl}");
+                Uri uri = new(siteMapUrl);
+                SiteMap? siteMap = SiteMap.Parse(uri);
+                if (siteMap == null)
                 {
-                    Guard.Against.Null(row);
-
-                    object? val = row["url"];
-                    if (val == null || val == DBNull.Value)
-                        continue;
-
-                    string? siteMapUrl = val.ToString();
-                    if (string.IsNullOrEmpty(siteMapUrl))
-                        continue;
-
-                    Console.WriteLine($"Start processing {siteMapUrl}");
-                    Uri uri = new(siteMapUrl);
-                    SiteMap? siteMap = SiteMap.Parse(uri);
-                    if (siteMap == null)
-                    {
-                        Console.WriteLine($"Couldn't parse {siteMapUrl}");
-                        continue;
-                    }
-
-                    int scrapperId = (int)row["scrapper_id"];
-
-                    Scrapper? scrapper = Scrapper.Load(scrapperId, siteMap, connectionString);
-                    if (scrapper == null)
-                        continue;
-
-                    await scrapper.Init();
-                    Task task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
-                    //Task task = scrapper.ScrapTo(memory);
-                    tasks.Add(task);
+                    Console.WriteLine($"Couldn't parse {siteMapUrl}");
+                    continue;
                 }
 
-                Task.WaitAll([.. tasks]);
+                int scrapperId = (int)row["scrapper_id"];
 
+                Scrapper? scrapper = Scrapper.Load(scrapperId, siteMap, connectionString);
+                if (scrapper == null)
+                    continue;
+
+                await scrapper.Init();
+                Task task = scrapper.ScrapTo(vectorDb, embeddingEngine!);
+                //Task task = scrapper.ScrapTo(memory);
+                tasks.Add(task);
             }
+
+            Task.WaitAll([.. tasks]);
+
+        } 
             catch (Exception ex)
             {
                 Console.Write(ex.Message);
