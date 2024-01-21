@@ -11,16 +11,25 @@ namespace VectorDb.QDrant
 {
     public class QDrantStore : IVectorDb
     {
-        public string? m_hostUrl; // This is a host name (like 'localhost') for this provider
+        //public Uri? m_hostUri; // This is a host name (like 'localhost') for this provider
         public string? m_providerKey { get; set; }
         QdrantClient m_qdClient;
 
-        public QDrantStore(string hostUrl,
+        public QDrantStore(string hostUri,
                            string providerKey)
         {
-            m_hostUrl = hostUrl;
             m_providerKey = providerKey;
-            m_qdClient = new QdrantClient(m_hostUrl, apiKey: m_providerKey);
+
+            try
+            {
+                var _hostUri = new Uri(hostUri);
+                m_qdClient = new QdrantClient(_hostUri, apiKey: m_providerKey);
+            }
+            catch(UriFormatException ex)
+            {
+                m_qdClient = new QdrantClient(hostUri, apiKey: m_providerKey);
+            }
+            
         }
 
         public async Task SearchGroups(string collectionName,
@@ -48,11 +57,11 @@ namespace VectorDb.QDrant
                                                  ReadOnlyMemory<float> queryVector,
                                                  ulong limit = 5)
         {
-            Filter filter = new Filter()
+            Filter filter = new()
             {
                 
             };
-            SearchParams sp = new SearchParams()
+            SearchParams sp = new()
             {
                 Exact = true,
             };
