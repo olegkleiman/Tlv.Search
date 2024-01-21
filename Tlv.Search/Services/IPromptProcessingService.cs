@@ -2,6 +2,6 @@
 {
     public interface IPromptProcessingService
     {
-        string FilterKeywords(string input, int excludeFrequency = 20);
+        Task<string> FilterKeywords(string input, int excludeFrequency = 25);
     }
 }

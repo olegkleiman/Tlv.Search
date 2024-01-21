@@ -45,11 +45,11 @@ namespace Tlv.Search
             {
                 string? prompt = req.Query["q"];
                 if (string.IsNullOrEmpty(prompt))
-                {
                     return new BadRequestObjectResult("Please provide some input, i.e. add ?q=... to invocation url");
-                }
 
                 _logger?.LogInformation($"Executing {nameof(Search)} with prompt {prompt}");
+
+                prompt = await _promptService.FilterKeywords(prompt);
 
                 var searchResuls = await _searchService.Search(prompt, limit: 5);
                 return new OkObjectResult(searchResuls);

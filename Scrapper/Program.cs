@@ -7,6 +7,7 @@ using EmbeddingEngine.Core;
 using VectorDb.Core;
 using Humanizer.Configuration;
 using StackExchange.Redis;
+using Scrapper;
 
 namespace Odyssey
 {
@@ -68,6 +69,9 @@ namespace Odyssey
                                                                 modelName);
                 Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
+                Cache cache = new (config, "Redis");
+                cache.ClearAll();
+
                 List<Task<Dictionary<string, int>?>> tasks = [];
                 foreach (DataRow? row in table.Rows)
                 {
@@ -109,17 +113,7 @@ namespace Odyssey
                     if (dict is null)
                         return;
 
-                    var connectionString = config.GetConnectionString("Redis");
-                    Guard.Against.NullOrEmpty(connectionString);
-                   
-                    var _multiplexer = ConnectionMultiplexer.Connect(connectionString);
-                    IDatabase cache = _multiplexer.GetDatabase();
-
-                    foreach (var dictKey in dict.Keys)
-                    {
-                        int count = dict[dictKey];
-                        cache.StringSet(dictKey, count);
-                    }
+                    cache.Merge(dict);
 
                 });
 

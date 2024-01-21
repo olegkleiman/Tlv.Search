@@ -26,7 +26,7 @@ var host = new HostBuilder()
             var connectionString = configuration.GetConnectionString("Redis");
             var connection = ConnectionMultiplexer.Connect(connectionString);
             Console.WriteLine("Redis connected");
-            return new PromptProcessingService(connection);
+            return new FrequencyFilterPromptProcessing(connection);
         });
 
         services.AddSingleton<SearchService>(sp =>
