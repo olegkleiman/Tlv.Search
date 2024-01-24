@@ -1,5 +1,6 @@
 using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -19,11 +20,13 @@ namespace Tlv.Search
         private readonly SearchService _searchService;
 
         public Search(ILoggerFactory loggerFactory,
-                      IPromptProcessingService promptService,
+                        TelemetryConfiguration telemetryConfiguration,
+
+                      //IPromptProcessingService promptService,
                       SearchService searchService)
         {
             _logger = loggerFactory.CreateLogger<Search>();
-            _promptService = promptService;
+            //_promptService = promptService;
             _searchService = searchService;
         }
 
@@ -49,9 +52,9 @@ namespace Tlv.Search
 
                 _logger?.LogInformation($"Executing {nameof(Search)} with prompt {prompt}");
 
-                prompt = await _promptService.FilterKeywords(prompt);
+                //prompt = await _promptService.FilterKeywords(prompt);
 
-                var searchResuls = await _searchService.Search(prompt, limit: 5);
+                var searchResuls = await _searchService.Search(prompt, limit: 5, _logger);
                 return new OkObjectResult(searchResuls);
             }
             catch (Exception ex)

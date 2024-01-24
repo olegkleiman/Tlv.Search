@@ -3,6 +3,7 @@ using Azure;
 using Azure.AI.OpenAI;
 using EmbeddingEngine.Core;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Logging;
 using Tlv.Search.Common;
 
 namespace EmbeddingEngine.OpenAI
@@ -27,6 +28,7 @@ namespace EmbeddingEngine.OpenAI
                 return m_modelName;
             }
         }
+
 
         public async Task<T?> GenerateEmbeddingsAsync<T>(string input)
         {
@@ -59,15 +61,20 @@ namespace EmbeddingEngine.OpenAI
         }
 
         public async Task<float[]?> GenerateEmbeddingsAsync(string input, 
-                                                            string representation = "query")
+                                                            string representation,
+                                                            ILogger? logger)
         {
             try
             {
                 var client = new OpenAIClient(m_providerKey, new OpenAIClientOptions());
+                logger?.LogInformation($"OpenAI client created with key {m_providerKey}");
 
                 string? content = input;
                 if (string.IsNullOrEmpty(content))
+                {
+                    logger?.LogError("OpenAI EmbeddingEngine: input is empty");
                     return Array.Empty<float>();
+                }
 
                 EmbeddingsOptions eo = new(deploymentName: m_modelName,
                                             input: new List<string>() { content });
@@ -78,13 +85,14 @@ namespace EmbeddingEngine.OpenAI
                     Guard.Against.Zero(items.Count);
                     return items[0].Embedding.ToArray();
                 }
+                logger?.LogInformation($"OpenAI client created embeddings for {content}");
 
-                return new float[] { };
+                return Array.Empty<float>();
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                logger?.LogError(ex.Message);
                 return Array.Empty<float>();
             }
         }

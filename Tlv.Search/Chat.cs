@@ -1,4 +1,5 @@
 using Ardalis.GuardClauses;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
@@ -98,7 +99,7 @@ namespace Tlv.Search
                                              where message.Role == AuthorRole.User
                                              select message.Content);
 
-                    var searchResuls = await _searchService.Search(prompt);
+                    var searchResuls = await _searchService.Search(prompt, limit: 1, _logger);
 
                     StringBuilder sb = new("Based on the following information:\n\n");
                     foreach (var item in searchResuls)
