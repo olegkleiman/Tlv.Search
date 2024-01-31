@@ -61,6 +61,7 @@ namespace Odyssey
                 da.Fill(table);
 
                 IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, providerKey);
+                //IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.SQLServer, vectorDbHost, connectionString);
                 Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
 
                 IEmbeddingEngine? embeddingEngine =

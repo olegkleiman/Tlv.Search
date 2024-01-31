@@ -160,7 +160,8 @@ namespace Odyssey
                                 float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input, "passage", logger: null);
                                 if (embeddings != null)
                                 {
-                                    await vectorDb.Save(subDoc, subDocIndex++, 
+                                    await vectorDb.Save(subDoc, 
+                                                        subDocIndex++, 
                                                         doc.Id, // parent doc id
                                                         embeddings,
                                                         collectionName

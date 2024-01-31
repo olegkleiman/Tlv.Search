@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -10,6 +12,7 @@ using Microsoft.SemanticKernel.Plugins.Core;
 using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Text;
 using Microsoft.SemanticKernel.TextGeneration;
+using Plugins;
 using System.Net.Sockets;
 using System.Threading;
 using static System.Formats.Asn1.AsnWriter;
@@ -21,6 +24,9 @@ namespace SKPluginDrive
         static async Task Main(string[] args)
         {
             #region Read Configuration
+
+            //var openaiAzureKey = Environment.GetEnvironmentVariable("OPENAI_AZURE_KEY");
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false);
@@ -43,7 +49,16 @@ namespace SKPluginDrive
 
             try
             {
+                using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+                {
+                    builder
+                            .SetMinimumLevel(LogLevel.Trace)
+                            .AddConsole()
+                            .AddDebug();
+                });
+
 #pragma warning disable SKEXP0003, SKEXP0011, SKEXP0026, SKEXP0050, SKEXP0052, SKEXP0055
+                
                 IKernelBuilder kernelBuilder = Kernel.CreateBuilder()
                             //.WithLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
                             .AddAzureOpenAIChatCompletion(
@@ -51,12 +66,39 @@ namespace SKPluginDrive
                                                      openaiEndpoint,
                                                      openaiAzureKey
                                                      );
-                kernelBuilder.Services.AddLogging(c => c.AddConsole());
+                kernelBuilder.Services.AddLogging(cfg =>
+                {
+                    cfg.Services.TryAddSingleton(loggerFactory);
+                });
+                //kernelBuilder.Services.AddLogging(c => c.AddConsole());
+                kernelBuilder.Plugins.AddFromType<SocialPlugin>();
+                kernelBuilder.Plugins.AddFromPromptDirectory("./Plugins/FactmanPlugin");
                 kernelBuilder.Plugins.AddFromType<LightPlugin>();
                 kernelBuilder.Plugins.AddFromType<TimePlugin>();
                 Kernel kernel = kernelBuilder.Build();
 
+                var kernelMemory = new KernelMemoryBuilder()
+                                    .WithOpenAIDefaults(Env.Var("OPENAI_API_KEY"))
+                                    .Build<MemoryServerless>();
+
+                //var plugin = new MemoryPlugin(kernelMemory, waitForIngestionToComplete: true);
+
+                var commonMyth = await kernel.InvokeAsync("FactmanPlugin", "FindMyth");
                 
+
+                var bustedMyth = await kernel.InvokeAsync("FactmanPlugin", "BustMyth", new() {
+                                            { "myth", commonMyth }
+                                        });
+                var optimizeResponse = await kernel.InvokeAsync("FactmanPlugin", "AdaptMessage", new() {
+                                            { "input", bustedMyth },
+                                            { "platform", "twitter" }
+                                        });
+
+                // Invoke the "Post" function of the "SocialPlugin" to post the adapted message to a platform.
+                var postToPlatform = await kernel.InvokeAsync("SocialPlugin", "Post", new() {
+                                            { "platform", "x" },
+                                            { "message", optimizeResponse }
+                                        });
 
                 // Enable auto function calling
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
