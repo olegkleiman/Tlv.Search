@@ -1,5 +1,6 @@
 ﻿using Azure;
 using EmbeddingEngine.Core;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Embeddings;
 using Polly;
@@ -43,7 +44,6 @@ namespace EmbeddingEngine.HuggingFace
         public string m_providerKey { get; set; }
         public string m_modelName { get; set; }
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.HUGGING_FACE;
-
         public HuggingFaceEngine(string providerKey,
                                  string modelName)
         {
@@ -101,7 +101,8 @@ namespace EmbeddingEngine.HuggingFace
         }
 
         public async Task<float[]?> GenerateEmbeddingsAsync(string input, 
-                                                            string representation = "query")
+                                                            string representation,
+                                                            ILogger? logger)
         {
             using HttpClient httpClient = new HttpClient(new RetryHandler(new HttpClientHandler()));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", m_providerKey);
@@ -133,6 +134,8 @@ namespace EmbeddingEngine.HuggingFace
             }
             catch (Exception ex)
             {
+                logger?.LogError(ex.Message);
+
                 var embeddingResponse = JsonSerializer.Deserialize<float[][][]>(body);
                 return embeddingResponse[0][0] ?? Array.Empty<float>();
             }

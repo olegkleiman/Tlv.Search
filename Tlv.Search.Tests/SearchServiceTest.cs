@@ -45,7 +45,7 @@ namespace Tlv.Search.Tests
         public void Search()
         {
             //var promptProcessor = new Mock<IPromptProcessingService>();
-            //var loggerMock = new Mock<ILogger>();
+            var loggerMock = new Mock<ILogger>();
 
             var vectorDb = new Mock<IVectorDb>();
             Assert.That(vectorDb, Is.Not.Null);
@@ -55,7 +55,7 @@ namespace Tlv.Search.Tests
 
             var collectionName = $"doc_parts_{_collectionNamePostFix}";
             SearchService searchService = new(vectorDb.Object, embeddingEngine.Object, collectionName);
-            var results = searchService.Search("תשלום חוב ארנונה");
+            var results = searchService.Search("תשלום חוב ארנונה", limit: 1, loggerMock.Object);
         }
     }
 }

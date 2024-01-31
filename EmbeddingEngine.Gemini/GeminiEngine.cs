@@ -1,4 +1,5 @@
 ﻿using EmbeddingEngine.Core;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -36,7 +37,6 @@ namespace EmbeddingEngine.Gemini
     {
         public string? m_providerKey { get; set; } = providerKey;
         public const string m_modelName = "models/embedding-001";
-
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.GEMINI;
 
         public string ModelName
@@ -48,7 +48,8 @@ namespace EmbeddingEngine.Gemini
         }
 
         public async Task<float[]?> GenerateEmbeddingsAsync(string input,
-                                                            string representation = "query")
+                                                            string representation,
+                                                            ILogger? logger)
         {
             if (string.IsNullOrEmpty(input))
                 return null;
@@ -102,5 +103,6 @@ namespace EmbeddingEngine.Gemini
         {
             throw new NotImplementedException();
         }
+
     }
 }
