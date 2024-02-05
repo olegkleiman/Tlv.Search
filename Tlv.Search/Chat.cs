@@ -27,9 +27,10 @@ namespace Tlv.Search
 
         public Chat(ILoggerFactory loggerFactory,
                     Kernel kernel,
-                    SearchService searchService)
+                    SearchService searchService,
+                    TelemetryClient telemetryClient)
         {
-            _telemetryClient = new TelemetryClient();
+            _telemetryClient = telemetryClient;
             _chat = kernel.GetRequiredService<IChatCompletionService>();
             _searchService = searchService;
             //var context = kernel.Plugins.
@@ -52,13 +53,17 @@ namespace Tlv.Search
         [OpenApiParameter(name: "h", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "chat history as json array")]
         public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
+            Dictionary<string, string> searchParameters = new Dictionary<string, string>();
+
             try
             {
 
                 #region Read Query Parameters
 
                 string? prompt = req.Query["q"];
+
                 Guard.Against.NullOrEmpty(prompt, Resource.no_prompt);
+                searchParameters.Add("question", prompt);
 
                 string correlationId = Guid.NewGuid().ToString();
 
@@ -74,9 +79,11 @@ namespace Tlv.Search
              //   _telemetryClient?.TrackTrace($"The content of the chat history" , new Dictionary<string,string> { { "historyJson" , historyJson } , { "prompt" , prompt } });
 
                 ChatMessageContent[]? history = System.Text.Json.JsonSerializer.Deserialize<ChatMessageContent[]>(historyJson);
+
                 history.ToList().ForEach(result =>
                 {
                     string jsonResult = JsonConvert.SerializeObject(result);
+                   
                     _telemetryClient?.TrackEvent("HistoryChatContent", new Dictionary<string, string> { { "result", jsonResult } });
                 });
                 Guard.Against.Null(history, errorMessage);
@@ -114,10 +121,12 @@ namespace Tlv.Search
                                              select message.Content);
 
                     var searchResuls = await _searchService.Search(prompt);
+                    int index = 0;
 
                     searchResuls.ForEach(result =>
                     {
                         string jsonResult = JsonConvert.SerializeObject(result);
+                        searchParameters.Add($"SearchResult{++index}", jsonResult);
                         _telemetryClient?.TrackEvent($"SearchResuls", new Dictionary<string, string> { { "result", jsonResult } });
                     });
                   
@@ -160,15 +169,21 @@ namespace Tlv.Search
                         await Task.Delay(30);
                     }
                 }
+                searchParameters.Add($"ChatMessageContent", sb1.ToString());
+
                 _telemetryClient?.TrackEvent($"ChatMessageContent", new Dictionary<string, string> { { "ChatMessageContent", sb1.ToString() } });
                 await response.WriteAsync("[DONE]");
                 await response.Body.FlushAsync();
+
                 _telemetryClient?.TrackEvent($"EndChatSearching");
+                _telemetryClient?.TrackEvent("SearchProcessResults", searchParameters);
                 _telemetryClient?.TrackTrace($"The search process {correlationId} is over");
             }
             catch (Exception ex)
             {
-                _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { $"Contact to perform the search from {nameof(Search)} with error:", ex.Message } });
+                searchParameters.Add($"Contact to perform the search from {nameof(Search)} with error:", ex.Message);
+                _telemetryClient?.TrackEvent("SearchProcessResults", searchParameters);
+                _telemetryClient?.TrackException(ex, searchParameters);
             }
 
         }
