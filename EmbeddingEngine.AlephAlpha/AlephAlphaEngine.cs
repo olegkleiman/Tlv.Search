@@ -1,5 +1,6 @@
 ﻿using EmbeddingEngine.Core;
 using RestSharp;
+using System.Net;
 using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace EmbeddingEngine.AlephAlpha
     public class AlephAlphaEngine : IEmbeddingEngine
     {
         public string m_providerKey { get; set; }
+        public string m_endpoint { get; set; }
         public string m_modelName { get; set; }
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.ALEPH_ALPHA;
 
@@ -27,9 +29,11 @@ namespace EmbeddingEngine.AlephAlpha
         }
 
         public AlephAlphaEngine(string providerKey,
-                    string modelName)
+                                string endpoint,
+                                string modelName)
         {
             m_providerKey = providerKey;
+            m_endpoint = endpoint;
             m_modelName = modelName;
         }
 

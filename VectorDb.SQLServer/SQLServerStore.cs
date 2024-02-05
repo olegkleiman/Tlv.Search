@@ -6,9 +6,9 @@ using VectorDb.Core;
 
 namespace VectorDb.SQLServer
 {
-    public class SQLServerStore(string providerKey) : IVectorDb
+    public class SQLServerStore(string hostUri, string providerKey) : IVectorDb
     {
-        public string m_Host { get; set; } = providerKey;
+        public string m_ConnectionString { get; set; } = providerKey;
 
         public Task<List<SearchItem>> Search(string collectionName,
                                             ReadOnlyMemory<float> queryVector,
@@ -25,7 +25,7 @@ namespace VectorDb.SQLServer
         {
             try
             {
-                using var conn = new SqlConnection(providerKey);
+                using var conn = new SqlConnection(m_ConnectionString);
                 conn.Open();
 
                 //
@@ -41,9 +41,11 @@ namespace VectorDb.SQLServer
                 command.Parameters.Add("@text", SqlDbType.NVarChar, -1).Value = doc.Text;
                 command.Parameters.Add("@description", SqlDbType.NVarChar, -1).Value = doc.Description;
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
-                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.Url;
+                command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.Url.ToString();
                 command.Parameters.Add("@imageUrl", SqlDbType.NVarChar, -1).Value = doc.ImageUrl;
-                command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = doc.Source;
+                command.Parameters.Add("@address", SqlDbType.NVarChar, -1).Value = doc.Address;
+                command.Parameters.Add("@geom_location", SqlDbType.VarChar, -1).Value = 
+                    $"POINT({doc.Lat} {doc.Lon})";
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
                 returnParameter.Direction = ParameterDirection.ReturnValue;
@@ -83,12 +85,10 @@ namespace VectorDb.SQLServer
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine(ex.Message);
-                return false;
+                throw;
             }
-
 
         }
     }

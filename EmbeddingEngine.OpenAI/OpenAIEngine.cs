@@ -10,13 +10,16 @@ namespace EmbeddingEngine.OpenAI
     public class OpenAIEngine : IEmbeddingEngine
     {
         public string m_providerKey { get; set; }
+        public string m_endpoint { get; set; }
         public string m_modelName { get; set; }
 
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.OPENAI;
         public OpenAIEngine(string providerKey,
+                            string endpoint, 
                             string modelName)
         {
             m_providerKey = providerKey;
+            m_endpoint = endpoint;
             m_modelName = modelName;
         }
 

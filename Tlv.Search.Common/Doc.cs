@@ -14,6 +14,9 @@ namespace Tlv.Search.Common
         public Uri? Url { get; private set; }
         public string? ImageUrl { get; set; }
         public string? Source { get; set; }
+        public string? Address { get; set; }
+        public float Lat { get; set; }
+        public float Lon { get; set; }
 
         public Doc(Uri uri)
         {

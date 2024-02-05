@@ -54,7 +54,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EmbeddingEngineFramework", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scrapper", "Scrapper\Scrapper.csproj", "{FBA87A38-B6FF-48A1-8CCF-E6CE5D1A5103}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PyIncluded.Drive", "PyIncluded.Drive\PyIncluded.Drive.csproj", "{CD849CA3-CBAD-462A-9E15-B155E0FD01B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PyIncluded.Drive", "PyIncluded.Drive\PyIncluded.Drive.csproj", "{CD849CA3-CBAD-462A-9E15-B155E0FD01B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsIngestor", "EventsIngestor\EventsIngestor.csproj", "{F71CE208-60CD-4363-A5B9-F00192039DFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -146,6 +148,10 @@ Global
 		{CD849CA3-CBAD-462A-9E15-B155E0FD01B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD849CA3-CBAD-462A-9E15-B155E0FD01B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD849CA3-CBAD-462A-9E15-B155E0FD01B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F71CE208-60CD-4363-A5B9-F00192039DFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F71CE208-60CD-4363-A5B9-F00192039DFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F71CE208-60CD-4363-A5B9-F00192039DFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F71CE208-60CD-4363-A5B9-F00192039DFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

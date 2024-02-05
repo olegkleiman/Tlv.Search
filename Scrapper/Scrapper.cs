@@ -3,7 +3,7 @@ using BenchmarkDotNet.Attributes;
 using EmbeddingEngine.Core;
 using HtmlAgilityPack;
 using Microsoft.Data.SqlClient;
-using Odyssey.Models;
+using Scrapper.Models;
 using Odyssey.Tools;
 using PuppeteerSharp;
 using System.Security.Claims;
@@ -90,8 +90,9 @@ namespace Odyssey
             }
         }
 
-    public async Task<Dictionary<string, int>?> ScrapTo(IVectorDb vectorDb,
-                                                       IEmbeddingEngine embeddingEngine)
+    public async Task<Dictionary<string, int>?> ScrapTo(string collectionNamePrefix,
+                                                        IVectorDb vectorDb,
+                                                        IEmbeddingEngine embeddingEngine)
         {
             if (vectorDb is null
                 || embeddingEngine is null)
@@ -113,7 +114,7 @@ namespace Odyssey
                     continue;
 
                 doc.Id = docIndex;
-                string collectionName = $"doc_parts_{embeddingEngine?.ProviderName}_{embeddingEngine?.ModelName}";
+                string collectionName = $"{collectionNamePrefix}_{embeddingEngine?.ProviderName}_{embeddingEngine?.ModelName}";
                 collectionName = collectionName.Replace('/', '_');
 
                 if ( doc is not null)

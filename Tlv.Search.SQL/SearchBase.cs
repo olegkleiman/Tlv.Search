@@ -33,6 +33,7 @@ namespace Tlv.Search
             EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
             IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
                                                                                     providerKey: embeddingEngineKey,
+                                                                                    endpoint: "",
                                                                                     "text-embedding-ada-002");
             Guard.Against.Null(embeddingEngine);
 

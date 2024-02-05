@@ -41,6 +41,7 @@ namespace EmbeddingEngine.Core
     {
         public static IEmbeddingEngine? Create(EmbeddingsProviders providerName, 
                                                 string providerKey,
+                                                string endpoint,
                                                 string modelName)
         {
             Guard.Against.EnumOutOfRange(providerName);
@@ -92,7 +93,7 @@ namespace EmbeddingEngine.Core
                 Type? _type = Type.GetType(typeName);
                 if (_type is null) return null;
 
-                object[] arguments = new object[] { providerKey, modelName };
+                object[] arguments = new object[] { providerKey, endpoint, modelName };
                 IEmbeddingEngine? engine = (IEmbeddingEngine?)Activator.CreateInstance(_type, args: arguments);
                 if (engine is null) return null;
                 return engine;

@@ -42,12 +42,15 @@ namespace EmbeddingEngine.HuggingFace
     {
         public string m_providerKey { get; set; }
         public string m_modelName { get; set; }
+        public string m_endpoint { get; set; }
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.HUGGING_FACE;
 
         public HuggingFaceEngine(string providerKey,
+                                 string endpoint,
                                  string modelName)
         {
             m_providerKey = providerKey;
+            m_endpoint = endpoint;
             m_modelName = modelName;
         }
 
@@ -66,8 +69,8 @@ namespace EmbeddingEngine.HuggingFace
                 using HttpClient httpClient = new();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", m_providerKey);
 
-                string inferenceApi = $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}";
-
+                string inferenceApi = $"{m_endpoint}/{m_modelName}";
+ 
                 HttpRequestMessage requestMessage = new(HttpMethod.Post,
                                                         inferenceApi)
                 {
@@ -107,7 +110,8 @@ namespace EmbeddingEngine.HuggingFace
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", m_providerKey);
 
             HttpRequestMessage requestMessage = new(HttpMethod.Post,
-                                                    $"https://api-inference.huggingface.co/pipeline/feature-extraction/{m_modelName}");
+                                                    $"{m_endpoint}/{m_modelName}");
+
             string payload = string.IsNullOrEmpty(representation) ? input : $"{representation}: {input}";
             requestMessage.Content = JsonContent.Create(payload);
             
