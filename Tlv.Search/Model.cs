@@ -1,5 +1,6 @@
 using System.Net;
 using Ardalis.GuardClauses;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
@@ -8,11 +9,11 @@ namespace Tlv.Search
 {
     public class Model
     {
-        private readonly ILogger _logger;
+        private readonly TelemetryClient _telemetryClient;
 
-        public Model(ILoggerFactory loggerFactory)
+        public Model()
         {
-            _logger = loggerFactory.CreateLogger<Model>();
+            _telemetryClient = new TelemetryClient();
         }
 
         protected string? GetConfigValue(string configKey)
@@ -27,7 +28,7 @@ namespace Tlv.Search
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "model")] HttpRequestData req)
         {
             string embeddingModelName = GetConfigValue("EMBEDDING_MODEL_NAME")!;
-
+            _telemetryClient?.TrackTrace($"embeddingModelName:{embeddingModelName}");
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
@@ -37,7 +38,9 @@ namespace Tlv.Search
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _telemetryClient?.TrackException(ex);
+                _telemetryClient?.TrackTrace($"Contact to perform the search from {nameof(Model)} with error:{ex.Message}");
+
             }
 
             return response;

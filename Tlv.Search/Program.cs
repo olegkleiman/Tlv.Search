@@ -1,5 +1,7 @@
 using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,10 +16,23 @@ using VectorDb.Core;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
+    .ConfigureAppConfiguration((context, config) =>
+    {
+        // Load configuration from appsettings.json
+        config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+        
+    })
     .ConfigureServices((hostContext, services) =>
     {
-        services.AddApplicationInsightsTelemetryWorkerService();
-        services.ConfigureFunctionsApplicationInsights();
+        var configuration = services.BuildServiceProvider().GetService<IConfiguration>();
+        var instrumentationKey = configuration.GetValue<string>("TelemetryInstrumentationKey");
+        var TelemetryConnectionString = configuration.GetValue<string>("TelemetryConnectionString");
+
+        //// Add Application Insights telemetry
+        //services.AddApplicationInsightsTelemetryWorkerService();
+        //services.ConfigureFunctionsApplicationInsights();
+        services.AddApplicationInsightsTelemetry(instrumentationKey);
+        //TelemetryConfiguration.Active.ConnectionString = TelemetryConnectionString;
 
         services.AddSingleton<IPromptProcessingService>(sp =>
         {
