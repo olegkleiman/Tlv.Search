@@ -1,5 +1,6 @@
 using Ardalis.GuardClauses;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -129,7 +130,7 @@ namespace Tlv.Search
                         searchParameters.Add($"SearchResult{++index}", jsonResult);
                         _telemetryClient?.TrackEvent($"SearchResuls", new Dictionary<string, string> { { "result", jsonResult } });
                     });
-                  
+
 
                     StringBuilder sb = new("Based on the following information:\n\n");
                     foreach (var item in searchResuls)

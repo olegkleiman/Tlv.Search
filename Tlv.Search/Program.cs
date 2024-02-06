@@ -34,43 +34,42 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetry(instrumentationKey);
         //TelemetryConfiguration.Active.ConnectionString = TelemetryConnectionString;
 
-        services.AddSingleton<IPromptProcessingService>(sp =>
-        {
-            IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
+        //services.AddSingleton<IPromptProcessingService>(sp =>
+        //{
+        //    IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
 
-            var connectionString = configuration.GetConnectionString("Redis");
-            var connection = ConnectionMultiplexer.Connect(connectionString);
-            Console.WriteLine("Redis connected");
-            return new FrequencyFilterPromptProcessing(connection);
-        });
+        //    var connectionString = configuration.GetConnectionString("Redis");
+        //    var connection = ConnectionMultiplexer.Connect(connectionString);
+        //    Console.WriteLine("Redis connected");
+        //    return new FrequencyFilterPromptProcessing(connection);
+        //});
 
         services.AddSingleton<SearchService>(sp =>
         {
             #region Read Configuration
 
-            IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-
-            string? vectorDbHost = configuration["VECTOR_DB_HOST"];
+            string? vectorDbHost = Environment.GetEnvironmentVariable("VECTOR_DB_HOST");
             Guard.Against.NullOrEmpty(vectorDbHost);
-            string? vectorDbKey = configuration["VECTOR_DB_KEY"];
+            string? vectorDbKey = Environment.GetEnvironmentVariable("VECTOR_DB_KEY");
             Guard.Against.NullOrEmpty(vectorDbKey);
 
-            string? embeddingsProviderName = configuration["EMBEDIING_PROVIDER"];
+            string? embeddingsProviderName = Environment.GetEnvironmentVariable("EMBEDIING_PROVIDER");
             Guard.Against.NullOrEmpty(embeddingsProviderName);
             EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders),
                                                                                      embeddingsProviderName);
             Guard.Against.Null(embeddingsProvider);
 
             string configKeyName = $"{embeddingsProviderName.ToUpper()}_KEY";
-            string? embeddingEngineKey = configuration[configKeyName];
+            string? embeddingEngineKey = Environment.GetEnvironmentVariable(configKeyName);
             Guard.Against.NullOrEmpty(embeddingEngineKey);
 
-            //configKeyName = $"{embeddingsProviderName.ToUpper()}_ENDPOINT";
-            //string? endpoint = configuration[configKeyName];
-
             configKeyName = "EMBEDDING_MODEL_NAME";
-            string? modelName = configuration[configKeyName];
+            string? modelName = Environment.GetEnvironmentVariable(configKeyName); 
             Guard.Against.NullOrEmpty(modelName);
+
+            configKeyName = "COLLECTION_NAME_PREFIX";
+            string? collectionPrefix = Environment.GetEnvironmentVariable(configKeyName);
+            //Guard.Against.NullOrEmpty(collectionPrefix); - collection prefix name could be empty
 
             #endregion
 
@@ -79,15 +78,15 @@ var host = new HostBuilder()
                                                                 vectorDbKey);
             Guard.Against.Null(_vectorDb);
 
-            IEmbeddingEngine? _embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
+            IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
                                                                 providerKey: embeddingEngineKey,
                                                                 modelName);
-            Guard.Against.Null(_embeddingEngine);
+            Guard.Against.Null(embeddingEngine);
 
-            string _collectionName = $"doc_parts_{_embeddingEngine.ProviderName}_{_embeddingEngine.ModelName}";
+            string _collectionName = $"doc_parts{collectionPrefix}_{embeddingEngine.ProviderName}_{embeddingEngine.ModelName}";
             _collectionName = _collectionName.Replace('/', '_');
             return new SearchService(_vectorDb,
-                                     _embeddingEngine,
+                                     embeddingEngine,
                                      _collectionName);
         });
 

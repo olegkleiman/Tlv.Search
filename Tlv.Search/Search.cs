@@ -1,6 +1,7 @@
 using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -26,6 +27,7 @@ namespace Tlv.Search
         {
             _telemetryClient = telemetryClient ;
             _promptService = promptService;
+
             _searchService = searchService;
         }
         
@@ -58,7 +60,7 @@ namespace Tlv.Search
                 searchParameters.Add("question", prompt);    
                 _telemetryClient?.TrackEvent("FilterKeywords", new Dictionary<string, string>() { { "prompt", prompt } });
 
-                prompt = await _promptService.FilterKeywords(prompt);
+                //prompt = await _promptService.FilterKeywords(prompt);
 
                  _telemetryClient?.TrackTrace($"Search content after filter keywords", new Dictionary<string, string>() { { "prompt", prompt } });
                 var searchResuls = await _searchService.Search(prompt, limit: 5);
@@ -72,6 +74,7 @@ namespace Tlv.Search
                 });
                 _telemetryClient?.TrackEvent("SearchProcessResults", searchParameters);
                 _telemetryClient?.TrackTrace($"The search process {correlationId} is over");
+
                 return new OkObjectResult(searchResuls);
             }
             catch (Exception ex)

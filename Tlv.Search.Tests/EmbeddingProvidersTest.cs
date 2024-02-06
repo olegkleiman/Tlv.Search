@@ -1,5 +1,7 @@
 using EmbeddingEngine.Core;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Tlv.Search.Tests
 {
@@ -104,7 +106,8 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("sentence-transformers/all-MiniLM-L6-v2"));
 
             string prompt = "Tel-Aviv Municipality";
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            var loggerMock = new Mock<ILogger>();
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "", logger: loggerMock.Object);
 
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(384));
@@ -125,7 +128,8 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("intfloat/multilingual-e5-large"));
 
             string prompt = "Tel-Aviv Municipality";
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            var loggerMock = new Mock<ILogger>();
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "passage", logger: loggerMock.Object);
             
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(1024));
@@ -146,7 +150,8 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("intfloat/e5-large-v2"));
 
             string prompt = "Tel-Aviv Municipality";
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            var loggerMock = new Mock<ILogger>();
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "passage", logger: loggerMock.Object);
 
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(1024));
@@ -167,7 +172,8 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("intfloat/multilingual-e5-base"));
 
             string prompt = "Tel-Aviv Municipality";
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            var loggerMock = new Mock<ILogger>();
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "passage", logger: loggerMock.Object);
 
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(768));
@@ -200,8 +206,8 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("text-embedding-ada-002"));
 
             string prompt = "Tel-Aviv Municipality";
-
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            var loggerMock = new Mock<ILogger>();
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "passage", logger: loggerMock.Object);
 
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(1536));

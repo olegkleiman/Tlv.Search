@@ -1,4 +1,5 @@
 ﻿using EmbeddingEngine.Core;
+using Microsoft.Extensions.Logging;
 using RestSharp;
 using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
@@ -17,6 +18,7 @@ namespace EmbeddingEngine.AlephAlpha
         public string m_providerKey { get; set; }
         public string m_modelName { get; set; }
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.ALEPH_ALPHA;
+        public ILogger logger { get; set; }
 
         public string ModelName
         {
@@ -46,7 +48,8 @@ namespace EmbeddingEngine.AlephAlpha
         /// </param>
         /// <returns></returns>
         public async Task<float[]?> GenerateEmbeddingsAsync(string prompt,
-                                                            string representation = "query")
+                                                            string representation,
+                                                            ILogger? logger)
         {
             var options = new RestClientOptions()
             {

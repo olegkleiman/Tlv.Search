@@ -1,4 +1,5 @@
 ﻿using Ardalis.GuardClauses;
+using Microsoft.Extensions.Logging;
 
 namespace EmbeddingEngine.Core
 {
@@ -17,7 +18,8 @@ namespace EmbeddingEngine.Core
         /// </param>
         /// <returns></returns>
         Task<float[]?> GenerateEmbeddingsAsync(string input, 
-                                                string representation = "query");
+                                                string representation,
+                                                ILogger? logger);
         Task<T?> GenerateEmbeddingsAsync<T>(string input);
         public string ModelName { get; }
         public string ProviderName
