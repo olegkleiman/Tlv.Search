@@ -52,7 +52,8 @@ namespace Tlv.Search
         [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiParameter(name: "h", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "chat history as json array")]
-        public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+        public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,
+                                ILogger logger)
         {
             Dictionary<string, string> searchParameters = new Dictionary<string, string>();
 
@@ -121,7 +122,7 @@ namespace Tlv.Search
                                              where message.Role == AuthorRole.User
                                              select message.Content);
 
-                    var searchResuls = await _searchService.Search(prompt);
+                    var searchResuls = await _searchService.Search(prompt, limit: 1, logger);
                     int index = 0;
 
                     searchResuls.ForEach(result =>
