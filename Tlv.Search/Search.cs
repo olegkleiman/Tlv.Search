@@ -43,7 +43,8 @@ namespace Tlv.Search
         [OpenApiOperation(operationId: "Run", tags: new[] { "q" })]
         [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **prompt** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,
+                                             ILogger logger)
         {
             Dictionary<string, string> searchParameters = new Dictionary<string, string>();
             try
@@ -63,7 +64,7 @@ namespace Tlv.Search
                 //prompt = await _promptService.FilterKeywords(prompt);
 
                  _telemetryClient?.TrackTrace($"Search content after filter keywords", new Dictionary<string, string>() { { "prompt", prompt } });
-                var searchResuls = await _searchService.Search(prompt, limit: 5);
+                var searchResuls = await _searchService.Search(prompt, limit: 5, logger);
                 int index = 0;
                 searchResuls.ForEach(result =>
                 {
