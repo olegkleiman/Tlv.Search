@@ -26,7 +26,7 @@ var host = new HostBuilder()
     {
         var configuration = services.BuildServiceProvider().GetService<IConfiguration>();
         var instrumentationKey = configuration.GetValue<string>("TelemetryInstrumentationKey");
-        var TelemetryConnectionString = configuration.GetValue<string>("TelemetryConnectionString");
+        //var TelemetryConnectionString = configuration.GetValue<string>("TelemetryConnectionString");
 
         //// Add Application Insights telemetry
         //services.AddApplicationInsightsTelemetryWorkerService();
