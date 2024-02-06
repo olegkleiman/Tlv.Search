@@ -49,7 +49,7 @@ namespace EventsIngestor
         [JsonPropertyName("address1_LON")]
         public float Lon { get; set; }
 
-        private HtmlNode NodeFromTag(HtmlDocument htmlDoc, 
+        private static HtmlNode NodeFromTag(HtmlDocument htmlDoc, 
                                     string propertyName,
                                     string tag)
         {
@@ -63,6 +63,9 @@ namespace EventsIngestor
         {
             HtmlDocument htmlDoc = new();
             var htmlNode = NodeFromTag(htmlDoc, Text, "div");
+            if (string.IsNullOrEmpty(htmlNode.InnerText))
+                Console.WriteLine("Empty text for element");
+
             var _text = htmlNode.InnerText;
 
             htmlNode = NodeFromTag(htmlDoc, previewPage, "a");
@@ -74,12 +77,12 @@ namespace EventsIngestor
             return new Doc(new Uri(baseUrl + hrefValue))
             {
                 Text = _text,
-                Description = Description,
-                Title = Title,
+                Description = this.Description,
+                Title = this.Title,
                 ImageUrl = baseUrl + src,
                 Address = FullAddress,
-                Lat = Lat,
-                Lon = Lon
+                Lat = this.Lat,
+                Lon = this.Lon
             };
         }
     }

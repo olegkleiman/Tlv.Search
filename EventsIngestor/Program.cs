@@ -88,6 +88,8 @@ namespace EventsIngestor
 
                 int docIndex = 0;
                 string collectionName = $"doc_parts_events_{embeddingEngine?.ProviderName}_{embeddingEngine?.ModelName}";
+                collectionName = collectionName.Replace('/', '_');
+
                 foreach (var _event in events)
                 {
                     Doc doc = _event.ToDoc();
