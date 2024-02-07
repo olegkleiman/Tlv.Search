@@ -69,6 +69,7 @@ namespace Odyssey
                 da.Fill(table);
 
                 IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, providerKey);
+                //IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.SQLServer, vectorDbHost, connectionString);
                 Guard.Against.Null(vectorDb, providerKey, $"Couldn't create vector db store with key '{providerKey}'");
 
                 IEmbeddingEngine? embeddingEngine =
@@ -111,6 +112,7 @@ namespace Odyssey
 
                     await scrapper.Init();
                     Task<Dictionary<string, int>?> task = scrapper.ScrapTo(collectionNamePrefix, vectorDb, embeddingEngine!);
+
                     //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }
@@ -131,7 +133,7 @@ namespace Odyssey
             {
                 Console.Write(ex.Message);
             }
-        }
+       }
 
     }
 }
