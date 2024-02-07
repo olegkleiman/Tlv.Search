@@ -63,6 +63,10 @@ var host = new HostBuilder()
             string? embeddingEngineKey = Environment.GetEnvironmentVariable(configKeyName);
             Guard.Against.NullOrEmpty(embeddingEngineKey);
 
+            configKeyName = $"{embeddingsProviderName.ToUpper()}_ENDPOINT";
+            string? endpoint = configuration[configKeyName];
+            Guard.Against.NullOrEmpty(endpoint);
+
             configKeyName = "EMBEDDING_MODEL_NAME";
             string? modelName = Environment.GetEnvironmentVariable(configKeyName); 
             Guard.Against.NullOrEmpty(modelName);
@@ -78,12 +82,18 @@ var host = new HostBuilder()
                                                                 vectorDbKey);
             Guard.Against.Null(_vectorDb);
 
-            IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
+            IEmbeddingEngine? _embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(
+                                                                embeddingsProvider,
                                                                 providerKey: embeddingEngineKey,
+                                                                endpoint: endpoint,
                                                                 modelName);
             Guard.Against.Null(embeddingEngine);
 
-            string _collectionName = $"doc_parts{collectionPrefix}_{embeddingEngine.ProviderName}_{embeddingEngine.ModelName}";
+            configKeyName = "COLLECTION_NAME_PREFIX";
+            string? collectionNamePrefix = configuration[configKeyName];
+            Guard.Against.NullOrEmpty(collectionNamePrefix);
+
+            string _collectionName = $"{collectionNamePrefix}_{_embeddingEngine.ProviderName}_{_embeddingEngine.ModelName}";
             _collectionName = _collectionName.Replace('/', '_');
             return new SearchService(_vectorDb,
                                      embeddingEngine,

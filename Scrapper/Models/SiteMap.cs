@@ -1,6 +1,6 @@
 ﻿using System.Xml.Linq;
 
-namespace Odyssey.Models
+namespace Scrapper.Models
 {
     public record SiteMapItem(string Location, DateTime LastModified);
 
@@ -14,6 +14,12 @@ namespace Odyssey.Models
         public SiteMap(Uri url)
         {
             m_url = url.OriginalString;
+            var tokens = url.LocalPath.Split('.');
+            name = tokens[0];
+
+            name = url.IsFile ?
+                name.Replace("\\", "")
+                : name.Replace("/", "");
         }
 
         static public SiteMap? Parse(Uri url)

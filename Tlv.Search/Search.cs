@@ -62,7 +62,6 @@ namespace Tlv.Search
                 _telemetryClient?.TrackEvent("FilterKeywords", new Dictionary<string, string>() { { "prompt", prompt } });
 
                 //prompt = await _promptService.FilterKeywords(prompt);
-
                  _telemetryClient?.TrackTrace($"Search content after filter keywords", new Dictionary<string, string>() { { "prompt", prompt } });
                 var searchResuls = await _searchService.Search(prompt, limit: 5, logger);
                 int index = 0;

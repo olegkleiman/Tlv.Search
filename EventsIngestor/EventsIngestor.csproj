@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.GuardClauses" Version="4.4.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.58" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EmbeddingEngine.Core\EmbeddingEngine.Core.csproj" />
+    <ProjectReference Include="..\EmbeddingEngine.HuggingFace\EmbeddingEngine.HuggingFace.csproj" />
+    <ProjectReference Include="..\EmbeddingEngine.OpenAI\EmbeddingEngine.OpenAI.csproj" />
+    <ProjectReference Include="..\Tlv.Search.Common\Tlv.Search.Common.csproj" />
+    <ProjectReference Include="..\VectorDb.Core\VectorDb.Core.csproj" />
+    <ProjectReference Include="..\VectorDb.QDrant\VectorDb.QDrant.csproj" />
+    <ProjectReference Include="..\VectorDb.SQLServer\VectorDb.SQLServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

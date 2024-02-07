@@ -9,6 +9,12 @@ using static System.Formats.Asn1.AsnWriter;
 
 namespace VectorDb.QDrant
 {
+    public class Location
+    {
+        public float Lat { get; set; }
+        public float Lon { get; set; }
+    }
+
     public class QDrantStore : IVectorDb
     {
         //public Uri? m_hostUri; // This is a host name (like 'localhost') for this provider
@@ -90,10 +96,10 @@ namespace VectorDb.QDrant
         }
 
         public async Task<bool> Save(Doc doc,
-                        int docIndex,
-                        int parentDocId,
-                        float[] vector,
-                        string collectionName)
+                                    int docIndex,
+                                    int parentDocId,
+                                    float[] vector,
+                                    string collectionName)
         {
             Guard.Against.NullOrEmpty(collectionName);
             Guard.Against.Null(vector);
@@ -109,7 +115,7 @@ namespace VectorDb.QDrant
                     VectorParams vp = new()
                     {
                         Distance = Distance.Cosine,
-                        Size = (ulong)vector.Length
+                        Size = (ulong)vector.Length,
                     };
 
                     await m_qdClient.CreateCollectionAsync(collectionName, vp);
@@ -127,7 +133,9 @@ namespace VectorDb.QDrant
                         ["title"] = doc.Title ?? string.Empty,
                         ["url"] = doc.Url.ToString() ?? string.Empty,
                         ["image_url"] = doc.ImageUrl ?? string.Empty,
-                        ["parent_doc_id"] = parentDocId
+                        ["parent_doc_id"] = parentDocId,
+                        ["location"] = $"{{ \"lat\":{doc.Lat}, \"lon\":{doc.Lon} }}",
+                        ["prompt"] = "none"
                     },
                     Vectors = vector
                 };
@@ -136,12 +144,10 @@ namespace VectorDb.QDrant
 
                 return true;
             }
-            catch (Exception ex)
+            catch (QdrantException)
             {
-                Console.WriteLine(ex.Message);
-                return false;
+                throw;
             }
-
 
         }
 

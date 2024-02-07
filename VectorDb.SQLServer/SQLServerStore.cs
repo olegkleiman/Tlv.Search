@@ -43,7 +43,9 @@ namespace VectorDb.SQLServer
                 command.Parameters.Add("@title", SqlDbType.NVarChar, -1).Value = doc.Title;
                 command.Parameters.Add("@url", SqlDbType.NVarChar, -1).Value = doc.Url.ToString();
                 command.Parameters.Add("@imageUrl", SqlDbType.NVarChar, -1).Value = doc.ImageUrl;
-                command.Parameters.Add("@source", SqlDbType.VarChar, -1).Value = doc.Source;
+                command.Parameters.Add("@address", SqlDbType.NVarChar, -1).Value = doc.Address;
+                command.Parameters.Add("@geom_location", SqlDbType.VarChar, -1).Value = 
+                    $"POINT({doc.Lat} {doc.Lon})";
 
                 var returnParameter = command.Parameters.Add("@ReturnVal", SqlDbType.Int);
                 returnParameter.Direction = ParameterDirection.ReturnValue;
@@ -83,12 +85,10 @@ namespace VectorDb.SQLServer
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine(ex.Message);
-                return false;
+                throw;
             }
-
 
         }
     }

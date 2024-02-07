@@ -1,13 +1,13 @@
 ﻿using Ardalis.GuardClauses;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Odyssey.Models;
 using System.Data;
 using EmbeddingEngine.Core;
 using VectorDb.Core;
 using Humanizer.Configuration;
 using StackExchange.Redis;
 using Scrapper;
+using Scrapper.Models;
 
 namespace Odyssey
 {
@@ -39,6 +39,10 @@ namespace Odyssey
                 string? embeddingEngineKey = config[configKeyName];
                 Guard.Against.NullOrEmpty(embeddingEngineKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
+                configKeyName = $"{embeddingsProviderName.ToUpper()}_ENDPOINT";
+                string? endpoint = config[configKeyName];
+                Guard.Against.NullOrEmpty(endpoint);
+
                 configKeyName = "VECTOR_DB_KEY";
                 string? providerKey = config[configKeyName];
                 Guard.Against.NullOrEmpty(providerKey, configKeyName, $"Couldn't find {configKeyName} in configuration");
@@ -46,6 +50,10 @@ namespace Odyssey
                 configKeyName = "VECTOR_DB_HOST";
                 string? vectorDbHost = config[configKeyName];
                 Guard.Against.NullOrEmpty(vectorDbHost, configKeyName, $"Couldn't find {configKeyName} in configuration");
+
+                configKeyName = "COLLECTION_NAME_PREFIX";
+                string? collectionNamePrefix = config[configKeyName];
+                Guard.Against.NullOrEmpty(collectionNamePrefix, configKeyName, $"Couldn't find {configKeyName} in configuration");
 
                 configKeyName = "EMBEDDING_MODEL_NAME";
                 string? modelName = config[configKeyName];
@@ -67,6 +75,7 @@ namespace Odyssey
                 IEmbeddingEngine? embeddingEngine =
                     EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
                                                                 providerKey: embeddingEngineKey,
+                                                                endpoint: endpoint,
                                                                 modelName);
                 Guard.Against.Null(embeddingEngine, embeddingEngineKey, $"Couldn't create embedding engine with key '{embeddingEngineKey}'");
 
@@ -102,7 +111,8 @@ namespace Odyssey
                         continue;
 
                     await scrapper.Init();
-                    Task<Dictionary<string, int>?> task = scrapper.ScrapTo(siteMap.name, vectorDb, embeddingEngine!);
+                    Task<Dictionary<string, int>?> task = scrapper.ScrapTo(collectionNamePrefix, vectorDb, embeddingEngine!);
+
                     //Task task = scrapper.ScrapTo(memory);
                     tasks.Add(task);
                 }

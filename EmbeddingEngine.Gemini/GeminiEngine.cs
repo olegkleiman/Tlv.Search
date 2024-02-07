@@ -33,10 +33,12 @@ namespace EmbeddingEngine.Gemini
         public Values? embedding { get; set; }
     }
 
-    public class GeminiEngine(string providerKey) : IEmbeddingEngine
+    public class GeminiEngine(string providerKey, string endpoint, string modelName) : IEmbeddingEngine
     {
         public string? m_providerKey { get; set; } = providerKey;
         public const string m_modelName = "models/embedding-001";
+        public string m_endpoint { get; set; } = endpoint;
+
         public EmbeddingsProviders provider { get; } = EmbeddingsProviders.GEMINI;
 
         public string ModelName

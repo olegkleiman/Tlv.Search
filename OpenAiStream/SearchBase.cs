@@ -31,6 +31,7 @@ public class SearchBase
         EmbeddingsProviders embeddingsProvider = (EmbeddingsProviders)Enum.Parse(typeof(EmbeddingsProviders), embeddingsProviderName);
         IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(embeddingsProvider,
                                                                                 providerKey: embeddingEngineKey,
+                                                                                endpoint: string.Empty,
                                                                                 "text-embedding-ada-002");
         Guard.Against.Null(embeddingEngine);
 
