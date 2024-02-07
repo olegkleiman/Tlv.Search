@@ -35,7 +35,7 @@ public class SearchBase
                                                                                 "text-embedding-ada-002");
         Guard.Against.Null(embeddingEngine);
 
-        ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+        ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "query", logger: null);
 
         IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, vectorDbProviderKey);
         Guard.Against.Null(vectorDb);

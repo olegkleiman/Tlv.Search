@@ -25,7 +25,10 @@ namespace Scrapper.Models
         static public SiteMap? Parse(Uri url)
         {
             SiteMap siteMap = new(url);
-   
+
+            string _name = (url.IsFile) ? url.Host : url.Segments.Last();
+            siteMap.name = _name.Split('.')[0];
+
             XDocument doc;
             var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");
 
