@@ -32,7 +32,6 @@ namespace EmbeddingEngine.OpenAI
             }
         }
 
-
         public async Task<T?> GenerateEmbeddingsAsync<T>(string input)
         {
             try
@@ -70,14 +69,10 @@ namespace EmbeddingEngine.OpenAI
             try
             {
                 var client = new OpenAIClient(m_providerKey, new OpenAIClientOptions());
-                logger?.LogInformation($"OpenAI client created with key {m_providerKey}");
 
                 string? content = input;
                 if (string.IsNullOrEmpty(content))
-                {
-                    logger?.LogError("OpenAI EmbeddingEngine: input is empty");
                     return Array.Empty<float>();
-                }
 
                 EmbeddingsOptions eo = new(deploymentName: m_modelName,
                                             input: new List<string>() { content });
@@ -88,9 +83,8 @@ namespace EmbeddingEngine.OpenAI
                     Guard.Against.Zero(items.Count);
                     return items[0].Embedding.ToArray();
                 }
-                logger?.LogInformation($"OpenAI client created embeddings for {content}");
 
-                return Array.Empty<float>();
+                return new float[] { };
 
             }
             catch (Exception ex)

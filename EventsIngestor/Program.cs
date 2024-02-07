@@ -93,7 +93,7 @@ namespace EventsIngestor
                 foreach (var _event in events)
                 {
                     Doc doc = _event.ToDoc();
-                    float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(doc.Content, "passage");
+                    float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(doc.Content, "passage", logger: null);
                     if (embeddings is null)
                         continue;
 

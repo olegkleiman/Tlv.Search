@@ -90,7 +90,6 @@ namespace Odyssey
             }
         }
 
-
     public async Task<Dictionary<string, int>?> ScrapTo(string collectionNamePrefix,
                                                         IVectorDb vectorDb,
                                                         IEmbeddingEngine embeddingEngine)
@@ -152,16 +151,10 @@ namespace Odyssey
                                 string input = subDoc.Content ?? string.Empty;
                                 countWords(input, wordsDictionary);
 
-                                using var loggerFactory = LoggerFactory.Create( builder => {
-                                    builder.AddConsole();
-                                });
-                                ILogger logger = loggerFactory.CreateLogger<Scrapper>();
-
                                 float[]? embeddings = await embeddingEngine.GenerateEmbeddingsAsync(input, "passage", logger: null);
                                 if (embeddings != null)
                                 {
-                                    await vectorDb.Save(subDoc, 
-                                                        subDocIndex++, 
+                                    await vectorDb.Save(subDoc, subDocIndex++, 
                                                         doc.Id, // parent doc id
                                                         embeddings,
                                                         collectionName

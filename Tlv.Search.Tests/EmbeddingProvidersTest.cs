@@ -1,6 +1,7 @@
 using EmbeddingEngine.Core;
 using Microsoft.Extensions.Configuration;
-using System.Net;
+using Moq;
+using Microsoft.Extensions.Logging;
 
 namespace Tlv.Search.Tests
 {
@@ -144,7 +145,7 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("intfloat/multilingual-e5-large"));
 
             string prompt = "Where can I go this evening?";
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "passage", logger: null);
             
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(1024));
@@ -168,7 +169,7 @@ namespace Tlv.Search.Tests
             Assert.That(embeddingEngine.ModelName, Is.EqualTo("intfloat/multilingual-e5-large"));
 
             string prompt = "Where can I go this evening?";
-            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt);
+            ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "passage", logger: null);
 
             Assert.That(promptEmbedding.Length, Is.Not.Zero);
             Assert.That(promptEmbedding.Length, Is.EqualTo(1024));

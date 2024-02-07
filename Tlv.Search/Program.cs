@@ -1,12 +1,14 @@
 using Ardalis.GuardClauses;
 using EmbeddingEngine.Core;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Plugins.Core;
 using StackExchange.Redis;
@@ -24,25 +26,28 @@ var host = new HostBuilder()
     })
     .ConfigureServices((hostContext, services) =>
     {
-        var configuration = services.BuildServiceProvider().GetService<IConfiguration>();
-        var instrumentationKey = configuration.GetValue<string>("TelemetryInstrumentationKey");
-        //var TelemetryConnectionString = configuration.GetValue<string>("TelemetryConnectionString");
+        string? appInsightsConnectionString = Environment.GetEnvironmentVariable("AzureApplicationInsightsConnectionString");
+        Guard.Against.NullOrEmpty(appInsightsConnectionString);
+        var options = new ApplicationInsightsServiceOptions
+        {
+            ConnectionString = appInsightsConnectionString
+        };
+        services.AddApplicationInsightsTelemetry(options: options);
 
-        //// Add Application Insights telemetry
-        //services.AddApplicationInsightsTelemetryWorkerService();
-        //services.ConfigureFunctionsApplicationInsights();
-        services.AddApplicationInsightsTelemetry(instrumentationKey);
-        //TelemetryConfiguration.Active.ConnectionString = TelemetryConnectionString;
+        services.AddSingleton<IPromptProcessingService>(sp =>
+        {
+            IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
 
-        //services.AddSingleton<IPromptProcessingService>(sp =>
-        //{
-        //    IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-
-        //    var connectionString = configuration.GetConnectionString("Redis");
-        //    var connection = ConnectionMultiplexer.Connect(connectionString);
-        //    Console.WriteLine("Redis connected");
-        //    return new FrequencyFilterPromptProcessing(connection);
-        //});
+            string? redisConnectionString = configuration.GetConnectionString("Redis");
+            if(redisConnectionString.IsNullOrEmpty() )
+                return new NullPropmtProcessng();
+            else
+            {
+                var connection = ConnectionMultiplexer.Connect(redisConnectionString);
+                Console.WriteLine("Redis connected");
+                return new FrequencyFilterPromptProcessing(connection);
+            }
+        });
 
         services.AddSingleton<SearchService>(sp =>
         {
@@ -64,7 +69,7 @@ var host = new HostBuilder()
             Guard.Against.NullOrEmpty(embeddingEngineKey);
 
             configKeyName = $"{embeddingsProviderName.ToUpper()}_ENDPOINT";
-            string? endpoint = configuration[configKeyName];
+            string? endpoint = Environment.GetEnvironmentVariable(configKeyName);
             Guard.Against.NullOrEmpty(endpoint);
 
             configKeyName = "EMBEDDING_MODEL_NAME";
@@ -82,7 +87,7 @@ var host = new HostBuilder()
                                                                 vectorDbKey);
             Guard.Against.Null(_vectorDb);
 
-            IEmbeddingEngine? _embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(
+            IEmbeddingEngine? embeddingEngine = EmbeddingEngine.Core.EmbeddingEngine.Create(
                                                                 embeddingsProvider,
                                                                 providerKey: embeddingEngineKey,
                                                                 endpoint: endpoint,
@@ -90,10 +95,10 @@ var host = new HostBuilder()
             Guard.Against.Null(embeddingEngine);
 
             configKeyName = "COLLECTION_NAME_PREFIX";
-            string? collectionNamePrefix = configuration[configKeyName];
+            string? collectionNamePrefix = Environment.GetEnvironmentVariable(configKeyName);
             Guard.Against.NullOrEmpty(collectionNamePrefix);
 
-            string _collectionName = $"{collectionNamePrefix}_{_embeddingEngine.ProviderName}_{_embeddingEngine.ModelName}";
+            string _collectionName = $"{collectionNamePrefix}_{embeddingEngine.ProviderName}_{embeddingEngine.ModelName}";
             _collectionName = _collectionName.Replace('/', '_');
             return new SearchService(_vectorDb,
                                      embeddingEngine,
