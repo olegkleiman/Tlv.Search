@@ -1,13 +1,8 @@
 ﻿using HtmlAgilityPack;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.Web;
 using Tlv.Search.Common;
-using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
 
 namespace EventsIngestor
 {
@@ -17,20 +12,20 @@ namespace EventsIngestor
 
         [JsonPropertyName("summary")]
         public string? Description { get; set; }
-        
+
         [JsonPropertyName("title")]
         public string? Title { get; set; }
-        
+
         [JsonPropertyName("comments")]
         public string? Text { get; set; }
-       
+
         public string? previewPage { get; set; }
         public DateTime startDate { get; set; }
         public DateTime endDate { get; set; }
-        
+
         [JsonPropertyName("cityLocation")]
         public string? CityLocation { get; set; }
-        
+
         [JsonPropertyName("address1")]
         public string? Address { get; set; }
         public string? FullAddress
@@ -43,13 +38,13 @@ namespace EventsIngestor
         [JsonPropertyName("mainPicture")]
         public string? image_url { get; set; }
 
-        [JsonPropertyName("address1_LAT")] 
+        [JsonPropertyName("address1_LAT")]
         public float Lat { get; set; }
 
         [JsonPropertyName("address1_LON")]
         public float Lon { get; set; }
 
-        private static HtmlNode NodeFromTag(HtmlDocument htmlDoc, 
+        private static HtmlNode NodeFromTag(HtmlDocument htmlDoc,
                                     string propertyName,
                                     string tag)
         {
@@ -57,6 +52,19 @@ namespace EventsIngestor
             return htmlDoc.DocumentNode
                             .Descendants(tag)
                             .First();
+        }
+
+        private string clearText(string? _clearText)
+        {
+            if (string.IsNullOrEmpty(_clearText))
+                return string.Empty;
+
+            _clearText = _clearText.Trim();
+            _clearText = Regex.Replace(_clearText, @"\r\n?|\n", string.Empty);
+            _clearText = HttpUtility.HtmlDecode(_clearText);
+            _clearText = _clearText.Replace('•', '*');
+            _clearText = Regex.Replace(_clearText, "[^\\p{L}\\d\t !@#$%^&*()_\\=+/+,<>?.:\\-`']", "");
+            return _clearText;
         }
 
         public Doc ToDoc()
@@ -76,9 +84,9 @@ namespace EventsIngestor
 
             return new Doc(new Uri(baseUrl + hrefValue))
             {
-                Text = _text,
-                Description = this.Description,
-                Title = this.Title,
+                Text = clearText(_text),
+                Description = clearText(this.Description),
+                Title = clearText(this.Title),
                 ImageUrl = baseUrl + src,
                 Address = FullAddress,
                 Lat = this.Lat,

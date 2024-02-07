@@ -110,8 +110,6 @@ namespace EventsIngestor
                     Console.WriteLine($"processed {docIndex}");
                     docIndex++;
 
-                    if (docIndex > 2)
-                        break;
                 }
                 
 
