@@ -58,29 +58,29 @@ namespace Tlv.Search
                 // Set the correlation identifier in the operation context
                 _telemetryClient.Context.Operation.Id = correlationId;
                 _telemetryClient?.TrackTrace($"Start searching");
-                searchParameters.Add("question", prompt);    
-                _telemetryClient?.TrackEvent("FilterKeywords", new Dictionary<string, string>() { { "prompt", prompt } });
+                searchParameters.Add("propmt", prompt);    
 
-                //prompt = await _promptService.FilterKeywords(prompt);
-                 _telemetryClient?.TrackTrace($"Search content after filter keywords", new Dictionary<string, string>() { { "prompt", prompt } });
+                if( _promptService is not null )
+                    prompt = await _promptService.FilterKeywords(prompt);
+ 
+                searchParameters.Add("filtered_prompt", prompt);
                 var searchResuls = await _searchService.Search(prompt, limit: 5, logger);
                 int index = 0;
                 searchResuls.ForEach(result =>
                 {
-                  
                     string jsonResult = JsonConvert.SerializeObject(result);
                     searchParameters.Add($"result{++index}", jsonResult);
-                   _telemetryClient?.TrackTrace($"Answers for the search on the municipality website" , new Dictionary<string,string> { { "result", jsonResult } });
+                   _telemetryClient?.TrackTrace($"Search results:" , new Dictionary<string,string> { { "result", jsonResult } });
                 });
-                _telemetryClient?.TrackEvent("SearchProcessResults", searchParameters);
-                _telemetryClient?.TrackTrace($"The search process {correlationId} is over");
+                _telemetryClient?.TrackEvent("Search", searchParameters);
+                _telemetryClient?.TrackTrace($"The search process {correlationId} finished");
 
                 return new OkObjectResult(searchResuls);
             }
             catch (Exception ex)
             {
-                searchParameters.Add($"Contact to perform the search from {nameof(Search)} with error:", ex.Message);
-                _telemetryClient?.TrackEvent("SearchProcessResults", searchParameters);
+                searchParameters.Add("exception", ex.Message);
+                _telemetryClient?.TrackEvent("Search", searchParameters);
                 _telemetryClient?.TrackException(ex, searchParameters);
 
                 return new ObjectResult(new { ex.Message })

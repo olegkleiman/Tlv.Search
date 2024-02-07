@@ -19,6 +19,9 @@ namespace Tlv.Search.Services
         /// <returns>The string with excludes</returns>
         public async Task<string> FilterKeywords(string input, int excludeFrequency = 25)
         {
+            if( _multiplexer is null )
+                return input;
+
             string _input = input.Trim();
             List<string> tokens = [];
 

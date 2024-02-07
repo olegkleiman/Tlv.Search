@@ -18,8 +18,8 @@ namespace EmbeddingEngine.Core
         /// </param>
         /// <returns></returns>
         Task<float[]?> GenerateEmbeddingsAsync(string input, 
-                                                string representation,
-                                                ILogger? logger);
+                                                string representation = "query",
+                                                ILogger? logger = null);
         Task<T?> GenerateEmbeddingsAsync<T>(string input);
         public string ModelName { get; }
         public string ProviderName
