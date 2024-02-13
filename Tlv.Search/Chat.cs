@@ -14,6 +14,8 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Newtonsoft.Json;
 using System.Text;
 using System.Text.Json;
+using Tlv.Search.Common;
+using Tlv.Search.Models;
 using Tlv.Search.Services;
 
 namespace Tlv.Search
@@ -122,19 +124,22 @@ namespace Tlv.Search
                                              where message.Role == AuthorRole.User
                                              select message.Content);
 
-                    var searchResuls = await _searchService.Search(prompt, limit: 1, logger);
+                    PromptContext promptContext = new(prompt);
+                    var searchResults = await _searchService.Search(promptContext,
+                                                                    limit: 1, 
+                                                                    logger);
                     int index = 0;
 
-                    searchResuls.ForEach(result =>
+                    searchResults.ForEach(result =>
                     {
                         string jsonResult = JsonConvert.SerializeObject(result);
                         searchParameters.Add($"SearchResult{++index}", jsonResult);
-                        _telemetryClient?.TrackEvent($"SearchResuls", new Dictionary<string, string> { { "result", jsonResult } });
+                        _telemetryClient?.TrackEvent($"SearchResults", new Dictionary<string, string> { { "result", jsonResult } });
                     });
 
 
                     StringBuilder sb = new("Based on the following information:\n\n");
-                    foreach (var item in searchResuls)
+                    foreach (var item in searchResults)
                     {
                         sb.Append($"{item.summary}\n\n");
                     }

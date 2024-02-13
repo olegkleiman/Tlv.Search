@@ -12,6 +12,7 @@ namespace VectorDb.SQLServer
 
         public Task<List<SearchItem>> Search(string collectionName,
                                             ReadOnlyMemory<float> queryVector,
+                                            PromptContext promptContext,
                                             ulong limit = 5)
         {
             throw new NotImplementedException();

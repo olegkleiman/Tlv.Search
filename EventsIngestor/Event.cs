@@ -1,4 +1,5 @@
-﻿using HtmlAgilityPack;
+﻿using Ardalis.GuardClauses;
+using HtmlAgilityPack;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -20,6 +21,9 @@ namespace EventsIngestor
         public string? Text { get; set; }
 
         public string? previewPage { get; set; }
+
+        public string? mainItemPreview { get; set; }
+
         public DateTime startDate { get; set; }
         public DateTime endDate { get; set; }
 
@@ -39,10 +43,10 @@ namespace EventsIngestor
         public string? image_url { get; set; }
 
         [JsonPropertyName("address1_LAT")]
-        public float Lat { get; set; }
+        public string Lat { get; set; }
 
         [JsonPropertyName("address1_LON")]
-        public float Lon { get; set; }
+        public string Lon { get; set; }
 
         private static HtmlNode NodeFromTag(HtmlDocument htmlDoc,
                                     string propertyName,
@@ -70,17 +74,21 @@ namespace EventsIngestor
         public Doc ToDoc()
         {
             HtmlDocument htmlDoc = new();
-            var htmlNode = NodeFromTag(htmlDoc, Text, "div");
-            if (string.IsNullOrEmpty(htmlNode.InnerText))
-                Console.WriteLine("Empty text for element");
-
+            var htmlNode = NodeFromTag(htmlDoc, $"<div>{Text}</div>", "div");
+            Guard.Against.NullOrEmpty(htmlNode.InnerText, "Empty text for 'comments' field");
             var _text = htmlNode.InnerText;
 
-            htmlNode = NodeFromTag(htmlDoc, previewPage, "a");
+            string previewUrl = previewPage ?? mainItemPreview;
+            Guard.Against.NullOrEmpty(previewUrl, "Empty 'previewPage' field");
+            htmlNode = NodeFromTag(htmlDoc, previewUrl, "a");
             var hrefValue = htmlNode.Attributes["href"].Value;
 
             htmlNode = NodeFromTag(htmlDoc, image_url, "img");
+            Guard.Against.Null(htmlNode, "Empty 'mainPicture' field");
             var src = htmlNode.Attributes["src"].Value;
+
+            var lat = float.Parse(this.Lat);
+            var lon = float.Parse(this.Lon);
 
             return new Doc(new Uri(baseUrl + hrefValue))
             {
@@ -89,8 +97,8 @@ namespace EventsIngestor
                 Title = clearText(this.Title),
                 ImageUrl = baseUrl + src,
                 Address = FullAddress,
-                Lat = this.Lat,
-                Lon = this.Lon
+                Lat = lat,
+                Lon = lon
             };
         }
     }

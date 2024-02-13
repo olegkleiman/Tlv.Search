@@ -42,7 +42,8 @@ namespace Tlv.Search
             IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, vectorDbProviderKey);
             Guard.Against.Null(vectorDb);
 
-            return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);
+            PromptContext pc = new(prompt);
+            return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding, pc);
         }
 
 #pragma warning disable SKEXP0003, SKEXP0011, SKEXP0020, SKEXP0026, SKEXP0050, SKEXP0052, SKEXP0055

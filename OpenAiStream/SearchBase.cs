@@ -40,7 +40,8 @@ public class SearchBase
         IVectorDb? vectorDb = VectorDb.Core.VectorDb.Create(VectorDbProviders.QDrant, vectorDbHost, vectorDbProviderKey);
         Guard.Against.Null(vectorDb);
 
-        return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}", promptEmbedding);
+        PromptContext pc = new(prompt);
+        return await vectorDb.Search($"{collectionName}_{embeddingsProviderName}",promptEmbedding, pc);
     }
 
 
