@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tlv.Search.Common;
+using Tlv.Search.Models;
 using Tlv.Search.Services;
 using VectorDb.Core;
 
@@ -55,7 +57,8 @@ namespace Tlv.Search.Tests
 
             var collectionName = $"doc_parts_{_collectionNamePostFix}";
             SearchService searchService = new(vectorDb.Object, embeddingEngine.Object, collectionName);
-            var results = searchService.Search("תשלום חוב ארנונה", limit: 1, loggerMock.Object);
+            PromptContext promptContext = new PromptContext("תשלום חוב ארנונה");
+            var results = searchService.Search(promptContext, limit: 1, loggerMock.Object);
         }
     }
 }

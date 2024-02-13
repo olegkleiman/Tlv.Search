@@ -1,18 +1,9 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
-using Google.Protobuf.Collections;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.Memory;
-//using Microsoft.SemanticKernel.CoreSkills;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using Microsoft.SemanticKernel.Plugins.Core;
-using System;
-using Google.Protobuf;
 
 namespace QDrantDrive
 {
@@ -22,8 +13,11 @@ namespace QDrantDrive
         {
             try
             {
-                List<string> prompts = ["Hello", "הנחות מארנונה"];
+                //string prompt = "פעילות בקאנטרי גורן";
+                string prompt = "פעילות בקאנטרי נווה שרת";
+                List<string> prompts = [prompt];
 
+                #region read configuration
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", optional: false);
@@ -34,37 +28,40 @@ namespace QDrantDrive
                 var vectorSize = ulong.Parse(config["VECTOR_SIZE"]);
                 var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
 
-                try
+                string context = "At which geographical location happens the following sentence. Report only the geographical name. Answer in Hebrew: ";
+                context += prompt;
+
+                ChatCompletionsOptions cco = new ChatCompletionsOptions()
                 {
-                    ILoggerFactory myLoggerFactory = NullLoggerFactory.Instance;
+                    Temperature = (float)0.7,
+                    MaxTokens = 800,
+                    NucleusSamplingFactor = (float)0.95,
+                    FrequencyPenalty = 0,
+                    PresencePenalty = 0,
+                    DeploymentName = "gpt-4",
+                    Messages =
+                        {
+                            new ChatRequestSystemMessage(@"You are a help assistant that analyzes the user input."),
+                            new ChatRequestUserMessage(context)
+                        },
+                };
+                var chat = await client.GetChatCompletionsAsync(cco);
+                ChatResponseMessage responseMessage = chat.Value.Choices[0].Message;
+                string content = responseMessage.Content;
 
-                    var kernelBuilder = Kernel.CreateBuilder();
-                    //kernelBuilder.Services. .AddSingleton(myLoggerFactory);
+                string hostUri = config["VECTOR_DB_HOST"];
+                string m_providerKey = config["VECTOR_DB_KEY"];
+                string collectionName = config["COLLECTION_NAME"];
 
-#pragma warning disable SKEXP0011, SKEXP0050, SKEXP0052
-                    kernelBuilder.AddAzureOpenAITextEmbeddingGeneration("text-embedding-ada-002", client);
-                    var kernel = kernelBuilder.Build();
-                    //kernel.AddFromType<TimePlugin>();
+                #endregion
 
-                    var memoryBuilder = new MemoryBuilder();
-                    memoryBuilder.WithAzureOpenAITextEmbeddingGeneration("text-embedding-ada-002", "model-id", openaiEndpoint, openaiKey);
+                QdrantClient qdClient = new QdrantClient(new Uri(hostUri),
+                                                        apiKey: m_providerKey);
 
-#pragma warning restore SKEXP0011, SKEXP0050, SKEXP0052
-
-                    var func = kernel.CreateFunctionFromPrompt(prompts[0]);
-                    var res = await kernel.InvokeAsync(func);
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-                string collectionName = "site_docs2";
-
-                QdrantClient qdClient = new("localhost");
-                var collections =  await qdClient.ListCollectionsAsync();
+                var collections = await qdClient.ListCollectionsAsync();
                 var q = (from collection in collections
-                        where collection == collectionName
-                        select collection).FirstOrDefault();
+                         where collection == collectionName
+                         select collection).FirstOrDefault();
                 if (q == null)
                 {
                     VectorParams vp = new()
@@ -77,76 +74,68 @@ namespace QDrantDrive
                 }
 
 
-                EmbeddingsOptions eo = new(deploymentName: "text-embedding-ada-002",
+                EmbeddingsOptions eo = new(deploymentName: "text-embedding-3-large",
                                             input: prompts);
                 Response<Embeddings> response = await client.GetEmbeddingsAsync(eo);
-                List<PointStruct> points = [];
-                var random = new Random();
-                foreach (var item in response.Value.Data)
+                var queryVector = response.Value.Data[0].Embedding;
+
+
+                //
+                // Search: Full Text Match
+                //
+                // If there is no full-text index configured for the field, the condition will work as exact substring match.
+                // var uRes = await qdClient.CreatePayloadIndexAsync(collectionName,
+                //                                                    "description",
+                //                                                    PayloadSchemaType.Text);
+
+
+                Condition condition = new Condition()
                 {
-                    var embedding = item.Embedding;
-                    int itemIndex = item.Index;
-
-                    List<float> _vectors = [];
-
-                    for (int i = 0; i < embedding.Length; i++)
+                    Field = new FieldCondition()
                     {
-                        float value = embedding.Span[i];
-                        _vectors.Add(value);
-                    }
-                    PointStruct ps = new()
-                    {
-                        Id = (ulong)item.Index,
-                        Payload =
+                        Key = "description",
+                        Match = new Match()
                         {
-                            ["text"] = prompts[itemIndex],
-                            ["title"] = "Generic",
-                            ["url"] = "https://www.tel-aviv.gov.il/Residents/Arnona/Pages/ArnonaSwitching.aspx",
-                            ["subs"] = "[{\"group_id\": \"user_1\"}]"
-                        },
-                        Vectors = _vectors.ToArray()
-                    };
-
-                    points.Add(ps);
-
-                }
-
-                await qdClient.UpsertAsync(collectionName, points);
-
-                List<float> queryVector = [];
-                EmbeddingsOptions eo2 = new(deploymentName: "text-embedding-ada-002",
-                                            input:["הנחות מארנונה"]);
-                response = await client.GetEmbeddingsAsync(eo2);
-                foreach (var item in response.Value.Data)
-                {
-                    var embedding = item.Embedding;
-                    for (int i = 0; i < embedding.Length; i++)
-                    {
-                        queryVector.Add(embedding.Span[i]);
+                            // If the query has several words, then the condition will be satisfied only if all of them are present in the text.
+                            Text = content
+                        }
                     }
-                }
-
-                //
-                // Search
-                //
-
-                Filter filter = new Filter()
-                {
-                    
                 };
-                //filter: Range("rand_number", new Range { Gte = 3 })
+
+                Filter filter = new Filter(condition);
+                filter.Must.Add(condition);
 
                 SearchParams sp = new SearchParams()
                 {
                     Exact = true
                 };
 
-                var scores = await qdClient.SearchAsync(collectionName, queryVector.ToArray(), 
-                                                        filter: filter, searchParams: sp, limit: 5);
-                foreach(var score in scores)
+                List<SearchPoints> searches = [];
+                SearchPoints searchPoints = new SearchPoints()
+                {
+                    CollectionName = collectionName,
+                    WithPayload = true,
+                    Filter = filter,
+                    Limit = 5
+                };
+                searchPoints.Vector.Add(queryVector.ToArray());
+                searches.Add(searchPoints);
+
+                //var results = await qdClient.SearchBatchAsync(collectionName,
+                //                                              searches);
+
+                var _res = await qdClient.ScrollAsync(collectionName,
+                                                      filter);
+
+                var scores = await qdClient.SearchAsync(collectionName,
+                                                        vector: queryVector.ToArray(),
+                                                        filter: filter,
+                                                        searchParams: sp,
+                                                        limit: 5);
+                foreach (var score in scores)
                 {
                     var payload = score.Payload;
-                    Console.WriteLine($"Text: {payload["text"]} Score: {score.Score}"); 
+                    Console.WriteLine($"Text: {payload["text"]} Score: {score.Score}");
                 }
             }
             catch (Exception ex)

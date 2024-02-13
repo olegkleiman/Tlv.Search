@@ -30,7 +30,7 @@ namespace Tlv.Search.Common
             get
             {
                 //return $"{Title?.Trim()} {Text?.Trim()}";
-                return Title?.Trim();
+                return $"{Title?.Trim()} + {Description.Trim()} + {Text.Trim()}";
             }
         }
     }

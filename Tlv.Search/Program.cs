@@ -13,6 +13,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Plugins.Core;
 using StackExchange.Redis;
 using System.Net;
+using Tlv.Search.Models;
 using Tlv.Search.Services;
 using VectorDb.Core;
 
@@ -39,13 +40,18 @@ var host = new HostBuilder()
             IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
 
             string? redisConnectionString = configuration.GetConnectionString("Redis");
-            if(redisConnectionString.IsNullOrEmpty() )
-                return new NullPropmtProcessng();
+            string? openai_key = Environment.GetEnvironmentVariable("PROMPT_PROCESSING_OPENAI_KEY");
+
+            if ( string.IsNullOrEmpty(redisConnectionString) 
+                && string.IsNullOrEmpty(openai_key) )
+                return new NullPromptProcessing();
             else
             {
-                var connection = ConnectionMultiplexer.Connect(redisConnectionString);
-                Console.WriteLine("Redis connected");
-                return new FrequencyFilterPromptProcessing(connection);
+
+                var connection = !string.IsNullOrEmpty(redisConnectionString) ?
+                                  ConnectionMultiplexer.Connect(redisConnectionString) : null;
+
+                return new DefaultPromptProcessing(connection, openai_key);
             }
         });
 

@@ -2,6 +2,7 @@
 using EmbeddingEngine.Core;
 using Microsoft.Extensions.Logging;
 using Tlv.Search.Common;
+using Tlv.Search.Models;
 using VectorDb.Core;
 
 namespace Tlv.Search.Services
@@ -14,7 +15,7 @@ namespace Tlv.Search.Services
         public IEmbeddingEngine embeddingEngine { get; set; } = _embeddingEngine;
         public string collectionName { get; set; } = _collectionName;
 
-        public async Task<List<SearchItem>> Search(string prompt,
+        public async Task<List<SearchItem>> Search(PromptContext promptContext,
                                                    ulong limit,
                                                    ILogger? logger)
         {
@@ -23,11 +24,14 @@ namespace Tlv.Search.Services
 
             try
             {
-                ReadOnlyMemory<float> promptEmbedding = await embeddingEngine.GenerateEmbeddingsAsync(prompt, "query", logger);
-                Guard.Against.NegativeOrZero(promptEmbedding.Length, "promptEmbedding", "0-lenght prompt embedding");
+                ReadOnlyMemory<float> promptEmbedding = 
+                    await embeddingEngine.GenerateEmbeddingsAsync(promptContext?.Prompt, 
+                                                                   "query", logger);
+                Guard.Against.NegativeOrZero(promptEmbedding.Length, "promptEmbedding", "0-length prompt embedding");
 
                 return await vectorDb.Search(collectionName,
                                             promptEmbedding,
+                                            promptContext,
                                             limit: limit);
             }
             catch(Exception)

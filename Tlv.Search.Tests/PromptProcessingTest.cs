@@ -1,17 +1,11 @@
-﻿using EmbeddingEngine.Core;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Tlv.Search.Common;
 using Tlv.Search.Services;
 
 namespace Tlv.Search.Tests
 {
-    public class PromptProcessingTest
+    public class DefaultPromptProcessingTest
     {
         private IConfigurationRoot configuration;
 
@@ -28,16 +22,36 @@ namespace Tlv.Search.Tests
         }
 
         [Test]
-        public async Task FrequencyFilterPromptProcessing()
+        public async Task WithRedis()
         {
             var connectionString = configuration.GetConnectionString("Redis");
             Assert.That(connectionString, Is.Not.Empty);
 
             var connection = ConnectionMultiplexer.Connect(connectionString);
-            var processor = new FrequencyFilterPromptProcessing(connection);
+
+            var processor = new DefaultPromptProcessing(connection, string.Empty);
             Assert.That(processor, Is.Not.Null);
 
-            await processor.FilterKeywords("הנחות לארנוננה לחיילי מילואים");
+            string prompt = "הנחות בארנוננה לחיילי מילואים";
+            PromptContext promptContext = await processor.CreateContext(prompt);
+            Assert.That(promptContext.FilteredPrompt, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task WithGeoLocation()
+        {
+            if (configuration is null)
+                Assert.Fail();
+
+            string openAIKey = configuration["PROMPT_PROCESSING_OPENAI_KEY"];
+
+            var processor = new DefaultPromptProcessing(null, openAIKey);
+            Assert.That(processor, Is.Not.Null);
+
+            string prompt = "אירועי יום האהבה במרכז העיר";
+            PromptContext promptContext = await processor.CreateContext(prompt);
+            Assert.That(promptContext.GeoCondition, Is.Not.Null);
+
         }
     }
 }

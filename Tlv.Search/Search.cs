@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System.Net;
+using Tlv.Search.Common;
+using Tlv.Search.Models;
 using Tlv.Search.Services;
 using VectorDb.Core;
 
@@ -18,7 +20,7 @@ namespace Tlv.Search
     public class Search
     {
         private readonly TelemetryClient _telemetryClient;
-        private readonly IPromptProcessingService _promptService;
+        private readonly IPromptProcessingService? _promptService;
         private readonly SearchService _searchService;
 
         public Search(TelemetryClient telemetryClient,
@@ -58,15 +60,14 @@ namespace Tlv.Search
                 // Set the correlation identifier in the operation context
                 _telemetryClient.Context.Operation.Id = correlationId;
                 _telemetryClient?.TrackTrace($"Start searching");
-                searchParameters.Add("propmt", prompt);    
+                searchParameters.Add("prompt", prompt);
 
-                if( _promptService is not null )
-                    prompt = await _promptService.FilterKeywords(prompt);
- 
-                searchParameters.Add("filtered_prompt", prompt);
-                var searchResuls = await _searchService.Search(prompt, limit: 5, logger);
+                //PromptContext? promptContext = _promptService != null ? await _promptService.CreateContext(prompt) : null;
+                PromptContext? promptContext = await _promptService?.CreateContext(prompt);
+                searchParameters.Add("filtered_prompt", promptContext.FilteredPrompt);
+                var searchResults = await _searchService.Search(promptContext, limit: 5, logger);
                 int index = 0;
-                searchResuls.ForEach(result =>
+                searchResults.ForEach(result =>
                 {
                     string jsonResult = JsonConvert.SerializeObject(result);
                     searchParameters.Add($"result{++index}", jsonResult);
@@ -75,7 +76,7 @@ namespace Tlv.Search
                 _telemetryClient?.TrackEvent("Search", searchParameters);
                 _telemetryClient?.TrackTrace($"The search process {correlationId} finished");
 
-                return new OkObjectResult(searchResuls);
+                return new OkObjectResult(searchResults);
             }
             catch (Exception ex)
             {

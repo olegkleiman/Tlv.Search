@@ -61,12 +61,26 @@ namespace VectorDb.QDrant
 
         public async Task<List<SearchItem>> Search(string collectionName,
                                                  ReadOnlyMemory<float> queryVector,
+                                                 PromptContext promptContext,
                                                  ulong limit = 5)
         {
-            Filter filter = new()
+            Condition condition = new()
             {
-                
+                Field = new FieldCondition()
+                {
+                    Key = "description",
+                    Match = new Match()
+                    {
+                        // If the query has several words, then the condition will be satisfied only if all of them are present in the text.
+                        Text = promptContext.GeoCondition
+                    }
+                }
             };
+            Filter filter = new Filter(condition);
+            filter.Must.Add(condition);
+
+            var textResults = await m_qdClient.ScrollAsync(collectionName, filter);
+
             SearchParams sp = new()
             {
                 Exact = true,
@@ -75,7 +89,7 @@ namespace VectorDb.QDrant
             // Retrieves closest points based on vector similarity
             IReadOnlyList<ScoredPoint> scores = await m_qdClient.SearchAsync(collectionName,
                                                     queryVector,
-                                                    filter: filter,
+                                                    filter: null,
                                                     searchParams: sp,
                                                     limit: limit);
 
@@ -116,6 +130,7 @@ namespace VectorDb.QDrant
                     {
                         Distance = Distance.Cosine,
                         Size = (ulong)vector.Length,
+                        
                     };
 
                     await m_qdClient.CreateCollectionAsync(collectionName, vp);
