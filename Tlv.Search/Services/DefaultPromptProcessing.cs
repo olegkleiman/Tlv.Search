@@ -88,7 +88,7 @@ namespace Tlv.Search.Services
             if( _openAIClient is null )
                 return;
 
-            string context = "At which geographical location happens the following sentence. Report only the geographical name. Answer in Hebrew: ";
+            string context = "At which geographical location happens the following sentence. Report only the geographical name. Say 'No' if there is no geographical location detected. Answer in Hebrew: ";
             context += prompt;
 
             ChatCompletionsOptions cco = new ChatCompletionsOptions()
@@ -107,7 +107,12 @@ namespace Tlv.Search.Services
             };
             var chat = await _openAIClient.GetChatCompletionsAsync(cco);
             ChatResponseMessage responseMessage = chat.Value.Choices[0].Message;
-            PromptContext.GeoCondition = responseMessage.Content;
+            string content = responseMessage.Content;
+            if( content.CompareTo("No") == 0
+                || string.IsNullOrEmpty(content))
+                PromptContext.GeoCondition = string.Empty;
+            else
+                PromptContext.GeoCondition = content;
         }
 
     }

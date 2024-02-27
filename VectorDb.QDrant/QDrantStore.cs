@@ -1,11 +1,9 @@
 ﻿using Ardalis.GuardClauses;
+using Google.Protobuf.Collections;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
-using System.Collections;
-using System.Collections.Generic;
 using Tlv.Search.Common;
 using VectorDb.Core;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace VectorDb.QDrant
 {
@@ -31,11 +29,11 @@ namespace VectorDb.QDrant
                 var _hostUri = new Uri(hostUri);
                 m_qdClient = new QdrantClient(_hostUri, apiKey: m_providerKey);
             }
-            catch(UriFormatException ex)
+            catch (UriFormatException ex)
             {
                 m_qdClient = new QdrantClient(hostUri, apiKey: m_providerKey);
             }
-            
+
         }
 
         public async Task SearchGroups(string collectionName,
@@ -64,22 +62,40 @@ namespace VectorDb.QDrant
                                                  PromptContext promptContext,
                                                  ulong limit = 5)
         {
-            Condition condition = new()
-            {
-                Field = new FieldCondition()
-                {
-                    Key = "description",
-                    Match = new Match()
-                    {
-                        // If the query has several words, then the condition will be satisfied only if all of them are present in the text.
-                        Text = promptContext.GeoCondition
-                    }
-                }
-            };
-            Filter filter = new Filter(condition);
-            filter.Must.Add(condition);
+            List<SearchItem> searchResult = new ();
 
-            var textResults = await m_qdClient.ScrollAsync(collectionName, filter);
+            if (!string.IsNullOrEmpty(promptContext.GeoCondition))
+            {
+                Condition condition = new()
+                {
+                    Field = new FieldCondition()
+                    {
+                        Key = "description",
+                        Match = new Match()
+                        {
+                            // If the query has several words, then the condition will be satisfied only if all of them are present in the text.
+                            Text = promptContext.GeoCondition
+                        }
+                    }
+                };
+                Filter filter = new(condition);
+
+                ScrollResponse scrollResponse = await m_qdClient.ScrollAsync(collectionName, filter);
+                RepeatedField<RetrievedPoint> scrollPoints = scrollResponse.Result;
+                var _q = (from point in scrollPoints
+                         let payload = point.Payload
+                         select new SearchItem()
+                         {
+                             id = point.Id.Num,
+                             title = payload["title"].StringValue,
+                             summary = payload["text"].StringValue,
+                             url = payload["url"].StringValue,
+                             imageUrl = payload["image_url"].StringValue,
+                             parentDocId = payload["parent_doc_id"].IntegerValue,
+                         }
+                        ).ToList();
+                searchResult.AddRange(_q);
+            }
 
             SearchParams sp = new()
             {
@@ -87,26 +103,27 @@ namespace VectorDb.QDrant
             };
 
             // Retrieves closest points based on vector similarity
-            IReadOnlyList<ScoredPoint> scores = await m_qdClient.SearchAsync(collectionName,
+            IReadOnlyList<ScoredPoint> scoredPoints = await m_qdClient.SearchAsync(collectionName,
                                                     queryVector,
                                                     filter: null,
                                                     searchParams: sp,
                                                     limit: limit);
 
 
-            return (from score in scores
-                    let payload = score.Payload
+            var q = (from point in scoredPoints
+                    let payload = point.Payload
                     select new SearchItem()
                     {
-                        id = score.Id.Num,
+                        id = point.Id.Num,
                         title = payload["title"].StringValue,
                         summary = payload["text"].StringValue,
                         url = payload["url"].StringValue,
                         imageUrl = payload["image_url"].StringValue,
                         parentDocId = payload["parent_doc_id"].IntegerValue,
-                        similarity = score.Score
+                        similarity = point.Score
                     }).ToList();
-
+            searchResult.AddRange(q);
+            return searchResult;
         }
 
         public async Task<bool> Save(Doc doc,
@@ -130,7 +147,7 @@ namespace VectorDb.QDrant
                     {
                         Distance = Distance.Cosine,
                         Size = (ulong)vector.Length,
-                        
+
                     };
 
                     await m_qdClient.CreateCollectionAsync(collectionName, vp);
@@ -155,7 +172,7 @@ namespace VectorDb.QDrant
                     Vectors = vector
                 };
 
-                await m_qdClient.UpsertAsync(collectionName, new List<PointStruct>() { ps } );
+                await m_qdClient.UpsertAsync(collectionName, new List<PointStruct>() { ps });
 
                 return true;
             }
