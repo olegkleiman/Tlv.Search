@@ -57,13 +57,8 @@ namespace VectorDb.QDrant
             }
         }
 
-        public async Task<List<SearchItem>> Search(string collectionName,
-                                                 ReadOnlyMemory<float> queryVector,
-                                                 PromptContext promptContext,
-                                                 ulong limit = 5)
+        private Filter? CreateFilter(PromptContext promptContext)
         {
-            List<SearchItem> searchResult = new ();
-
             if (!string.IsNullOrEmpty(promptContext.GeoCondition))
             {
                 Condition condition = new()
@@ -78,24 +73,36 @@ namespace VectorDb.QDrant
                         }
                     }
                 };
-                Filter filter = new(condition);
-
-                ScrollResponse scrollResponse = await m_qdClient.ScrollAsync(collectionName, filter);
-                RepeatedField<RetrievedPoint> scrollPoints = scrollResponse.Result;
-                var _q = (from point in scrollPoints
-                         let payload = point.Payload
-                         select new SearchItem()
-                         {
-                             id = point.Id.Num,
-                             title = payload["title"].StringValue,
-                             summary = payload["text"].StringValue,
-                             url = payload["url"].StringValue,
-                             imageUrl = payload["image_url"].StringValue,
-                             parentDocId = payload["parent_doc_id"].IntegerValue,
-                         }
-                        ).ToList();
-                searchResult.AddRange(_q);
+                return new Filter(condition);
             }
+            else
+                return null;
+        }
+
+        public async Task<List<SearchItem>> Search(string collectionName,
+                                                 ReadOnlyMemory<float> queryVector,
+                                                 PromptContext promptContext,
+                                                 ulong limit = 5)
+        {
+            List<SearchItem> searchResult = new ();
+
+            Filter? filter = CreateFilter(promptContext);
+
+            ScrollResponse scrollResponse = await m_qdClient.ScrollAsync(collectionName, filter);
+            RepeatedField<RetrievedPoint> scrollPoints = scrollResponse.Result;
+            var _q = (from point in scrollPoints
+                      let payload = point.Payload
+                      select new SearchItem()
+                      {
+                          id = point.Id.Num,
+                          title = payload["title"].StringValue,
+                          summary = payload["text"].StringValue,
+                          url = payload["url"].StringValue,
+                          imageUrl = payload["image_url"].StringValue,
+                          parentDocId = payload["parent_doc_id"].IntegerValue,
+                      }
+                    ).ToList();
+            searchResult.AddRange(_q);
 
             SearchParams sp = new()
             {
