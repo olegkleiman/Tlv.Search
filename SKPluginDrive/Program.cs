@@ -77,9 +77,9 @@ namespace SKPluginDrive
                 kernelBuilder.Plugins.AddFromType<TimePlugin>();
                 Kernel kernel = kernelBuilder.Build();
 
-                var kernelMemory = new KernelMemoryBuilder()
-                                    .WithOpenAIDefaults(Env.Var("OPENAI_API_KEY"))
-                                    .Build<MemoryServerless>();
+                //var kernelMemory = new KernelMemoryBuilder()
+                //                    .WithOpenAIDefaults(Env.Var("OPENAI_KEY"))
+                //                    .Build<MemoryServerless>();
 
                 //var plugin = new MemoryPlugin(kernelMemory, waitForIngestionToComplete: true);
 

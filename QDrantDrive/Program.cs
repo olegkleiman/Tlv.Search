@@ -1,6 +1,6 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
-using Google.Protobuf.WellKnownTypes;
+using Tlv.Search.Common;
 using Microsoft.Extensions.Configuration;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
@@ -14,7 +14,7 @@ namespace QDrantDrive
             try
             {
                 //string prompt = "פעילות בקאנטרי גורן";
-                string prompt = "פעילות בקאנטרי נווה שרת";
+                string prompt = "פעילות יום אהבה";
                 List<string> prompts = [prompt];
 
                 #region read configuration
@@ -28,7 +28,7 @@ namespace QDrantDrive
                 var vectorSize = ulong.Parse(config["VECTOR_SIZE"]);
                 var client = new OpenAIClient(openaiKey, new OpenAIClientOptions());
 
-                string context = "At which geographical location happens the following sentence. Report only the geographical name. Answer in Hebrew: ";
+                string context = "At which geographical location happens the following sentence. Report only the geographical name. Say 'No' if there is no geographical location detected. Answer in Hebrew: ";
                 context += prompt;
 
                 ChatCompletionsOptions cco = new ChatCompletionsOptions()
@@ -48,6 +48,13 @@ namespace QDrantDrive
                 var chat = await client.GetChatCompletionsAsync(cco);
                 ChatResponseMessage responseMessage = chat.Value.Choices[0].Message;
                 string content = responseMessage.Content;
+
+                PromptContext PromptContext = new PromptContext(prompt);
+                if (content.CompareTo("No") == 0
+                    || string.IsNullOrEmpty(content))
+                    PromptContext.GeoCondition = string.Empty;
+                else
+                    PromptContext.GeoCondition = content;
 
                 string hostUri = config["VECTOR_DB_HOST"];
                 string m_providerKey = config["VECTOR_DB_KEY"];

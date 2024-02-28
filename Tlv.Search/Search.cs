@@ -48,7 +48,7 @@ namespace Tlv.Search
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,
                                              ILogger logger)
         {
-            Dictionary<string, string> searchParameters = new Dictionary<string, string>();
+            Dictionary<string, string> searchParameters = [];
             try
             {
                
@@ -62,7 +62,6 @@ namespace Tlv.Search
                 _telemetryClient?.TrackTrace($"Start searching");
                 searchParameters.Add("prompt", prompt);
 
-                //PromptContext? promptContext = _promptService != null ? await _promptService.CreateContext(prompt) : null;
                 PromptContext? promptContext = await _promptService?.CreateContext(prompt);
                 searchParameters.Add("filtered_prompt", promptContext.FilteredPrompt);
                 var searchResults = await _searchService.Search(promptContext, limit: 5, logger);
@@ -88,7 +87,6 @@ namespace Tlv.Search
                 {
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
-
             }
         }
     }

@@ -8,7 +8,7 @@
     <UserSecretsId>69cc3216-531e-480b-8b93-0ed72d51768e</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Ardalis.GuardClauses" Version="4.3.0" />
+    <PackageReference Include="Ardalis.GuardClauses" Version="4.4.0" />
     <PackageReference Include="Catalyst.Models.Hebrew" Version="1.0.30952" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.22.0" />
