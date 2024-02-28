@@ -73,7 +73,10 @@ namespace VectorDb.QDrant
                         }
                     }
                 };
-                return new Filter(condition);
+
+                Filter filter = new();
+                filter.Should.Add(condition);
+                return filter;
             }
             else
                 return null;
@@ -112,7 +115,7 @@ namespace VectorDb.QDrant
             // Retrieves closest points based on vector similarity
             IReadOnlyList<ScoredPoint> scoredPoints = await m_qdClient.SearchAsync(collectionName,
                                                     queryVector,
-                                                    filter: null,
+                                                    filter: filter,// null,
                                                     searchParams: sp,
                                                     limit: limit);
 

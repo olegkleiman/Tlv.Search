@@ -48,7 +48,7 @@ namespace Tlv.Search
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,
                                              ILogger logger)
         {
-            Dictionary<string, string> searchParameters = new Dictionary<string, string>();
+            Dictionary<string, string> searchParameters = [];
             try
             {
                
